@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Sawaal dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Inter:wght@400;500;600;700&display=swap">
+<script src="config.js"></script>
+<script src="courses.js"></script>
+<script src="sawaal.js" data-course="dashboard"></script>
+<style>
+:root{
+  --ink:#171412;--slate:#1B2430;--page:#FAF8F3;--card:#FFFFFF;--rule:#E4DED2;--muted:#6B6357;
+  --gold:#FFB703;--gold-ink:#231B08;--red:#C8322A;--teal:#0F7B6C;--mint:#E8F5F1;--blush:#FDECEA;--soft:#F3EFE6;--amber:#FFF4DC;--bar:#2F6FB0;--bar2:#E08A00;
+  --disp:"Bricolage Grotesque","Trebuchet MS",sans-serif;--body:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{--ink:#F1EDE4;--page:#13120F;--card:#1D1B17;--rule:#36312A;--muted:#ADA493;--soft:#28251F;--mint:#15302A;--blush:#3A1E1B;--amber:#3A2E12;--red:#F07D74;--teal:#5CC7B4;--bar:#6FA8E0;--bar2:#F2B04D}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.top{background:var(--slate);color:#fff;padding:12px 16px}
+.top .in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.top .brand{font:800 20px var(--disp);margin-right:auto}
+.top .brand small{font:500 13px var(--body);color:#9FB0C6;margin-left:6px}
+.top select{background:#2A3849;color:#fff;border:1px solid #3E4E63;border-radius:8px;padding:7px 10px;max-width:100%}
+.top button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:8px;padding:6px 11px;font-weight:600;font-size:13px;cursor:pointer}
+.filters{background:var(--card);border-bottom:1px solid var(--rule)}
+.filters .in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.filters label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:3px}
+.filters>.in>div{min-width:0;max-width:100%}
+select,input[type=password],input[type=text]{background:var(--card);border:1.5px solid var(--rule);border-radius:8px;padding:8px 10px;max-width:100%}
+.tabs{background:var(--card);border-bottom:1px solid var(--rule);overflow-x:auto;position:sticky;top:0;z-index:5}
+.tabs .in{max-width:1180px;margin:0 auto;display:flex;gap:2px;padding:0 10px}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:12px 14px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--gold)}
+main{max-width:1180px;margin:0 auto;padding:22px 16px 80px}
+h1{font:800 26px/1.2 var(--disp);margin:0 0 4px}
+h2{font:800 20px/1.25 var(--disp);margin:0 0 8px}
+h3{font-size:15px;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:18px;margin-bottom:16px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}.g5{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font:800 30px/1.1 var(--disp)}.stat span{color:var(--muted);font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:var(--gold-ink);border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.alt{background:var(--soft);color:var(--ink)}
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);margin-bottom:18px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:600;background:var(--soft);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--soft)}tr.sel td{background:var(--amber)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;background:var(--soft);white-space:nowrap}
+.pill.ok{background:var(--mint);color:var(--teal)}.pill.bad{background:var(--blush);color:var(--red)}
+.prog{display:flex;align-items:center;gap:8px;min-width:130px}
+.prog .t{height:7px;background:var(--soft);border-radius:6px;flex:1;overflow:hidden}.prog .t i{display:block;height:100%;background:var(--teal)}
+.prog span{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.finding{border-left:4px solid var(--gold);background:var(--card);border-radius:0 10px 10px 0;padding:14px 16px;font-size:16px;line-height:1.45}
+.finding b{font:800 20px var(--disp)}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:13.5px}
+.bars .lb{color:var(--muted);white-space:nowrap}.bars .tr{height:14px;background:var(--soft);border-radius:4px;overflow:hidden}
+.bars .tr i{display:block;height:100%;background:var(--bar);border-radius:4px}.bars .tr i.b2{background:var(--bar2)}
+.bars .v{font-variant-numeric:tabular-nums;text-align:right;min-width:2.5em}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);margin:4px 0 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.quote{border-bottom:1px solid var(--rule);padding:10px 0}.quote:last-child{border-bottom:0}
+.quote .who{font-size:12.5px;color:var(--muted);margin-bottom:2px}.quote .txt{white-space:pre-wrap;word-break:break-word}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--soft);border-radius:20px;padding:4px 11px;font-weight:600;font-size:13.5px}
+.muted{color:var(--muted)}.small{font-size:13px}
+.note{background:var(--amber);border-radius:8px;padding:10px 12px;font-size:13.5px;margin-bottom:16px}
+.err{background:var(--blush);border-left:4px solid var(--red);padding:10px 12px;border-radius:6px;margin:12px 0}
+.empty{color:var(--muted);text-align:center;padding:36px 12px}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;letter-spacing:.04em}
+.hide{display:none!important}
+.auth{max-width:400px;margin:70px auto;padding:0 16px}
+.auth label{display:block;font-weight:600;margin:14px 0 5px}.auth input{width:100%}
+.auth .btn{width:100%;justify-content:center;margin-top:16px;padding:12px}
+@media (max-width:640px){h1{font-size:22px}.top .brand small{display:none}}
+</style>
+</head>
+<body>
+
+<div id="vLogin" class="auth hide">
+  <h1>Sawaal dashboard</h1>
+  <p class="sub">Progress and findings for every school.</p>
+  <form id="fLogin">
+    <label for="pw">Dashboard password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="pwBtn">Open dashboard</button>
+    <div id="pwErr" class="err hide"></div>
+  </form>
+</div>
+
+<div id="vApp" class="hide">
+  <div class="top"><div class="in">
+    <div class="brand">Sawaal<small>dashboard</small></div>
+    <select id="course" aria-label="Course"></select>
+    <button id="refresh" type="button">Refresh</button>
+    <button id="logout" type="button">Lock</button>
+  </div></div>
+  <div class="filters"><div class="in">
+    <div><label for="school">School</label><select id="school"></select></div>
+    <div><label for="cls">Class</label><select id="cls"></select></div>
+    <div class="small muted" id="loaded" style="margin-left:auto;align-self:center"></div>
+  </div></div>
+  <div class="tabs"><div class="in" id="tabs">
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="findings">Findings</button>
+    <button data-tab="students">Students</button>
+    <button data-tab="download">Download</button>
+  </div></div>
+  <main id="out"></main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var api = Sawaal.api;
+  var $ = function (id) { return document.getElementById(id); };
+  var COURSES = (window.SAWAAL_COURSES || []).filter(function (c) { return c && c.id; });
+  var PW_KEY = "sawaal.dashpw";
+  var S = { pw: null, course: null, school: "", cls: "", tab: "overview", data: null, student: null, freeText: null };
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function answerText(a) { if (a == null) return ""; if (typeof a === "string") return a; if (Array.isArray(a)) return a.join(", "); return JSON.stringify(a); }
+  function num(v) { if (v == null || v === "") return null; if (typeof v === "number") return v; var m = String(v).match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; }
+  function when(ts) {
+    if (!ts) return "";
+    var mins = Math.round((Date.now() - new Date(ts)) / 60000);
+    if (mins < 1) return "just now"; if (mins < 60) return mins + " min ago";
+    if (mins < 1440) return Math.round(mins / 60) + " h ago"; if (mins < 20160) return Math.round(mins / 1440) + " days ago";
+    return new Date(ts).toLocaleDateString();
+  }
+  function pct(a, b) { return b ? Math.round(a / b * 100) + "%" : "–"; }
+  function median(v) { if (!v.length) return null; var s = v.slice().sort(function (a, b) { return a - b; }), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+  function fmt(n) { return n == null ? "–" : (Math.round(n * 10) / 10).toString(); }
+  function sget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function sset(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function course() { return COURSES.find(function (c) { return c.id === S.course; }) || { id: S.course, title: S.course, insights: {} }; }
+  function bars(items, pair) {
+    var max = 1; items.forEach(function (i) { max = Math.max(max, i.value || 0, i.value2 || 0); });
+    return '<div class="bars">' + items.map(function (i) {
+      return '<div class="lb">' + esc(i.label) + '</div><div><div class="tr"><i style="width:' + Math.round((i.value || 0) / max * 100) + '%"></i></div>' +
+        (pair ? '<div class="tr" style="margin-top:3px"><i class="b2" style="width:' + Math.round((i.value2 || 0) / max * 100) + '%"></i></div>' : "") +
+        '</div><div class="v">' + (i.value || 0) + (pair ? "<br>" + (i.value2 || 0) : "") + "</div>";
+    }).join("") + "</div>";
+  }
+  function progressBar(p, screens) {
+    if (!p) return '<span class="pill">Not started</span>';
+    if (p.completed_at) return '<span class="pill ok">Finished</span>';
+    var at = Math.min((p.screen || 0) + 1, screens || 1), w = screens ? Math.round(at / screens * 100) : 0;
+    return '<div class="prog"><div class="t"><i style="width:' + w + '%"></i></div><span>' + (screens ? at + "/" + screens : "started") + "</span></div>";
+  }
+  function csvDownload(name, rows) {
+    var text = "﻿" + rows.map(function (r) { return r.map(function (c) { return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" })); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  }
+
+  /* ================= sign in ================= */
+  function showLogin(msg) {
+    $("vApp").classList.add("hide"); $("vLogin").classList.remove("hide");
+    $("pwErr").textContent = msg || ""; $("pwErr").classList.toggle("hide", !msg);
+    $("pw").focus();
+  }
+  $("fLogin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    S.pw = $("pw").value; $("pwBtn").disabled = true; $("pwBtn").textContent = "Opening…";
+    load().then(function () { sset(PW_KEY, S.pw); }, function () {}).then(function () { $("pwBtn").disabled = false; $("pwBtn").textContent = "Open dashboard"; });
+  });
+  $("logout").onclick = function () { sset(PW_KEY, null); S.pw = null; S.data = null; $("pw").value = ""; showLogin(); };
+  $("refresh").onclick = function () { load(); };
+
+  /* ================= data ================= */
+  function load() {
+    $("loaded").textContent = "Loading…";
+    return api.rpc("sawaal_dashboard", { p_password: S.pw, p_course: S.course }, { timeout: 30000 }).then(function (d) {
+      prepare(d);
+      $("vLogin").classList.add("hide"); $("vApp").classList.remove("hide");
+      $("loaded").textContent = "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      fillCourses(); fillFilters(); render();
+    }, function (err) {
+      $("loaded").textContent = "";
+      if (/wrong_password|password_not_set/.test(err.code)) { sset(PW_KEY, null); showLogin(api.friendly(err)); }
+      else if (!S.data) showLogin(api.friendly(err));
+      else $("out").innerHTML = '<div class="err">' + esc(api.friendly(err)) + "</div>";
+      throw err;
+    });
+  }
+
+  function prepare(d) {
+    var D = { students: d.students || [], progress: d.progress || [], answers: d.answers || [], byId: {}, schools: [], schoolByKey: {}, prog: {}, courseIds: {} };
+    // Group schools by their normalised name; show the most common spelling.
+    var spell = {};
+    D.students.forEach(function (s) {
+      D.byId[s.id] = s;
+      var k = s.school_key; spell[k] = spell[k] || {}; spell[k][s.school] = (spell[k][s.school] || 0) + 1;
+    });
+    Object.keys(spell).forEach(function (k) {
+      var names = spell[k], best = Object.keys(names).sort(function (a, b) { return names[b] - names[a] || a.localeCompare(b); })[0];
+      var sc = { key: k, name: best }; D.schools.push(sc); D.schoolByKey[k] = sc;
+    });
+    D.schools.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    D.students.forEach(function (s) { s._school = D.schoolByKey[s.school_key].name; });
+    D.progress.forEach(function (p) { D.courseIds[p.course] = true; (D.prog[p.course] = D.prog[p.course] || {})[p.student_id] = p; });
+    S.data = D;
+  }
+
+  function fillCourses() {
+    var ids = COURSES.map(function (c) { return c.id; });
+    Object.keys(S.data.courseIds).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    if (!ids.length) ids = ["(none)"];
+    $("course").innerHTML = ids.map(function (id) {
+      var c = COURSES.find(function (x) { return x.id === id; });
+      return '<option value="' + esc(id) + '">' + esc(c ? c.title : id) + "</option>";
+    }).join("");
+    $("course").value = S.course;
+  }
+  function classesIn(schoolKey) {
+    var seen = {};
+    S.data.students.forEach(function (s) { if (!schoolKey || s.school_key === schoolKey) seen[s.class] = true; });
+    return Object.keys(seen).sort(function (a, b) { return (parseInt(a, 10) || 99) - (parseInt(b, 10) || 99) || a.localeCompare(b); });
+  }
+  function fillFilters() {
+    if (S.school && !S.data.schoolByKey[S.school]) S.school = "";
+    $("school").innerHTML = '<option value="">All schools (' + S.data.schools.length + ")</option>" +
+      S.data.schools.map(function (s) { return '<option value="' + esc(s.key) + '">' + esc(s.name) + "</option>"; }).join("");
+    $("school").value = S.school;
+    var cl = classesIn(S.school);
+    if (S.cls && cl.indexOf(S.cls) < 0) S.cls = "";
+    $("cls").innerHTML = '<option value="">All classes</option>' + cl.map(function (c) { return '<option value="' + esc(c) + '">Class ' + esc(c) + "</option>"; }).join("");
+    $("cls").value = S.cls;
+  }
+  $("course").onchange = function () { S.course = this.value; S.student = null; S.freeText = null; load(); };
+  $("school").onchange = function () { S.school = this.value; S.cls = ""; S.student = null; fillFilters(); render(); };
+  $("cls").onchange = function () { S.cls = this.value; S.student = null; render(); };
+  document.querySelectorAll("#tabs button").forEach(function (b) {
+    b.onclick = function () { S.tab = b.dataset.tab; document.querySelectorAll("#tabs button").forEach(function (x) { x.classList.toggle("on", x === b); }); render(); };
+  });
+  function goTab(t) { document.querySelector('#tabs button[data-tab="' + t + '"]').click(); }
+
+  // Students matching the School and Class filters.
+  function inScope(s) { return (!S.school || s.school_key === S.school) && (!S.cls || s.class === S.cls); }
+  function scopeStudents() { return S.data.students.filter(inScope); }
+  function scopeAnswers() { return S.data.answers.filter(function (r) { var s = S.data.byId[r.student_id]; return s && inScope(s); }); }
+  function scopeName() {
+    var n = S.school ? S.data.schoolByKey[S.school].name : "All schools";
+    return n + (S.cls ? ", Class " + S.cls : "");
+  }
+  function whoLabel(s) { return (s.name ? s.name + " · " : "") + (S.school ? "" : s._school + " · ") + "Class " + s.class + " · " + s.code; }
+
+  /* ================= render ================= */
+  function render() {
+    window.scrollTo(0, 0);
+    var f = { overview: renderOverview, findings: renderFindings, students: renderStudents, download: renderDownload }[S.tab];
+    try { f(); } catch (e) { console.error(e); $("out").innerHTML = '<div class="err">Something went wrong drawing this page: ' + esc(e.message) + "</div>"; }
+  }
+
+  // Summary numbers for a group of students on the current course.
+  function summarise(students, answersBySid) {
+    var c = course(), ins = c.insights || {}, prog = S.data.prog[S.course] || {};
+    var started = 0, finished = 0, last = null;
+    students.forEach(function (s) {
+      var p = prog[s.id]; if (p) { started++; if (p.completed_at) finished++; }
+      if (!last || s.last_seen > last) last = s.last_seen;
+    });
+    var scores = (ins.scored || []).map(function (sc) {
+      var v = []; students.forEach(function (s) { var r = (answersBySid[s.id] || {})[sc.id]; if (r) { var x = num(r.correct); if (x == null) x = num(r.answer); if (x != null) v.push(x); } });
+      return median(v);
+    });
+    var pp = (ins.prePost || []).filter(function (p) { return p.type !== "choice"; }).map(function (p) {
+      var a = [], b = [];
+      students.forEach(function (s) { var m = answersBySid[s.id] || {}; var x = m[p.pre] && num(m[p.pre].answer), y = m[p.post] && num(m[p.post].answer); if (x != null && y != null) { a.push(x); b.push(y); } });
+      if (!a.length) return null;
+      var avg = function (v) { return v.reduce(function (t, x) { return t + x; }, 0) / v.length; };
+      return { pre: avg(a), post: avg(b) };
+    });
+    return { n: students.length, started: started, finished: finished, last: last, scores: scores, pp: pp };
+  }
+  function answersBySid() {
+    var m = {}; S.data.answers.forEach(function (r) { (m[r.student_id] = m[r.student_id] || {})[r.item] = r; }); return m;
+  }
+
+  function renderOverview() {
+    var c = course(), ins = c.insights || {}, students = scopeStudents(), abs = answersBySid();
+    var tot = summarise(students, abs);
+    var week = students.filter(function (s) { return Date.now() - new Date(s.last_seen) < 7 * 864e5; }).length;
+    var html = "<h1>" + esc(scopeName()) + '</h1><p class="sub">' + esc(c.title || c.id) + ". Pick a school above to see one school, or click a row below.</p>";
+    html += '<div class="grid g5" style="margin-bottom:22px">' +
+      (S.school ? "" : '<div class="stat"><b>' + S.data.schools.length + "</b><span>schools</span></div>") +
+      '<div class="stat"><b>' + tot.n + "</b><span>students signed up</span></div>" +
+      '<div class="stat"><b>' + tot.started + "</b><span>started this course</span></div>" +
+      '<div class="stat"><b>' + tot.finished + "</b><span>finished it (" + pct(tot.finished, tot.started) + ")</span></div>" +
+      '<div class="stat"><b>' + week + "</b><span>active in the last 7 days</span></div></div>";
+
+    // One row per school (all schools), or per class (one school).
+    var groups = [];
+    if (!S.school) S.data.schools.forEach(function (sc) { groups.push({ key: sc.key, label: sc.name, list: students.filter(function (s) { return s.school_key === sc.key; }) }); });
+    else classesIn(S.school).forEach(function (cl) { if (!S.cls || S.cls === cl) groups.push({ key: cl, label: "Class " + cl, list: students.filter(function (s) { return s.class === cl; }) }); });
+    groups = groups.filter(function (g) { return g.list.length; });
+    var likert = (ins.prePost || []).filter(function (p) { return p.type !== "choice"; });
+    if (!groups.length) { $("out").innerHTML = html + '<div class="card empty">No students yet. Share a course link and they\'ll appear here as soon as someone signs in.</div>'; return; }
+
+    html += "<h2>" + (S.school ? "Class by class" : "School by school") + '</h2><p class="sub">' +
+      ((ins.scored || []).length ? "Scores are the median (middle) student. " : "") +
+      (likert.length ? "Before → after is the average self-rating out of 5 at the start and end." : "") + "</p>";
+    html += '<div class="tablewrap"><table><thead><tr><th>' + (S.school ? "Class" : "School") + '</th><th class="num">Students</th><th class="num">Started</th><th class="num">Finished</th>' +
+      (ins.scored || []).map(function (s) { return '<th class="num" title="' + esc(s.label) + '">' + esc(s.label) + (s.max ? " /" + s.max : "") + "</th>"; }).join("") +
+      likert.map(function (p) { return '<th class="num" title="' + esc(p.label) + '">' + esc(p.label.charAt(0).toUpperCase() + p.label.slice(1)) + "</th>"; }).join("") +
+      "<th>Last active</th></tr></thead><tbody>";
+    groups.forEach(function (g) {
+      var s = summarise(g.list, abs);
+      html += '<tr class="click" data-key="' + esc(g.key) + '"><td><b>' + esc(g.label) + '</b></td><td class="num">' + s.n + '</td><td class="num">' + s.started +
+        '</td><td class="num">' + s.finished + ' <span class="muted small">' + pct(s.finished, s.started) + "</span></td>" +
+        s.scores.map(function (v) { return '<td class="num">' + fmt(v) + "</td>"; }).join("") +
+        s.pp.map(function (v) { return '<td class="num">' + (v ? fmt(v.pre) + " → <b>" + fmt(v.post) + "</b>" : "–") + "</td>"; }).join("") +
+        '<td class="small muted">' + esc(when(s.last)) + "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+    $("out").innerHTML = html;
+    $("out").querySelectorAll("tr[data-key]").forEach(function (tr) {
+      tr.onclick = function () {
+        if (!S.school) { S.school = tr.dataset.key; S.cls = ""; } else S.cls = tr.dataset.key;
+        fillFilters(); render();
+      };
+    });
+  }
+
+  /* ---- analysis: turns answers into findings, driven by the course's "insights" ---- */
+  function analyse(ins, answers) {
+    var by = {};
+    answers.forEach(function (r) { (by[r.student_id] = by[r.student_id] || {})[r.item] = r; });
+    var sids = Object.keys(by);
+    var label = function (sid) { var s = S.data.byId[sid]; return s ? whoLabel(s) : "unknown"; };
+    var val = function (sid, item) { var r = by[sid][item]; return r ? r.answer : undefined; };
+    var score = function (sid, item) { var r = by[sid][item]; if (!r) return null; var c = num(r.correct); return c != null ? c : num(r.answer); };
+    var out = { n: sids.length, headlines: [], gaps: [], scores: [], prePost: [], struggled: [], freeText: [] };
+
+    (ins.gapChecks || []).forEach(function (g) {
+      var both = 0, high = 0, list = [];
+      sids.forEach(function (sid) {
+        var c = num(val(sid, g.confidence)), p = score(sid, g.performance);
+        if (c == null || p == null) return; both++;
+        if (c >= (g.high || 4)) { high++; if (p < g.below) list.push(label(sid)); }
+      });
+      out.gaps.push({ check: g, both: both, high: high, gap: list });
+      if (both) out.headlines.push({ w: 3, html: "<b>" + high + " of " + both + "</b> students rated themselves 4 or 5 on " + esc(g.confidenceLabel) + ". <b>" + list.length + "</b> of them scored below " + esc(g.below) + " on " + esc(g.performanceLabel) + "." });
+    });
+    (ins.counts || []).forEach(function (c) {
+      var answered = 0, hit = 0;
+      sids.forEach(function (sid) { var v = val(sid, c.item); if (v == null || v === "") return; answered++; if ((c.values || []).indexOf(String(v)) !== -1) hit++; });
+      if (answered) out.headlines.push({ w: 2, html: "<b>" + hit + " of " + answered + "</b> students " + esc(c.label) + "." });
+    });
+    (ins.prePost || []).forEach(function (pp) {
+      var pairs = sids.filter(function (sid) { return val(sid, pp.pre) != null && val(sid, pp.post) != null; });
+      var res = { def: pp, n: pairs.length };
+      if (pp.type === "choice") {
+        var o = {};
+        pairs.forEach(function (sid) {
+          var a = String(val(sid, pp.pre)), b = String(val(sid, pp.post));
+          o[a] = o[a] || { label: a, value: 0, value2: 0 }; o[a].value++;
+          o[b] = o[b] || { label: b, value: 0, value2: 0 }; o[b].value2++;
+        });
+        res.options = Object.keys(o).map(function (k) { return o[k]; });
+        if (pp.highlight && pairs.length) { var h = o[pp.highlight] || { value: 0, value2: 0 }; out.headlines.push({ w: 2, html: "Students choosing “" + esc(pp.highlight) + "” went from <b>" + h.value + "</b> before to <b>" + h.value2 + "</b> after (of " + pairs.length + ")." }); }
+      } else {
+        var preHigh = 0, postHigh = 0, preSum = 0, postSum = 0;
+        var dist = [1, 2, 3, 4, 5].map(function (k) { return { label: String(k), value: 0, value2: 0 }; });
+        pairs.forEach(function (sid) {
+          var a = num(val(sid, pp.pre)), b = num(val(sid, pp.post));
+          if (a >= 4) preHigh++; if (b >= 4) postHigh++; preSum += a; postSum += b;
+          if (dist[a - 1]) dist[a - 1].value++; if (dist[b - 1]) dist[b - 1].value2++;
+        });
+        res.options = dist; res.preMean = pairs.length ? preSum / pairs.length : null; res.postMean = pairs.length ? postSum / pairs.length : null;
+        if (pairs.length) out.headlines.push({ w: 1, html: "Students rating themselves 4 or 5 on " + esc(pp.label) + " went from <b>" + preHigh + "</b> to <b>" + postHigh + "</b> (of " + pairs.length + " who answered both)." });
+      }
+      out.prePost.push(res);
+    });
+    var scoredIds = {};
+    (ins.scored || []).forEach(function (s) {
+      scoredIds[s.id] = true;
+      var vals = sids.map(function (sid) { return score(sid, s.id); }).filter(function (v) { return v != null; });
+      var bucket = s.bucket || 1, max = s.max || Math.max.apply(null, vals.concat([1])), groups = [];
+      for (var lo = 0; lo <= max; lo += bucket) { var hi = bucket === 1 ? lo : Math.min(max, lo + bucket - 1); groups.push({ label: bucket === 1 ? String(lo) : lo + "–" + hi, lo: lo, value: 0 }); }
+      vals.forEach(function (v) { for (var i = groups.length - 1; i >= 0; i--) if (v >= groups[i].lo) { groups[i].value++; break; } });
+      out.scores.push({ def: s, n: vals.length, groups: groups, median: median(vals), max: max });
+    });
+    // Any question saved with correct = 1 or 0 counts as graded.
+    var items = {};
+    answers.forEach(function (r) {
+      if (scoredIds[r.item]) return;
+      var it = items[r.item] = items[r.item] || { q: r.question || r.item, section: r.section, total: 0, wrong: 0, graded: true, wrongs: {} };
+      var c = r.correct == null ? "" : String(r.correct);
+      if (c !== "0" && c !== "1") { it.graded = false; return; }
+      it.total++; if (c === "0") { it.wrong++; var w = answerText(r.answer); it.wrongs[w] = (it.wrongs[w] || 0) + 1; }
+    });
+    out.struggled = Object.keys(items).map(function (k) { return items[k]; }).filter(function (i) { return i.graded && i.total; }).map(function (i) {
+      i.pctWrong = Math.round(i.wrong / i.total * 100); i.topWrong = Object.keys(i.wrongs).sort(function (a, b) { return i.wrongs[b] - i.wrongs[a]; })[0]; return i;
+    }).sort(function (a, b) { return b.pctWrong - a.pctWrong || b.total - a.total; });
+    (ins.freeText || []).forEach(function (f) {
+      var list = [];
+      sids.forEach(function (sid) { var t = answerText(val(sid, f.id)).trim(); if (t) list.push({ who: label(sid), text: t }); });
+      out.freeText.push({ def: f, answers: list });
+    });
+    out.headlines.sort(function (a, b) { return b.w - a.w; });
+    return out;
+  }
+
+  function renderFindings() {
+    var c = course(), A = analyse(c.insights || {}, scopeAnswers());
+    var html = "<h1>Findings: " + esc(scopeName()) + '</h1><p class="sub">' + esc(c.title || c.id) + ". What students actually answered, in plain sentences first.</p>";
+    if (!A.n) { $("out").innerHTML = html + '<div class="card empty">No answers yet for this group.</div>'; return; }
+    html += A.n < 10 ? '<div class="note">Based on ' + A.n + " student" + (A.n === 1 ? "" : "s") + ". With fewer than 10, read these as individual stories rather than trends.</div>" : '<p class="small muted">Based on ' + A.n + " students with answers.</p>";
+    if (A.headlines.length) html += '<h2>Headlines</h2><div class="grid" style="margin-bottom:22px">' + A.headlines.slice(0, 6).map(function (h) { return '<div class="finding">' + h.html + "</div>"; }).join("") + "</div>";
+    if (A.gaps.length) {
+      html += '<h2>Confident but wrong</h2><p class="sub">Students who rated themselves highly but scored low on the matching activity. The riskiest combination with AI.</p><div class="grid g2" style="margin-bottom:22px">';
+      A.gaps.forEach(function (g) {
+        html += '<div class="card"><h3>Confident about ' + esc(g.check.confidenceLabel) + ", below " + esc(g.check.below) + " on " + esc(g.check.performanceLabel) + "</h3>" +
+          (!g.both ? '<p class="muted small">Not enough answers yet.</p>' : !g.gap.length ? '<p class="muted small">Nobody. ' + g.high + " rated themselves highly and backed it up.</p>" :
+            '<div class="chips">' + g.gap.map(function (w) { return '<span class="chip">' + esc(w) + "</span>"; }).join("") + "</div>") + "</div>";
+      });
+      html += "</div>";
+    }
+    if (A.scores.length) {
+      html += '<h2>Activity scores</h2><p class="sub">How many students got each score.</p><div class="grid g3" style="margin-bottom:22px">';
+      A.scores.forEach(function (s) {
+        html += '<div class="card"><h3>' + esc(s.def.label) + "</h3>" + (!s.n ? '<p class="small muted">No one has done this yet.</p>' :
+          '<p class="small muted" style="margin:0 0 10px">' + s.n + " students · median " + fmt(s.median) + " of " + s.max + "</p>" + bars(s.groups)) + "</div>";
+      });
+      html += "</div>";
+    }
+    if (A.prePost.length) {
+      html += '<h2>Before and after</h2><p class="sub">The same questions at the start and the end, for students who answered both.</p><div class="legend"><span><i style="background:var(--bar)"></i>Before</span><span><i style="background:var(--bar2)"></i>After</span></div><div class="grid g2" style="margin-bottom:22px">';
+      A.prePost.forEach(function (p) {
+        html += '<div class="card"><h3>' + esc(p.def.label.charAt(0).toUpperCase() + p.def.label.slice(1)) + "</h3>" + (!p.n ? '<p class="muted small">No one has answered both yet.</p>' :
+          '<p class="small muted" style="margin:0 0 10px">' + p.n + " students" + (p.def.type !== "choice" ? " · average " + p.preMean.toFixed(1) + " → " + p.postMean.toFixed(1) + " out of 5" : "") + "</p>" + bars(p.options, true)) + "</div>";
+      });
+      html += "</div>";
+    }
+    if (A.struggled.length) {
+      html += '<h2>Where students struggled</h2><p class="sub">Graded questions, most often answered wrong.</p><div class="tablewrap"><table><thead><tr><th>Question</th><th class="num">Got it wrong</th><th>Most common wrong answer</th></tr></thead><tbody>' +
+        A.struggled.slice(0, 12).map(function (i) { return "<tr><td>" + esc(i.q) + '<div class="small muted">' + esc(i.section || "") + '</div></td><td class="num"><b>' + i.pctWrong + '%</b><div class="small muted">of ' + i.total + "</div></td><td>" + esc(i.topWrong || "–") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    }
+    if (A.freeText.length) {
+      if (!S.freeText || !A.freeText.find(function (f) { return f.def.id === S.freeText; })) S.freeText = A.freeText[0].def.id;
+      var ft = A.freeText.find(function (f) { return f.def.id === S.freeText; });
+      html += '<h2>What students wrote</h2><p class="sub">Please read these: now and then a student writes something that needs a trusted adult to follow up.</p>' +
+        '<p><select id="ftPick" aria-label="Question">' + A.freeText.map(function (f) { return '<option value="' + esc(f.def.id) + '"' + (f.def.id === S.freeText ? " selected" : "") + ">" + esc(f.def.label) + " (" + f.answers.length + ")</option>"; }).join("") + "</select></p>" +
+        '<div class="card">' + (ft.answers.length ? ft.answers.map(function (a) { return '<div class="quote"><div class="who">' + esc(a.who) + '</div><div class="txt">' + esc(a.text) + "</div></div>"; }).join("") : '<p class="muted">Nobody has answered this one yet.</p>') + "</div>";
+    }
+    if (!(c.insights && Object.keys(c.insights).length)) html += '<p class="small muted">This course has no "insights" in courses.js, so only graded questions are summarised here. Every answer is in the Students tab and the Download tab.</p>';
+    $("out").innerHTML = html;
+    if ($("ftPick")) $("ftPick").onchange = function () { S.freeText = this.value; renderFindings(); };
+  }
+
+  function renderStudents() {
+    var c = course(), prog = S.data.prog[S.course] || {}, counts = {};
+    S.data.answers.forEach(function (r) { counts[r.student_id] = (counts[r.student_id] || 0) + 1; });
+    var list = scopeStudents().sort(function (a, b) {
+      return a._school.localeCompare(b._school) || (parseInt(a.class, 10) || 99) - (parseInt(b.class, 10) || 99) || a.code.localeCompare(b.code);
+    });
+    var html = "<h1>Students: " + esc(scopeName()) + '</h1><p class="sub">Click a student to see everything they answered in ' + esc(c.title || c.id) + ". The secret key is also how you help a student who forgot theirs.</p>";
+    if (!list.length) { $("out").innerHTML = html + '<div class="card empty">No students in this group yet.</div>'; return; }
+    html += '<div class="tablewrap"><table><thead><tr>' + (S.school ? "" : "<th>School</th>") + '<th>Class</th><th>Name</th><th>Secret key</th><th>Progress</th><th class="num">Answers</th><th>Signed up</th><th>Last active</th></tr></thead><tbody>';
+    list.forEach(function (s) {
+      html += '<tr class="click' + (S.student === s.id ? " sel" : "") + '" data-id="' + s.id + '">' + (S.school ? "" : "<td>" + esc(s._school) + "</td>") +
+        "<td>" + esc(s.class) + "</td><td>" + (s.name ? esc(s.name) : '<span class="muted">–</span>') + '</td><td class="code">' + esc(s.code) + "</td><td>" + progressBar(prog[s.id], c.screens) + '</td><td class="num">' + (counts[s.id] || 0) +
+        '</td><td class="small muted">' + new Date(s.created_at).toLocaleDateString() + '</td><td class="small muted">' + esc(when(s.last_seen)) + "</td></tr>";
+      if (S.student === s.id) html += '<tr><td colspan="8" style="background:var(--page)">' + studentDetail(s) + "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+    $("out").innerHTML = html;
+    $("out").querySelectorAll("tr[data-id]").forEach(function (tr) { tr.onclick = function () { S.student = S.student === tr.dataset.id ? null : tr.dataset.id; renderStudents(); }; });
+  }
+  function studentDetail(s) {
+    var rows = S.data.answers.filter(function (r) { return r.student_id === s.id; }).sort(function (a, b) { return a.answered_at < b.answered_at ? -1 : 1; });
+    var others = Object.keys(S.data.prog).filter(function (cid) { return cid !== S.course && S.data.prog[cid][s.id]; });
+    var html = '<div style="padding:6px 2px"><b>' + (s.name ? esc(s.name) + " · " : "") + esc(s._school) + " · Class " + esc(s.class) + ' · <span class="code">' + esc(s.code) + "</span></b>";
+    if (others.length) html += '<div class="small muted">Also opened: ' + others.map(function (cid) { var c = COURSES.find(function (x) { return x.id === cid; }); return esc(c ? c.title : cid) + (S.data.prog[cid][s.id].completed_at ? " (finished)" : ""); }).join(", ") + "</div>";
+    if (!rows.length) return html + '<p class="muted small">No answers in this course yet.</p></div>';
+    html += '<div class="tablewrap" style="margin:10px 0 0"><table><thead><tr><th>Section</th><th>Question</th><th>Answer</th><th></th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var mark = r.correct === "1" ? '<span class="pill ok">right</span>' : r.correct === "0" ? '<span class="pill bad">wrong</span>' : (r.correct ? '<span class="pill">' + esc(r.correct) + "</span>" : "");
+      html += '<tr><td class="small muted">' + esc(r.section || "") + "</td><td>" + esc(r.question || r.item) + '</td><td style="white-space:pre-wrap;max-width:440px">' + esc(answerText(r.answer)) + "</td><td>" + mark + "</td></tr>";
+    });
+    return html + "</tbody></table></div></div>";
+  }
+
+  function renderDownload() {
+    var c = course();
+    $("out").innerHTML = "<h1>Download: " + esc(scopeName()) + '</h1><p class="sub">Spreadsheets you can open in Excel or Google Sheets. They follow the School and Class filters above.</p>' +
+      '<div class="grid g2"><div class="card"><h2>Answers</h2><p>One row per answer, for ' + esc(c.title || c.id) + '.</p><button class="btn" id="dlA">Download answers</button></div>' +
+      '<div class="card"><h2>Progress</h2><p>One row per student: where they got to in ' + esc(c.title || c.id) + '.</p><button class="btn" id="dlP">Download progress</button></div></div>';
+    var stamp = new Date().toISOString().slice(0, 10), tag = (S.school || "all-schools") + (S.cls ? "-class-" + S.cls : "");
+    $("dlA").onclick = function () {
+      var rows = [["school", "class", "name", "secret_key", "section", "question_id", "question", "answer", "correct", "answered_at"]];
+      scopeAnswers().forEach(function (r) { var s = S.data.byId[r.student_id]; rows.push([s._school, s.class, s.name || "", s.code, r.section, r.item, r.question, answerText(r.answer), r.correct, r.answered_at]); });
+      csvDownload("sawaal-" + S.course + "-answers-" + tag + "-" + stamp + ".csv", rows);
+    };
+    $("dlP").onclick = function () {
+      var prog = S.data.prog[S.course] || {};
+      var rows = [["school", "class", "name", "secret_key", "status", "screen_reached", "total_screens", "started_at", "finished_at", "last_active"]];
+      scopeStudents().forEach(function (s) { var p = prog[s.id]; rows.push([s._school, s.class, s.name || "", s.code, !p ? "not started" : p.completed_at ? "finished" : "in progress", p ? p.screen + 1 : "", c.screens || "", p ? p.started_at : "", p && p.completed_at ? p.completed_at : "", s.last_seen]); });
+      csvDownload("sawaal-" + S.course + "-progress-" + tag + "-" + stamp + ".csv", rows);
+    };
+  }
+
+  /* ================= start ================= */
+  S.course = COURSES.length ? COURSES[0].id : null;
+  if (!api.configured()) {
+    $("vLogin").classList.remove("hide");
+    $("fLogin").innerHTML = '<div class="err">The keys in config.js haven\'t been filled in yet, or you opened this file straight from your computer. Put it on GitHub Pages first (see the README).</div>';
+  } else if (sget(PW_KEY)) { S.pw = sget(PW_KEY); load().catch(function () {}); }
+  else showLogin();
+})();
+</script>
+</body>
+</html>

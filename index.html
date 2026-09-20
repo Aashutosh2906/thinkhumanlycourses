@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sawaal: courses</title>
+<meta name="description" content="Short, free courses on using AI well, for students.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Inter:wght@400;500;600;700&display=swap">
+<script src="config.js"></script>
+<script src="courses.js"></script>
+<script src="sawaal.js" data-course="home"></script>
+<style>
+  :root{--ink:#171412;--page:#FAF6EC;--card:#FFFDF7;--rule:#E4DED2;--muted:#6B6357;--gold:#FFB703;--gold-ink:#231B08;--slate:#1B2430;--teal:#0F7B6C;--soft:#EFE9DC}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--page);color:var(--ink);font:16px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  header{background:var(--slate);color:#fff;padding:34px 16px 70px}
+  header .in,main{max-width:760px;margin:0 auto}
+  .brand{font:800 40px/1 "Bricolage Grotesque","Trebuchet MS",sans-serif;letter-spacing:-.02em;margin:0}
+  .brand span{color:var(--gold)}
+  header p{margin:10px 0 0;color:#C5D0DE;font-size:17px;max-width:520px}
+  main{padding:0 16px 60px;margin-top:-44px}
+  .me{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-bottom:18px;box-shadow:0 2px 10px rgba(27,36,48,.06)}
+  .me[hidden]{display:none}
+  .me b{font-size:17px}
+  .me .muted{color:var(--muted);font-size:14px}
+  .me button{margin-left:auto;background:none;border:1.5px solid var(--rule);border-radius:9px;padding:7px 12px;font:600 14px Inter,system-ui,sans-serif;color:var(--ink);cursor:pointer}
+  #signin .sw-card{max-width:none;box-shadow:0 2px 10px rgba(27,36,48,.08);border:1px solid var(--rule);margin-bottom:26px}
+  h2.sec{font:800 22px/1.2 "Bricolage Grotesque","Trebuchet MS",sans-serif;margin:8px 0 12px}
+  .course{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:20px;margin-bottom:14px;display:grid;grid-template-columns:1fr auto;gap:6px 18px;align-items:center}
+  .course h3{margin:0;font:800 23px/1.2 "Bricolage Grotesque","Trebuchet MS",sans-serif}
+  .course p{margin:0;color:var(--muted);grid-column:1}
+  .course .meta{font-size:13.5px;color:var(--muted);grid-column:1;margin-top:4px}
+  .course a.go{grid-column:2;grid-row:1/span 3;background:var(--gold);color:var(--gold-ink);text-decoration:none;font-weight:700;border-radius:10px;padding:12px 18px;white-space:nowrap}
+  .course a.go.again{background:var(--soft)}
+  .prog{grid-column:1;display:flex;align-items:center;gap:10px;margin-top:8px}
+  .prog .t{flex:1;max-width:260px;height:8px;background:var(--soft);border-radius:6px;overflow:hidden}
+  .prog .t i{display:block;height:100%;background:var(--teal)}
+  .prog span{font-size:13px;color:var(--muted)}
+  .done{display:inline-block;background:#E8F5F1;color:var(--teal);font-weight:700;font-size:13px;border-radius:20px;padding:3px 10px}
+  .empty{color:var(--muted);text-align:center;padding:30px}
+  footer{max-width:760px;margin:0 auto;padding:0 16px 40px;color:var(--muted);font-size:13.5px}
+  @media (max-width:560px){
+    .brand{font-size:34px}
+    .course{grid-template-columns:1fr}
+    .course a.go{grid-column:1;grid-row:auto;text-align:center;margin-top:10px}
+  }
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1 class="brand">Sawaal<span>.</span></h1>
+  <p>Short courses on using AI well. Free, and no email or password needed.</p>
+</div></header>
+
+<main>
+  <div id="me" class="me" hidden></div>
+  <div id="signin"></div>
+  <h2 class="sec">Courses</h2>
+  <div id="list"></div>
+</main>
+<footer id="foot"></footer>
+
+<script>
+(function () {
+  "use strict";
+  var api = Sawaal.api;
+  var courses = (window.SAWAAL_COURSES || []).filter(function (c) { return c && c.id && !c.hidden; });
+  var me = document.getElementById("me"), signin = document.getElementById("signin"), list = document.getElementById("list");
+  var progress = {};
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  function renderList() {
+    if (!courses.length) { list.innerHTML = '<div class="empty">No courses yet.</div>'; return; }
+    list.innerHTML = courses.map(function (c) {
+      var p = progress[c.id], label = "Start", cls = "go", extra = "";
+      if (p && p.completed_at) { label = "Read again"; cls = "go again"; extra = '<div class="prog"><span class="done">Finished</span></div>'; }
+      else if (p) {
+        var at = Math.min((p.screen || 0) + 1, c.screens || 1), pct = c.screens ? Math.round(at / c.screens * 100) : 0;
+        label = "Carry on";
+        extra = '<div class="prog"><div class="t"><i style="width:' + pct + '%"></i></div><span>' + (c.screens ? "Screen " + at + " of " + c.screens : "Started") + "</span></div>";
+      }
+      var meta = [c.minutes ? "About " + c.minutes + " minutes" : "", c.ages ? "Ages " + c.ages : ""].filter(Boolean).join(" · ");
+      return '<div class="course"><h3>' + esc(c.title || c.id) + "</h3>" +
+        (c.summary ? "<p>" + esc(c.summary) + "</p>" : "") +
+        (meta ? '<div class="meta">' + esc(meta) + "</div>" : "") + extra +
+        '<a class="' + cls + '" href="courses/' + encodeURIComponent(c.id) + '.html">' + label + "</a></div>";
+    }).join("");
+  }
+
+  function render() {
+    var s = api.getSession();
+    signin.innerHTML = "";
+    if (s && s.student) {
+      me.hidden = false;
+      me.innerHTML = '<div><b></b><div class="muted"></div></div><button type="button">Not you? Switch</button>';
+      me.querySelector("b").textContent = (s.student.name ? s.student.name + " · " : "") + "Class " + s.student.class + " · " + s.student.code;
+      me.querySelector(".muted").textContent = s.student.school;
+      me.querySelector("button").onclick = function () { api.clearSession(); progress = {}; render(); };
+      renderList();
+      api.rpc("sawaal_my_courses", { p_token: s.token }).then(function (rows) {
+        progress = {};
+        (rows || []).forEach(function (r) { progress[r.course] = r; });
+        renderList();
+      }, function (err) {
+        if (/bad_session/.test(err.code)) { api.clearSession(); render(); }
+      });
+    } else {
+      me.hidden = true;
+      if (api.configured()) {
+        api.signInForm(signin, {
+          title: "Sign in",
+          lead: "Pick up where you left off, or start fresh. Your answers save as you go.",
+          onDone: function () { render(); }
+        });
+      }
+      renderList();
+    }
+  }
+  render();
+})();
+</script>
+</body>
+</html>
