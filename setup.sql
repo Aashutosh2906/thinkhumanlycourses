@@ -59,20 +59,7 @@ create table if not exists public.settings (
 
 
 -- ---------------------------------------------------------------------
---  2. Dashboard password placeholder.
---     DON'T type your real password in this file: it goes on GitHub, where
---     anyone can read it. After this file has run, set your password with
---     this one line in a NEW query (see the README, step 1):
---       update settings set value = 'your-password' where key = 'dashboard_password';
---     The dashboard stays locked until you do.
--- ---------------------------------------------------------------------
-insert into public.settings (key, value)
-values ('dashboard_password', 'my-dashboard-password')
-on conflict (key) do nothing;
-
-
--- ---------------------------------------------------------------------
---  3. Lock the tables. Nobody reads or writes them directly;
+--  2. Lock the tables. Nobody reads or writes them directly;
 --     the website only uses the functions below.
 -- ---------------------------------------------------------------------
 alter table public.students enable row level security;
@@ -83,7 +70,7 @@ revoke all on public.students, public.progress, public.answers, public.settings 
 
 
 -- ---------------------------------------------------------------------
---  4. Functions the website calls
+--  3. Functions the website calls
 -- ---------------------------------------------------------------------
 
 -- Turns "St. Mary's  School " into "st marys school" so small differences
@@ -101,21 +88,6 @@ begin
   if v is null then raise exception 'bad_session'; end if;
   return v;
 end $$;
-
-create or replace function public._sawaal_check_password(p_password text)
-returns void language plpgsql security definer set search_path = public as $$
-declare v text;
-begin
-  select value into v from settings where key = 'dashboard_password';
-  if v is null or v = '' or v = 'my-dashboard-password' then
-    raise exception 'password_not_set';
-  end if;
-  if p_password is distinct from v then
-    perform pg_sleep(1);               -- slows down anyone guessing
-    raise exception 'wrong_password';
-  end if;
-end $$;
-
 
 -- Sign in. p_new = true for "first time here", false for "I've been here before".
 drop function if exists public.sawaal_login(text, text, text, boolean);
@@ -238,10 +210,12 @@ end $$;
 
 
 -- The dashboard: every student and their progress, plus the answers for one course.
-create or replace function public.sawaal_dashboard(p_password text, p_course text)
+-- No password: anyone with the dashboard link can see all answers, on purpose (you asked
+-- for direct access, no login). Don't share the link publicly.
+drop function if exists public.sawaal_dashboard(text, text);
+create or replace function public.sawaal_dashboard(p_course text)
 returns jsonb language plpgsql security definer set search_path = public as $$
 begin
-  perform _sawaal_check_password(p_password);
   return jsonb_build_object(
     'students', coalesce((select jsonb_agg(jsonb_build_object(
         'id', id, 'school', school, 'school_key', school_key, 'class', class, 'code', secret, 'name', name,
@@ -257,16 +231,13 @@ end $$;
 
 
 -- ---------------------------------------------------------------------
---  5. Who can call what
+--  4. Who can call what
 -- ---------------------------------------------------------------------
-revoke all on function public._sawaal_school_key(text)         from public, anon, authenticated;
-revoke all on function public._sawaal_student(uuid)             from public, anon, authenticated;
-revoke all on function public._sawaal_check_password(text)      from public, anon, authenticated;
 grant execute on function public.sawaal_login(text, text, text, boolean, text)               to anon, authenticated;
 grant execute on function public.sawaal_schools()                                            to anon, authenticated;
 grant execute on function public.sawaal_open(uuid, text)                                     to anon, authenticated;
 grant execute on function public.sawaal_save(uuid, text, jsonb, int, timestamptz, boolean)   to anon, authenticated;
 grant execute on function public.sawaal_my_courses(uuid)                                     to anon, authenticated;
-grant execute on function public.sawaal_dashboard(text, text)                                to anon, authenticated;
+grant execute on function public.sawaal_dashboard(text)                                      to anon, authenticated;
 
 -- Done. You should see "Success. No rows returned".
