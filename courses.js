@@ -73,6 +73,41 @@ window.SAWAAL_COURSES = [
       ]
     }
   },
+  {
+    id: "make-it-run-data-code",
+    title: "Make It Run — Data and Code With AI",
+    summary: "Data and code with an AI that writes both in seconds. How to read what it gave you, check what it claims, and avoid shipping something you don't understand.",
+    minutes: 65,
+    ages: "12 to 16",
+    screens: 30,
+    insights: {
+      scored: [
+        { id: "canask_score", label: "Can this table answer that?", max: 3 },
+        { id: "claims_score", label: "Which claims survive (flaws caught)", max: 4 },
+        { id: "ethics_score", label: "Would you do it?", max: 4 }
+      ],
+      prePost: [
+        { pre: "b1", post: "p1", type: "likert", label: "telling what a set of data can and cannot prove" },
+        { pre: "b2", post: "p2", type: "likert", label: "checking how a chart was made before believing it" },
+        { pre: "b3", post: "p3", type: "likert", label: "explaining what code does line by line" },
+        { pre: "b4", post: "p4", type: "choice", label: "what they do when code or a formula doesn't work", highlight: "Read the error message carefully" }
+      ],
+      counts: [
+        { item: "b5", values: ["None"], label: "had done no coding at all before today" },
+        { item: "m3a", values: ["All three"], label: "predicted all three code outputs correctly" },
+        { item: "m6b", values: ["Ignored it", "Did not notice it"], label: "ignored or didn't notice the outlier student in the capstone" },
+        { item: "m4c", values: ["Yes, I solved it myself", "Yes, a partial idea"], label: "said writing the bug report gave them an idea about the cause" }
+      ],
+      freeText: [
+        { id: "m1c", label: "A claim they've seen where the data didn't measure what was claimed" },
+        { id: "m2d", label: "Why two things moving together isn't the same as one causing the other" },
+        { id: "bug_insight", label: "Whether writing the bug report gave them an idea about the cause" },
+        { id: "cap_final", label: "Capstone: their final, honest conclusion" },
+        { id: "p7", label: "What was confusing, boring or missing" },
+        { id: "p8", label: "One thing they'll always do before running code they didn't write" }
+      ]
+    }
+},
 
   // ----- Example of a new course (remove the // to use it) -----
   // {
