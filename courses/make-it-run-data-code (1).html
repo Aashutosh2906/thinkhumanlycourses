@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Make It Run — Data and Code With AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@700&family=Noto+Sans+Devanagari:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#171412;
+  --slate:#1B2430;
+  --slate-2:#2A3849;
+  --page:#FFFDF7;
+  --rule:#E4DED2;
+  --muted:#6B6357;
+  --marigold:#FFB703;
+  --marigold-deep:#E08A00;
+  --chilli:#E23A2E;
+  --peacock:#0F7B6C;
+  --ultramarine:#2743C4;
+  --lilac:#F2EEFF;
+  --mint:#E8F5F1;
+  --blush:#FDECEA;
+  --amberbg:#FFF4DC;
+  --shadow:0 1px 0 var(--rule);
+  --disp:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pad:clamp(18px,4.5vw,56px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--slate);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+@media (max-width:600px){body{font-size:16px}}
+
+/* ---------- shell ---------- */
+#rail{position:fixed;top:0;left:0;height:4px;width:0;background:var(--marigold);z-index:60;transition:width .35s cubic-bezier(.4,0,.2,1)}
+#stage{height:100dvh;display:flex;flex-direction:column}
+#deck{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.slide{display:none;min-height:100%;padding:calc(var(--pad) + 6px) var(--pad) 40px;background:var(--page);
+  background-image:linear-gradient(var(--rule) 1px,transparent 1px);background-size:100% 34px;background-position:0 -1px}
+.slide.on{display:block;animation:in .28s ease-out}
+.slide.cover.on,.slide.divider.on{display:flex;align-items:center}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.wrap{max-width:760px;margin:0 auto}
+.wide .wrap{max-width:960px}
+
+/* ---------- nav bar ---------- */
+#bar{display:flex;align-items:center;gap:10px;background:var(--slate);color:#fff;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) 10px;z-index:50}
+#bar button{font-family:var(--body);font-size:15px;font-weight:600;border:0;border-radius:10px;padding:11px 16px;cursor:pointer}
+#prev{background:#33415A;color:#fff}
+#next{background:var(--marigold);color:#231B08;flex:1;max-width:260px;margin-left:auto}
+#next:disabled{opacity:.4;cursor:not-allowed}
+#menuBtn{background:#33415A;color:#fff;padding:11px 13px}
+#pos{font-size:13px;color:#9FB0C6;font-variant-numeric:tabular-nums;min-width:54px;text-align:center}
+#modLabel{font-size:13px;color:#9FB0C6;max-width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:520px){#modLabel{display:none}}
+
+/* ---------- contents overlay ---------- */
+#toc{position:fixed;inset:0;background:rgba(12,17,24,.96);color:#fff;z-index:70;display:none;overflow-y:auto;padding:24px}
+#toc.on{display:block}
+#toc h2{font-family:var(--disp);font-size:26px;margin:0 0 4px}
+#toc p{color:#9FB0C6;margin:0 0 20px;font-size:14px}
+.tocItem{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #33415A;color:#fff;padding:13px 2px;font-size:16px;font-family:var(--body);cursor:pointer}
+.tocItem span{color:#8FA3BC;font-size:13px;display:block}
+.tocItem:hover{color:var(--marigold)}
+#tocClose{margin-top:22px;background:var(--marigold);color:#231B08;border:0;border-radius:10px;padding:12px 18px;font-weight:700;font-family:var(--body);font-size:15px;cursor:pointer}
+
+/* ---------- typography ---------- */
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(32px,6.4vw,54px);line-height:1.02;letter-spacing:-.02em;margin:0 0 14px}
+h2{font-family:var(--disp);font-weight:800;font-size:clamp(25px,4.6vw,38px);line-height:1.08;letter-spacing:-.015em;margin:0 0 12px}
+h3{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.2;margin:24px 0 8px}
+p{margin:0 0 14px;max-width:66ch}
+.lead{font-size:clamp(17px,2.3vw,20px);color:#3C352C;max-width:60ch}
+.tag{display:inline-block;border-left:4px solid var(--marigold);padding:1px 0 1px 9px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px}
+.mins{color:var(--muted);font-size:13px;font-weight:500}
+strong{font-weight:700}
+.small{font-size:14px;color:var(--muted)}
+ul,ol{margin:0 0 16px;padding-left:22px;max-width:64ch}
+li{margin-bottom:8px}
+a{color:var(--ultramarine)}
+
+/* ---------- dividers ---------- */
+.divider{background:var(--slate);background-image:none;color:#fff}
+.divider .wrap{width:100%}
+.divider h1{color:#fff}
+.divider .num{font-family:var(--disp);font-weight:800;font-size:clamp(60px,17vw,150px);line-height:.82;color:var(--marigold);letter-spacing:-.04em;margin-bottom:6px}
+.divider p{color:#B9C6D6;font-size:18px;max-width:52ch}
+.divider .kit{margin-top:26px;border-top:1px solid #3A4A5E;padding-top:16px;color:#8FA3BC;font-size:14px}
+
+/* ---------- cards & panels ---------- */
+.panel{background:#fff;border:1px solid var(--rule);border-radius:4px;padding:20px;margin:0 0 18px;box-shadow:0 2px 0 var(--rule)}
+.panel.tight{padding:15px}
+.grid{display:grid;gap:12px;margin-bottom:18px}
+@media (min-width:680px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.mini{background:#fff;border:1px solid var(--rule);border-radius:4px;padding:15px}
+.mini h4{margin:0 0 6px;font-family:var(--disp);font-size:17px;font-weight:700}
+.mini p{font-size:15px;margin:0;color:#4A4238}
+
+/* chat bubbles */
+.chat{background:#fff;border:1px solid var(--rule);border-radius:4px;padding:14px;margin-bottom:14px}
+.bub{border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:15px;line-height:1.45;max-width:92%}
+.you{background:var(--lilac);border:1px solid #DCD4FA}
+.ai{background:#F4F2EE;border:1px solid var(--rule);margin-left:auto}
+.bub b{display:block;font-size:11px;letter-spacing:.04em;color:var(--muted);margin-bottom:3px;font-weight:700}
+
+/* prompt boxes */
+.prompt{background:var(--slate);color:#EAF0F7;border-radius:6px;padding:14px 15px;font-size:15px;line-height:1.5;white-space:pre-wrap;position:relative;margin-bottom:12px}
+.prompt.weak{background:#F4EEEA;color:#5A483E;border:1px dashed #D9C6BA}
+.copy{position:absolute;top:8px;right:8px;background:#3B4A60;color:#fff;border:0;border-radius:6px;font-size:12px;font-weight:600;padding:6px 9px;cursor:pointer;font-family:var(--body)}
+.prompt.weak .copy{background:#C9B6A8;color:#3A2E26}
+.copy.done{background:var(--peacock);color:#fff}
+
+/* callouts */
+.note{border-left:4px solid var(--ultramarine);background:#F2F4FF;padding:13px 15px;border-radius:0 4px 4px 0;margin-bottom:18px;font-size:15px}
+.note.warn{border-color:var(--chilli);background:var(--blush)}
+.note.good{border-color:var(--peacock);background:var(--mint)}
+.note p:last-child{margin-bottom:0}
+.note h4{margin:0 0 5px;font-family:var(--disp);font-size:16px}
+
+/* ---------- activity ---------- */
+.act{border:2px solid var(--ink);border-radius:4px;background:#fff;padding:0;margin:0 0 20px;overflow:hidden}
+.act>header{background:var(--ink);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.act>header h3{margin:0;color:#fff;font-size:17px;flex:1}
+.act>header .mins{color:var(--marigold);font-weight:600}
+.actbody{padding:18px 16px}
+.qcard{border-bottom:1px solid var(--rule);padding-bottom:16px;margin-bottom:16px}
+.qcard:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.qcard .qt{font-weight:600;margin-bottom:10px;display:block}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts.row{flex-direction:row;flex-wrap:wrap}
+.opt{text-align:left;font-family:var(--body);font-size:15px;background:#fff;border:1.5px solid var(--rule);border-radius:4px;padding:11px 13px;cursor:pointer;transition:border-color .15s,background .15s;color:var(--ink)}
+.opts.row .opt{flex:1;min-width:104px;text-align:center;font-weight:600}
+.opt:hover{border-color:var(--ink)}
+.opt:focus-visible{outline:3px solid var(--ultramarine);outline-offset:2px}
+.opt.picked{border-width:2px;background:var(--slate);border-color:var(--slate);color:#fff}
+.opt.right{background:var(--mint);border-color:var(--peacock)}
+.opt.wrong{background:var(--blush);border-color:var(--chilli)}
+.opt[disabled]{cursor:default}
+.opt.dim{opacity:.5}
+.fb{margin-top:10px;font-size:14.5px;line-height:1.5;padding:11px 13px;border-radius:4px;display:none}
+.fb.on{display:block}
+.fb.ok{background:var(--mint);border-left:4px solid var(--peacock)}
+.fb.no{background:var(--blush);border-left:4px solid var(--chilli)}
+.fb b{display:block;margin-bottom:3px}
+
+/* traffic pills */
+.opt.green{border-color:#9CCFC4}.opt.green.picked{background:var(--mint)}
+.opt.amber{border-color:#E8C97A}.opt.amber.picked{background:var(--amberbg)}
+.opt.red{border-color:#EFA9A3}.opt.red.picked{background:var(--blush)}
+
+/* ---------- ROTI builder ---------- */
+.roti{display:grid;gap:9px;margin-bottom:16px}
+.layer{display:grid;grid-template-columns:44px 1fr;align-items:stretch;border-radius:14px;overflow:hidden;border:1.5px solid var(--rule)}
+.layer .lk{display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:21px;color:#231B08}
+.layer textarea{border:0;padding:11px 12px;font-family:var(--body);font-size:15px;resize:vertical;min-height:62px;background:#fff;color:var(--ink);line-height:1.45}
+.layer textarea:focus{outline:2px solid var(--ultramarine);outline-offset:-2px}
+.layer:nth-child(1) .lk{background:#FFD66B}
+.layer:nth-child(2) .lk{background:#FFB703}
+.layer:nth-child(3) .lk{background:#F08C2E}
+.layer:nth-child(4) .lk{background:#E06C3A}
+.meter{height:9px;background:var(--rule);border-radius:99px;overflow:hidden;margin:6px 0 6px}
+.meter i{display:block;height:100%;width:0;background:var(--chilli);transition:width .3s,background .3s}
+.mrow{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;color:var(--muted);margin-bottom:12px}
+.mrow b{color:var(--ink)}
+
+/* hallucination hunt */
+.doc{background:#fff;border:1px solid var(--rule);border-radius:4px;padding:16px;line-height:1.95;font-size:15.5px;margin-bottom:14px;counter-reset:sus}
+.sus::before{counter-increment:sus;content:counter(sus);font-size:11px;font-weight:700;color:#7A7062;background:#F0EBE0;border-radius:4px;padding:2px 6px;margin-right:5px;vertical-align:1px}
+.sus.hit::before{background:var(--chilli);color:#fff}.sus.shown::before{background:var(--marigold-deep);color:#fff}.sus.miss::before{background:var(--peacock);color:#fff}
+.sus{border-bottom:2px dotted #B9AF9E;cursor:pointer;padding:1px 2px;border-radius:3px}
+.sus:hover{background:#FFF7E0}
+.sus.hit{background:#FFD9D5;border-bottom:2px solid var(--chilli)}
+.sus.miss{background:#E6EFEA;border-bottom:2px solid var(--peacock)}
+.sus.shown{background:#FFE9A8;border-bottom:2px solid var(--marigold-deep)}
+.huntfb{font-size:14.5px}
+.huntfb div{padding:9px 12px;border-radius:4px;margin-bottom:7px;background:#F7F4EE;border-left:4px solid var(--rule)}
+.huntfb div.bad{background:var(--blush);border-color:var(--chilli)}
+.huntfb div.fine{background:var(--mint);border-color:var(--peacock)}
+
+/* inputs */
+input[type=text],textarea,select{font-family:var(--body);font-size:15.5px;width:100%;border:1.5px solid var(--rule);border-radius:4px;padding:10px 12px;background:#fff;color:var(--ink)}
+input[type=text]:focus,textarea:focus,select:focus{outline:2px solid var(--ultramarine);outline-offset:-1px;border-color:var(--ultramarine)}
+textarea{resize:vertical;line-height:1.5}
+label.fl{display:block;font-weight:600;font-size:14.5px;margin:14px 0 5px}
+label.fl span{font-weight:400;color:var(--muted)}
+.btn{font-family:var(--body);font-size:15px;font-weight:600;border:0;border-radius:8px;padding:11px 17px;cursor:pointer;background:var(--ink);color:#fff}
+.btn.alt{background:var(--marigold);color:#231B08}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+.btn:focus-visible{outline:3px solid var(--ultramarine);outline-offset:2px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.chip{background:#F3EFE6;border:1px solid var(--rule);border-radius:99px;padding:7px 12px;font-size:13.5px;cursor:pointer;font-family:var(--body);color:#4A4238}
+.chip:hover{background:var(--amberbg);border-color:var(--marigold)}
+
+/* M&E block */
+.me{border:2px dashed var(--slate-2);border-radius:4px;background:#FBFAF6;padding:16px;margin:22px 0 6px}
+.me>h3{margin:0 0 3px;font-size:18px}
+.me .sub{font-size:13.5px;color:var(--muted);margin-bottom:14px}
+.likert{display:flex;gap:6px;margin-top:7px}
+.likert button{flex:1;font-family:var(--body);font-weight:600;font-size:15px;border:1.5px solid var(--rule);background:#fff;border-radius:4px;padding:10px 0;cursor:pointer;color:var(--ink)}
+.likert button.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+.lends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.meq{margin-bottom:16px}
+.meq>span.qt{display:block;font-weight:600;font-size:15px;margin-bottom:2px}
+.saved{font-size:13.5px;color:var(--peacock);font-weight:600;display:none}
+.saved.on{display:block}
+
+/* timer */
+.timer{display:inline-flex;align-items:center;gap:9px;background:var(--slate);color:#fff;border-radius:99px;padding:6px 8px 6px 15px;font-variant-numeric:tabular-nums;font-weight:700;font-size:17px;margin-bottom:14px}
+.timer button{background:var(--marigold);color:#231B08;border:0;border-radius:99px;font-family:var(--body);font-weight:700;font-size:13px;padding:7px 12px;cursor:pointer}
+.timer.done{background:var(--chilli)}
+
+/* score stamp */
+.stamp{display:none;border:3px solid var(--peacock);color:var(--peacock);font-family:var(--disp);font-weight:800;font-size:18px;padding:8px 14px;border-radius:6px;transform:rotate(-3deg);margin:12px 0}
+.stamp.on{display:inline-block;animation:pop .3s ease-out}
+@keyframes pop{from{transform:rotate(-3deg) scale(.8);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}
+
+/* cover */
+.cover{background:var(--slate);background-image:radial-gradient(circle at 12% 18%,rgba(255,183,3,.16),transparent 42%),radial-gradient(circle at 88% 76%,rgba(39,67,196,.22),transparent 46%);color:#fff}
+.cover h1{font-size:clamp(42px,10vw,88px);color:#fff;margin-bottom:8px}
+.scripts{font-size:clamp(24px,6vw,40px);color:var(--marigold);margin-bottom:20px;line-height:1.9}
+.scripts .ur{font-family:"Noto Nastaliq Urdu",serif}
+.scripts .dv{font-family:"Noto Sans Devanagari",serif}
+.cover p{color:#C6D2E0;font-size:18px;max-width:46ch}
+.cover .meta{margin-top:24px;display:flex;gap:20px;flex-wrap:wrap;color:#8FA3BC;font-size:14px;border-top:1px solid #3A4A5E;padding-top:16px}
+
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin-bottom:16px;background:#fff}
+th,td{border:1px solid var(--rule);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:#F3EFE6;font-weight:700}
+
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* predict-then-check */
+.predict{border:1.5px solid var(--rule);border-radius:4px;padding:15px;margin-bottom:16px;background:#FCFAF5}
+.predict>.qt{display:block;font-weight:600;margin-bottom:10px}
+.predict .conf{margin-top:12px}
+.predict .conf>span{font-size:14px;color:var(--muted);display:block;margin-bottom:5px}
+.predict .likert button{padding:8px 0;font-size:14px}
+.predict .revealbox{display:none;margin-top:12px;padding:12px 14px;border-radius:4px;background:#fff;border-left:4px solid var(--ultramarine);font-size:15px;line-height:1.5}
+.predict .revealbox.on{display:block}
+.predict .revealbox b{display:block;margin-bottom:4px}
+.predict .lock{opacity:.55;pointer-events:none}
+.cal{font-size:13.5px;font-weight:600;margin-top:9px;display:none}
+.cal.on{display:block}
+.cal.good{color:var(--peacock)}.cal.over{color:var(--chilli)}.cal.under{color:var(--marigold-deep)}
+.codebox{background:#14202B;color:#DCE7F2;border-radius:6px;padding:14px 15px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:1.6;white-space:pre;overflow-x:auto;margin-bottom:12px}
+.codebox .cm{color:#7F98AE}
+.codebox .kw{color:#FFB703}
+.codebox .st{color:#8FD3A8}
+.dataTable{font-size:14px}
+.dataTable td:first-child{font-weight:600}
+figure{margin:0 0 16px}
+figure svg{max-width:100%;height:auto;display:block;background:#fff;border:1px solid var(--rule);border-radius:4px}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:6px}
+
+.doc.steps{line-height:1.6}
+.doc.steps .sus{display:block;margin:0 0 8px;padding:7px 9px;border:1px solid transparent;border-bottom:1px dotted #B9AF9E;border-radius:4px}
+.doc.steps .sus:last-child{margin-bottom:0}
+.doc.steps .sus.hit{border-color:var(--chilli)}
+.doc.steps .sus.shown{border-color:var(--marigold-deep)}
+.doc.steps .sus.miss{border-color:var(--peacock)}
+.est{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.est input{max-width:190px}
+.est span{font-size:14px;color:var(--muted)}
+#sawaal-status{font-size:11px;line-height:1.3;color:#9FB0C6;max-width:26%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sawaal-status[data-state="saved"]{color:#7FD8C5}#sawaal-status[data-state="offline"],#sawaal-status[data-state="error"]{color:var(--marigold)}
+#sawaal-account{background:#1F2B3B;border-radius:12px;padding:14px 16px;margin:0 0 22px;color:#fff}
+@media (max-width:600px){#sawaal-status{display:none}}
+.meq.needs-answer,.qcard.needs-answer,.predict.needs-answer,.actbody.needs-answer{outline:2px solid var(--chilli);outline-offset:5px;border-radius:4px;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+#next.warn{background:var(--chilli);color:#fff}
+</style>
+<script src="../config.js"></script>
+<script src="../sawaal.js"></script>
+</head>
+<body>
+<div id="rail"></div>
+<div id="stage">
+  <main id="deck"></main>
+  <nav id="bar">
+    <button id="menuBtn" aria-label="Open contents">☰</button>
+    <button id="prev">Back</button>
+    <span id="pos">1/1</span>
+    <span id="sawaal-status" aria-live="polite"></span>
+    <span id="modLabel"></span>
+    <button id="next">Start</button>
+  </nav>
+</div>
+<div id="toc" role="dialog" aria-label="Course contents">
+  <div id="sawaal-account"></div>
+  <h2>Course contents</h2>
+  <p>Jump to any part. Your answers are kept as you go.</p>
+  <div id="tocList"></div>
+  <button id="tocClose">Close contents</button>
+</div>
+<template id="slides">
+<section class="slide cover">
+  <div class="wrap">
+    <div class="scripts">[ ] &nbsp; { } &nbsp; &lt; &gt;</div>
+    <h1>Make It Run</h1>
+    <p>Data and code with an AI that writes both in seconds. How to read what it gave you, check what it claims, and avoid shipping something you don't understand.</p>
+    <div class="meta"><span>55–70 minutes</span><span>Ages 12–16</span><span>6 activities</span><span>No coding experience needed</span></div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Getting started">
+  <div class="wrap">
+    <span class="tag">Before we start</span>
+    <h2>How this works</h2>
+    <div class="grid g2">
+      <div class="mini"><h4>You don't need to code</h4><p>Every piece of code here is four lines or fewer, and we explain what each line does. If you already code, there's plenty to argue with.</p></div>
+      <div class="mini"><h4>Predict before you run</h4><p>You'll be asked what code will do before you're told. That habit is the whole of Module 3.</p></div>
+      <div class="mini"><h4>Keep a chatbot open</h4><p>You'll test its data claims and its code in a second tab.</p></div>
+      <div class="mini"><h4>Your answers stay here</h4><p id="saveNote">On this device, until you export them at the end.</p></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0" id="pidTitle">Make your code name</h3>
+      <p class="small" id="pidHint">Not your real name. First two letters of a food you like, your lucky number, first two letters of your town. Example: <b>ma4li</b></p>
+      <label class="fl" for="pid">Your code name</label>
+      <input type="text" id="pid" maxlength="16" placeholder="e.g. ma4li" autocomplete="off">
+      <p id="pidSigned" class="hide" style="font-size:22px;font-weight:700;font-family:var(--disp);margin:6px 0 0"></p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Getting started">
+  <div class="wrap"><span class="tag">Getting started</span><h2>Where are you starting from?</h2>
+  <p class="lead">No right answers. We ask the same things at the end.</p><div class="me" data-me="base"></div></div>
+</section>
+
+<section class="slide divider" data-mod="Module 1">
+  <div class="wrap"><div class="num">1</div><h1>What data can and can't say</h1>
+    <p>A table of numbers answers some questions perfectly and others not at all. Knowing which is which is most of the skill.</p>
+    <div class="kit">11 minutes — 1 activity</div></div>
+</section>
+
+<section class="slide" data-mod="Module 1 — Reading data">
+  <div class="wrap">
+    <span class="tag">The idea</span>
+    <h2>Every dataset is somebody's answers to somebody's questions</h2>
+    <p class="lead">It isn't "the truth about the world". It's what got measured, by whom, when, and from how many people. Change any of those and the numbers change.</p>
+    <div class="panel tight">
+      <p class="small" style="margin:0"><b>The school canteen recorded this last Tuesday:</b></p>
+      <table class="dataTable" style="margin-top:10px;margin-bottom:0">
+        <tr><th>Item</th><th>Sold</th><th>Price</th><th>Time of peak sales</th></tr>
+        <tr><td>Samosa</td><td>142</td><td>30</td><td>11:00</td></tr>
+        <tr><td>Sandwich</td><td>68</td><td>60</td><td>13:00</td></tr>
+        <tr><td>Juice</td><td>95</td><td>40</td><td>13:00</td></tr>
+        <tr><td>Fruit</td><td>21</td><td>25</td><td>11:00</td></tr>
+      </table>
+    </div>
+    <div class="grid g2">
+      <div class="mini" style="border-left:6px solid var(--peacock)"><h4>It can answer</h4><p>What sold most. What earned most. Which items peak at the same time. What the total takings were.</p></div>
+      <div class="mini" style="border-left:6px solid var(--chilli)"><h4>It cannot answer</h4><p>What students <i>want</i>. What sells on Fridays. Why fruit sells badly. Whether prices are fair. Anything about a different week.</p></div>
+    </div>
+    <div class="note warn" style="margin-bottom:0">
+      <h4>The trap</h4>
+      <p>Ask a chatbot "why does fruit sell badly here?" and it will give you a confident, well-written answer. It has no idea. It is guessing from data about other schools in other countries, and it will not tell you that unless you ask.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide wide" data-mod="Module 1 — Reading data">
+  <div class="wrap">
+    <div class="act" data-act="canask">
+      <header><h3>Activity 1 — Can this table answer that?</h3><span class="mins">7 min</span></header>
+      <div class="actbody">
+        <p class="small" style="margin-bottom:16px">Using only the canteen table on the last screen.</p>
+        <div class="qcard" data-q="c1">
+          <span class="qt">1. "Which item made the most money?"</span>
+          <div class="opts">
+            <button class="opt" data-v="yes" data-correct="1" data-fb="Yes. Sold × price for each row. Samosas make 4,260 and juice makes 3,800 — so samosas win on both count and takings. Everything needed is in the table.">Yes — multiply sold by price</button>
+            <button class="opt" data-v="no" data-fb="Look again. You have quantity and price, which is everything you need.">No — we don't know the costs</button>
+            <button class="opt" data-v="maybe" data-fb="Profit would need costs. Money taken does not.">Only if we know the profit</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="qcard" data-q="c2">
+          <span class="qt">2. "Should the canteen stop selling fruit?"</span>
+          <div class="opts">
+            <button class="opt" data-v="yes" data-fb="21 sales is the lowest, but the table doesn't tell you whether that's a failure or whether 21 students rely on it.">Yes — it sells the least</button>
+            <button class="opt" data-v="no" data-correct="1" data-fb="Right. This is a decision, not a fact. The data is one input. Whether the school wants to offer fruit at all is a value judgement no table can make for you — and this is exactly the kind of question people wrongly hand to an AI.">No — that's a decision, not something data can answer</button>
+            <button class="opt" data-v="more" data-fb="More data would help the decision, but it still wouldn't make it. Someone has to decide what the canteen is for.">Only with a month of data</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="qcard" data-q="c3">
+          <span class="qt">3. "Students prefer savoury food over sweet food."</span>
+          <div class="opts">
+            <button class="opt" data-v="supported" data-fb="Samosas outsold fruit, but sales are not preferences — they reflect price, queue length, what ran out, and what students could afford.">Supported by the data</button>
+            <button class="opt" data-v="not" data-correct="1" data-fb="Yes. The table measures what was bought on one Tuesday, not what anyone prefers. To measure preference you would have to ask people, which is a completely different kind of data.">Not supported — this measures sales, not preference</button>
+            <button class="opt" data-v="partly" data-fb="It isn't partly supported. 'Preference' was never measured at all, so the data has nothing to say either way.">Partly supported</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="stamp" data-stamp></div>
+        <div class="note good" style="margin-top:16px;margin-bottom:0">
+          <h4>The question to keep</h4>
+          <p>Before using any number, ask: <b>what exactly was measured, and on whom?</b> Most bad conclusions come from answering a question the data never asked.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Module 1 — Reading data">
+  <div class="wrap"><span class="tag">Module 1 check-in</span><h2>Quick check-in</h2><div class="me" data-me="m1"></div></div>
+</section>
+
+<section class="slide divider" data-mod="Module 2">
+  <div class="wrap"><div class="num">2</div><h1>The same numbers, two stories</h1>
+    <p>Nobody has to lie to mislead you. They just have to choose where the axis starts.</p>
+    <div class="kit">13 minutes — 1 activity</div></div>
+</section>
+
+<section class="slide wide" data-mod="Module 2 — Charts that mislead">
+  <div class="wrap">
+    <span class="tag">Look at these</span>
+    <h2>Identical data. Different feeling.</h2>
+    <div class="grid g2">
+      <figure>
+        <svg viewBox="0 0 320 200" role="img" aria-label="Bar chart of club members starting at zero, showing a small increase">
+          <line x1="40" y1="170" x2="305" y2="170" stroke="#D9D2C5"></line>
+          <line x1="40" y1="20" x2="40" y2="170" stroke="#D9D2C5"></line>
+          <rect x="55" y="41" width="42" height="129" fill="#2743C4"></rect>
+          <rect x="120" y="37" width="42" height="133" fill="#2743C4"></rect>
+          <rect x="185" y="34" width="42" height="136" fill="#2743C4"></rect>
+          <rect x="250" y="30" width="42" height="140" fill="#2743C4"></rect>
+          <text x="76" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2022</text>
+          <text x="141" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2023</text>
+          <text x="206" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2024</text>
+          <text x="271" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2025</text>
+          <text x="34" y="174" text-anchor="end" font-size="10" fill="#6B6357">0</text>
+          <text x="34" y="24" text-anchor="end" font-size="10" fill="#6B6357">140</text>
+        </svg>
+        <figcaption>Club members, axis starting at zero</figcaption>
+      </figure>
+      <figure>
+        <svg viewBox="0 0 320 200" role="img" aria-label="Bar chart of the same club members data starting at 118, showing a dramatic increase">
+          <line x1="40" y1="170" x2="305" y2="170" stroke="#D9D2C5"></line>
+          <line x1="40" y1="20" x2="40" y2="170" stroke="#D9D2C5"></line>
+          <rect x="55" y="150" width="42" height="20" fill="#E23A2E"></rect>
+          <rect x="120" y="110" width="42" height="60" fill="#E23A2E"></rect>
+          <rect x="185" y="80" width="42" height="90" fill="#E23A2E"></rect>
+          <rect x="250" y="40" width="42" height="130" fill="#E23A2E"></rect>
+          <text x="76" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2022</text>
+          <text x="141" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2023</text>
+          <text x="206" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2024</text>
+          <text x="271" y="185" text-anchor="middle" font-size="11" fill="#6B6357">2025</text>
+          <text x="34" y="174" text-anchor="end" font-size="10" fill="#6B6357">118</text>
+          <text x="34" y="24" text-anchor="end" font-size="10" fill="#6B6357">133</text>
+        </svg>
+        <figcaption>The same four numbers, axis starting at 118</figcaption>
+      </figure>
+    </div>
+    <p>Both charts show 120, 124, 127 and 131 members. The first says "the club is stable". The second says "membership is exploding". Neither is a lie. Only one of them would get printed in a funding application.</p>
+    <div class="note">
+      <h4>Four things to check on any chart</h4>
+      <p><b>Where does the axis start?</b> <b>What years were chosen, and what got left out?</b> <b>How many people is this based on?</b> <b>Does the chart claim a cause, or just show two lines moving together?</b></p>
+    </div>
+  </div>
+</section>
+
+<section class="slide wide" data-mod="Module 2 — Charts that mislead">
+  <div class="wrap">
+    <div class="act" data-act="claims">
+      <header><h3>Activity 2 — Which claims survive?</h3><span class="mins">8 min</span></header>
+      <div class="actbody">
+        <p class="small">A student asked a chatbot to summarise a survey about homework and sleep. <b>Tap every claim that goes further than the data can support.</b> Four of the six are broken.</p>
+        <div class="doc">
+          <span class="sus" data-v="fine" data-note="Fine. It states what was measured, on whom, and how many. This is what a claim should look like — boring, specific, and checkable.">In a survey of 40 students at one school, those who reported more than two hours of homework also reported less sleep on average.</span>
+          <span class="sus" data-v="bad" data-note="Two lines moving together is not a cause. Maybe homework cuts sleep. Maybe students who sleep badly work more slowly, so the same homework takes longer. Maybe both are caused by something else entirely, like part-time jobs or younger siblings.">This proves that homework causes students to lose sleep.</span>
+          <span class="sus" data-v="bad" data-note="40 students at one school cannot speak for a country. Sample size and who is in it both matter — and this jump from one school to everywhere is the single most common error in student projects.">Therefore students across the country are losing sleep because of homework.</span>
+          <span class="sus" data-v="soft" data-note="Worth flagging. Self-reported numbers are real data, but people round, forget and exaggerate — especially about sleep and screen time. Not wrong to use, but it should be named as a limitation.">Students estimated their own sleep hours from memory.</span>
+          <span class="sus" data-v="bad" data-note="A dropped decimal, or an invented statistic. Watch for numbers that appear in a conclusion but never appeared in the data. If you cannot point to where a number came from, do not use it.">On average students lost 3.7 hours of sleep per night due to homework.</span>
+          <span class="sus" data-v="bad" data-note="The survey measured hours, not wellbeing, and it measured nothing at all about what would happen if homework were reduced. This is a policy recommendation wearing the costume of a finding.">The school should reduce homework, which would improve student wellbeing.</span>
+        </div>
+        <div class="btnrow"><button class="btn alt" data-huntcheck>Show me the answers</button><button class="btn ghost" data-huntreset>Start over</button></div>
+        <div class="stamp" data-stamp></div>
+        <div class="huntfb" data-huntfb></div>
+        <p class="small" style="margin-top:14px;margin-bottom:0">Every one of those sentences would look normal in a project. That's why this is worth practising.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Module 2 — Charts that mislead">
+  <div class="wrap"><span class="tag">Module 2 check-in</span><h2>Quick check-in</h2><div class="me" data-me="m2"></div></div>
+</section>
+
+<section class="slide divider" data-mod="Module 3">
+  <div class="wrap"><div class="num">3</div><h1>Never run what you can't read</h1>
+    <p>AI writes code faster than you can read it. That gap is where every bad afternoon comes from.</p>
+    <div class="kit">13 minutes — 1 activity</div></div>
+</section>
+
+<section class="slide" data-mod="Module 3 — Reading code">
+  <div class="wrap">
+    <span class="tag">The rule</span>
+    <h2>Predict the output before you press run</h2>
+    <p class="lead">It takes fifteen seconds and it changes everything. If your prediction is right, you understood the code. If it's wrong, you just found the exact thing you didn't understand — which is worth more than working code.</p>
+    <div class="grid g2">
+      <div class="mini"><h4>Why it matters more with AI</h4><p>Code that runs without an error can still be doing the wrong thing. Nothing will tell you. The program won't complain about deleting the wrong file.</p></div>
+      <div class="mini"><h4>The honest test</h4><p>Can you say, line by line, what each line does? If not, you don't have working code — you have code that hasn't broken yet.</p></div>
+    </div>
+    <div class="note warn" style="margin-bottom:0">
+      <h4>Three things AI code does that look fine</h4>
+      <p>Uses a library that doesn't exist. Handles the normal case and crashes on an empty list. Solves a slightly different problem from the one you described — usually the more common version of it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide wide" data-mod="Module 3 — Reading code">
+  <div class="wrap">
+    <div class="act" data-act="predictcode">
+      <header><h3>Activity 3 — What will this print?</h3><span class="mins">9 min</span></header>
+      <div class="actbody">
+        <p class="small">Python. Read carefully, commit, then reveal. If you've never coded, the comments tell you what each line means.</p>
+
+        <div class="predict" data-p="pc1">
+          <span class="qt">1.</span>
+          <div class="codebox"><span class="cm"># start a running total at zero</span>
+total = 0
+<span class="cm"># repeat for each number in the range</span>
+<span class="kw">for</span> i <span class="kw">in</span> range(1, 5):
+    total = total + i
+print(total)</div>
+          <div class="opts row">
+            <button class="opt" data-v="10" data-correct="1">10</button>
+            <button class="opt" data-v="15">15</button>
+            <button class="opt" data-v="5">5</button>
+            <button class="opt" data-v="4">4</button>
+          </div>
+          <button class="btn alt" data-reveal>Lock it in and show me</button>
+          <div class="revealbox"><b>10.</b>range(1, 5) gives 1, 2, 3, 4 — it stops <i>before</i> 5. So 1+2+3+4 = 10. Almost everyone says 15 the first time. This one rule causes more beginner bugs than anything else in programming, and it is the kind of thing that runs perfectly while producing the wrong number.</div>
+          <div class="cal"></div>
+        </div>
+
+        <div class="predict" data-p="pc2">
+          <span class="qt">2.</span>
+          <div class="codebox">price = <span class="st">"20"</span>
+tax = 5
+print(price + tax)</div>
+          <div class="opts row">
+            <button class="opt" data-v="25">25</button>
+            <button class="opt" data-v="205">205</button>
+            <button class="opt" data-v="error" data-correct="1">An error</button>
+            <button class="opt" data-v="20">20</button>
+          </div>
+          <button class="btn alt" data-reveal>Lock it in and show me</button>
+          <div class="revealbox"><b>An error.</b>The quote marks around "20" make it text, not a number, and Python refuses to add text to a number. This is the good kind of bug — it shouts. The dangerous version is when the types happen to work and you silently get the wrong answer.</div>
+          <div class="cal"></div>
+        </div>
+
+        <div class="predict" data-p="pc3">
+          <span class="qt">3.</span>
+          <div class="codebox">scores = [4, 8, 15, 16]
+print(scores[2])</div>
+          <div class="opts row">
+            <button class="opt" data-v="8">8</button>
+            <button class="opt" data-v="15" data-correct="1">15</button>
+            <button class="opt" data-v="16">16</button>
+            <button class="opt" data-v="4">4</button>
+          </div>
+          <button class="btn alt" data-reveal>Lock it in and show me</button>
+          <div class="revealbox"><b>15.</b>Counting starts at 0, so position 2 is the third item. If you picked 8 you counted like a human, which is entirely reasonable and entirely wrong here.</div>
+          <div class="cal"></div>
+        </div>
+
+        <div class="note good" style="margin-bottom:0">
+          <h4>The prompt that makes AI code readable</h4>
+          <p>"Write this in the simplest way possible. Add a comment on every line saying what it does in plain English. Then ask me two questions to check I understood it before I run it."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Module 3 — Reading code">
+  <div class="wrap"><span class="tag">Module 3 check-in</span><h2>Quick check-in</h2><div class="me" data-me="m3"></div></div>
+</section>
+
+<section class="slide divider" data-mod="Module 4">
+  <div class="wrap"><div class="num">4</div><h1>"It doesn't work"</h1>
+    <p>The three least useful words in programming. Here's what to send instead.</p>
+    <div class="kit">11 minutes — 1 activity</div></div>
+</section>
+
+<section class="slide" data-mod="Module 4 — Describing a bug">
+  <div class="wrap">
+    <span class="tag">The tool</span>
+    <h2>Four parts of a bug report</h2>
+    <p class="lead">This works on a chatbot, on a teacher, and on a forum full of strangers. It also solves the problem by itself surprisingly often.</p>
+    <table>
+      <tr><th style="width:26%">Part</th><th>What to write</th></tr>
+      <tr><td><b>Expected</b></td><td>What you thought would happen. Be specific: "it should print three names".</td></tr>
+      <tr><td><b>Actual</b></td><td>What happened instead. "It printed nothing" and "it printed one name" are different problems.</td></tr>
+      <tr><td><b>Exact error</b></td><td>Copy and paste the whole error message. Not a description of it — the text itself, including the line number.</td></tr>
+      <tr><td><b>Already tried</b></td><td>What you changed and what happened. Stops you getting the same three suggestions you already tested.</td></tr>
+    </table>
+    <div class="note">
+      <h4>Why this fixes bugs on its own</h4>
+      <p>Writing "I expected three names but got one" forces you to notice you don't actually know why three. Explaining a problem properly is a debugging technique, not just a politeness.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide wide" data-mod="Module 4 — Describing a bug">
+  <div class="wrap">
+    <div class="act" data-act="bugreport">
+      <header><h3>Activity 4 — Write a real bug report</h3><span class="mins">7 min</span></header>
+      <div class="actbody">
+        <p class="small">Use a bug you actually hit recently — in code, in a spreadsheet formula, in a game mod, in anything. Or load an example and rewrite it in your own words.</p>
+        <div class="chips" data-examples>
+          <button class="chip" data-ex="loop">Example: a loop printing too much</button>
+          <button class="chip" data-ex="sheet">Example: a spreadsheet formula</button>
+          <button class="chip" data-ex="clear">Clear</button>
+        </div>
+        <script type="application/json" class="exdata">{
+          "loop":[
+            "I expected my program to print each of the 5 student names once, so 5 lines in total.",
+            "Instead it printed all 5 names 5 times, so 25 lines, and the order is right each time.",
+            "There is no error message at all. It runs and finishes normally. Here is the code: [paste it]",
+            "I tried changing the range numbers and moving the print line left by four spaces, which made it print only the last name once."
+          ],
+          "sheet":[
+            "I expected column D to show the average of the three test scores in columns A, B and C for each student.",
+            "Instead every row in column D shows the same number, 62, even though the scores are different.",
+            "The formula in D2 is =AVERAGE($A$2:$C$2) and there is no error shown, just the repeated value.",
+            "I tried dragging the formula down again and retyping it in D3, which gave 62 as well."
+          ],
+          "clear":["","","",""]
+        }</script>
+        <div class="builder" data-id="bug_report" data-keywords="(expected|instead|error|tried|line)" data-q="Bug report written in Activity 4" data-done="All four parts filled. Read it back — does it already tell you where to look?">
+          <div class="layer"><div class="lk">E</div><textarea data-part data-store="bug_expected" data-tip="what you expected to happen, specifically"></textarea></div>
+          <div class="layer"><div class="lk">A</div><textarea data-part data-store="bug_actual" data-tip="what actually happened instead"></textarea></div>
+          <div class="layer"><div class="lk">!</div><textarea data-part data-store="bug_error" data-tip="the exact error message, or say clearly that there wasn't one"></textarea></div>
+          <div class="layer"><div class="lk">T</div><textarea data-part data-store="bug_tried" data-tip="what you already tried and what that changed"></textarea></div>
+        </div>
+        <div class="mrow"><span>Report strength</span><b data-label>Empty</b></div>
+        <div class="meter"><i data-meter></i></div>
+        <div class="prompt" data-out data-empty="Your bug report will appear here as you type."><button class="copy" data-copy>Copy</button></div>
+        <p class="small" data-tipout></p>
+        <label class="fl" for="bug_note">Did writing it out give you an idea about the cause before you asked anyone?</label>
+        <textarea id="bug_note" rows="2" data-store="bug_insight"></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Module 4 — Describing a bug">
+  <div class="wrap"><span class="tag">Module 4 check-in</span><h2>Quick check-in</h2><div class="me" data-me="m4"></div></div>
+</section>
+
+<section class="slide divider" data-mod="Module 5">
+  <div class="wrap"><div class="num">5</div><h1>Honest, safe, credited</h1>
+    <p>Three ways this goes wrong that have nothing to do with whether the code runs.</p>
+    <div class="kit">10 minutes — 1 activity</div></div>
+</section>
+
+<section class="slide" data-mod="Module 5 — Safe and honest">
+  <div class="wrap">
+    <span class="tag">Three risks</span>
+    <h2>What to watch for</h2>
+    <div class="grid g3">
+      <div class="mini" style="border-top:5px solid var(--chilli)"><h4>Other people's data</h4><p>A class list, a survey with names, a screenshot of a group chat. Those belong to the people in them. Remove names and identifying details before anything gets pasted anywhere.</p></div>
+      <div class="mini" style="border-top:5px solid var(--chilli)"><h4>Code that's wrong but runs</h4><p>AI code can leak information, delete more than intended, or quietly produce wrong numbers. Running it is a decision you are making, not the AI.</p></div>
+      <div class="mini" style="border-top:5px solid var(--chilli)"><h4>Not saying you used it</h4><p>In most schools, using AI is allowed and hiding it is not. One line — "I used an AI assistant to help debug my loop" — protects you completely.</p></div>
+    </div>
+    <div class="note good">
+      <h4>How to anonymise a dataset in one minute</h4>
+      <p>Replace names with Student 1, Student 2. Delete anything that identifies one person — exact birthday, address, phone, photo. Round small numbers into bands. If only one person in your data is 17, "age 17" is a name.</p>
+    </div>
+    <p class="small">This last point catches people out constantly: you can identify someone without using their name, just by combining a few details.</p>
+  </div>
+</section>
+
+<section class="slide wide" data-mod="Module 5 — Safe and honest">
+  <div class="wrap">
+    <div class="act" data-act="ethics">
+      <header><h3>Activity 5 — Would you do it?</h3><span class="mins">7 min</span></header>
+      <div class="actbody">
+        <div class="qcard" data-q="e1">
+          <span class="qt">1. For your data project you paste a spreadsheet of your class's test scores, with names, into a chatbot to find the average.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="It's fast, but those scores belong to 30 people who didn't agree to this.">Green</button>
+            <button class="opt amber" data-v="Amber" data-correct="1" data-fb="Right, and it's fixable in thirty seconds: delete the name column first. Then it's Green. Also worth noticing — a chatbot is a slow way to find an average that a spreadsheet does instantly.">Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Defensible, but the data itself is fine to analyse. It's the names that are the problem, and names are removable.">Red</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="qcard" data-q="e2">
+          <span class="qt">2. AI gives you a script that deletes duplicate files on your computer. You don't fully follow it, but it looks fine, so you run it.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Looks fine is not the same as is fine — and the thing being deleted here is your files.">Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Anything that deletes is not amber. The cost of being wrong is permanent.">Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. Never run code that changes or deletes things unless you can explain every line. Ask it to print what it would delete first, without deleting anything. Then read the list.">Red</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="qcard" data-q="e3">
+          <span class="qt">3. You submit a data project, and in a footnote you write which parts AI helped with and how.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-correct="1" data-fb="Yes. This is what professionals do. It costs you nothing, it's usually required, and it protects you if anyone asks later.">Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Declaring honestly is never the risky option. Not declaring is.">Amber</button>
+            <button class="opt red" data-v="Red" data-fb="The opposite — hiding it would be the problem.">Red</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="qcard" data-q="e4">
+          <span class="qt">4. You ask AI to write the whole analysis and the conclusion for your project, then you check the numbers and they're right.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="The numbers being right isn't the issue. The conclusion is the part you were being assessed on.">Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Checking is good, but the thinking still happened somewhere else.">Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. Deciding what the data means is the actual work. Use AI to check your analysis, criticise your conclusion, or explain a method — not to reach the conclusion for you.">Red</button>
+          </div><div class="fb"></div>
+        </div>
+        <div class="stamp" data-stamp></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Module 5 — Safe and honest">
+  <div class="wrap"><span class="tag">Module 5 check-in</span><h2>Quick check-in</h2><div class="me" data-me="m5"></div></div>
+</section>
+
+<section class="slide divider" data-mod="Capstone">
+  <div class="wrap"><div class="num">6</div><h1>Your turn with real numbers</h1>
+    <p>Ten students, three columns, one tempting conclusion. Find out whether it survives.</p>
+    <div class="kit">15 minutes</div></div>
+</section>
+
+<section class="slide wide" data-mod="Capstone">
+  <div class="wrap">
+    <div class="act" data-act="cap">
+      <header><h3>Capstone — A small investigation</h3><span class="mins">15 min</span></header>
+      <div class="actbody">
+        <div class="timer" data-mins="15"><span class="tv">15:00</span><button>Start</button></div>
+        <p class="small">Ten students recorded their screen time in the hour before bed, their hours of sleep, and their score in the same test.</p>
+        <table class="dataTable">
+          <tr><th>Student</th><th>Screen (mins)</th><th>Sleep (hrs)</th><th>Score (%)</th></tr>
+          <tr><td>1</td><td>10</td><td>8.5</td><td>78</td></tr>
+          <tr><td>2</td><td>15</td><td>8.0</td><td>71</td></tr>
+          <tr><td>3</td><td>20</td><td>7.5</td><td>84</td></tr>
+          <tr><td>4</td><td>30</td><td>7.0</td><td>66</td></tr>
+          <tr><td>5</td><td>35</td><td>7.5</td><td>90</td></tr>
+          <tr><td>6</td><td>45</td><td>6.5</td><td>62</td></tr>
+          <tr><td>7</td><td>60</td><td>6.0</td><td>58</td></tr>
+          <tr><td>8</td><td>75</td><td>6.0</td><td>69</td></tr>
+          <tr><td>9</td><td>90</td><td>5.5</td><td>55</td></tr>
+          <tr><td>10</td><td>120</td><td>5.0</td><td>41</td></tr>
+        </table>
+        <label class="fl" for="d1">1. Before analysing: what do you expect to find, and what would make you wrong? Write it now.</label>
+        <textarea id="d1" rows="2" data-store="cap_expect"></textarea>
+        <label class="fl" for="d2">2. What pattern do you actually see? Describe it in one sentence, using numbers from the table.</label>
+        <textarea id="d2" rows="2" data-store="cap_pattern"></textarea>
+        <label class="fl" for="d3">3. Student 5 breaks the pattern. What could explain that, and does one exception destroy the pattern?</label>
+        <textarea id="d3" rows="3" data-store="cap_outlier"></textarea>
+        <label class="fl" for="d4">4. Name two things this data cannot tell you, no matter how you analyse it.</label>
+        <textarea id="d4" rows="3" data-store="cap_limits"></textarea>
+        <p class="small">Now send this:</p>
+        <div class="prompt">Here is a small dataset from 10 students: [paste the table]
+
+Here is my conclusion: [paste yours]
+
+Do not write a better conclusion. Instead:
+1. Name every claim in my conclusion that the data does not support.
+2. Tell me which other explanation I have ignored.
+3. Tell me what I would need to measure to actually test cause and effect.
+4. Say honestly whether 10 students is enough to conclude anything.<button class="copy" data-copy>Copy</button></div>
+        <label class="fl" for="d5">5. What did it catch that you missed — and did it claim anything the data doesn't support?</label>
+        <textarea id="d5" rows="3" data-store="cap_ai_check"></textarea>
+        <label class="fl" for="d6">6. Your final, honest conclusion — including what you cannot claim.</label>
+        <textarea id="d6" rows="3" data-store="cap_final"></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Capstone">
+  <div class="wrap">
+    <span class="tag">Mark yourself honestly</span>
+    <h2>Did you conclude, or did you assume?</h2>
+    <table>
+      <tr><th style="width:34%">Signal</th><th>You did it properly if...</th></tr>
+      <tr><td><b>You wrote your expectation</b></td><td>Before looking, so you can tell whether you found a pattern or confirmed a belief.</td></tr>
+      <tr><td><b>You used numbers</b></td><td>Your sentence quotes actual values, not just "more" and "less".</td></tr>
+      <tr><td><b>You kept the outlier</b></td><td>You explained student 5 instead of quietly ignoring them. Deleting inconvenient data is the oldest trick there is.</td></tr>
+      <tr><td><b>You named a third factor</b></td><td>Sleep and screen time move together. Which one affects the score? Maybe neither — maybe both follow something else.</td></tr>
+      <tr><td><b>You said "cannot"</b></td><td>Your conclusion states its own limits. Ten students at one school, one test, self-reported.</td></tr>
+    </table>
+    <div class="note good" style="margin-bottom:0"><h4>The strongest answer here</h4><p>"In these 10 students, less screen time before bed went with more sleep and generally higher scores, with one clear exception. This cannot show cause, the sample is far too small, and sleep and screen time cannot be separated from each other in this data." That's a better answer than any confident conclusion.</p></div>
+  </div>
+</section>
+
+<section class="slide" data-mod="Capstone">
+  <div class="wrap"><span class="tag">Capstone check-in</span><h2>Capstone reflection</h2><div class="me" data-me="m6"></div></div>
+</section>
+
+<section class="slide" data-mod="After the workshop">
+  <div class="wrap"><span class="tag">Last set of questions</span><h2>Where did you land?</h2>
+  <p class="lead">The first four are the same as at the start.</p><div class="me" data-me="post"></div></div>
+</section>
+
+<section class="slide" data-mod="After the workshop">
+  <div class="wrap">
+    <span class="tag">Finish up</span><h2>Hand in your answers</h2>
+    <p class="lead" id="exportLead">Everything you typed is on this device and nowhere else. Save it out and give the file to your teacher.</p>
+    <div class="panel">
+      <h3 style="margin-top:0">What's in the file</h3>
+      <p class="small" id="exportSummary">Loading...</p>
+      <div class="btnrow">
+        <button class="btn alt" id="dlCsv">Download as spreadsheet</button>
+        <button class="btn ghost" id="dlJson">Download as data file</button>
+        <button class="btn ghost" id="showRaw">Show it as text</button>
+      </div>
+      <textarea id="rawBox" class="hide" rows="8" readonly></textarea>
+      <p class="small" id="exportNote" style="margin-bottom:0">If the download doesn't work, tap "Show it as text", select all, and paste it wherever your teacher asked.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide divider" data-mod="Done">
+  <div class="wrap"><div class="num">✓</div><h1>Read it before you run it</h1>
+    <p>Ask what was measured and on whom. Check where the axis starts. Predict the output first. Write the four-part bug report. Take the names out. And say what you used.</p>
+    <div class="kit"><p style="color:#B9C6D6;margin-bottom:8px">The line worth remembering:</p>
+    <p style="color:#fff;font-size:20px;font-family:var(--disp);font-weight:700;margin:0">Code that runs is not the same as code that's right.</p></div>
+    <p id="doneSaved" class="hide" style="color:#B9C6D6;margin-top:22px">Your answers are saved. You can come back and reread them any time.</p>
+    <a id="doneBack" class="hide" href="../index.html" style="display:inline-block;margin-top:10px;background:var(--marigold);color:#231B08;border-radius:10px;padding:12px 18px;font-weight:700;text-decoration:none">See all courses</a>
+  </div>
+</section>
+
+</template>
+<script>
+(function(){
+"use strict";
+var COURSE="make-it-run-data-code";
+var STATE={course:COURSE,pid:"",started:new Date().toISOString(),answers:{}};
+var SCORES={};
+var READY=false;      /* true once saved progress has been restored */
+var RESTORING=false;  /* while true, re-applying old answers must not re-save them */
+function rec(id,mod,q,a,correct){
+  STATE.answers[id]={mod:mod||"",q:q||"",a:a,correct:(correct===undefined?"":correct),t:new Date().toISOString()};
+  if(!RESTORING)Sawaal.record(id,mod,q,a,correct);
+  updateExportSummary();
+}
+function modOf(el){var s=el.closest(".slide");return s&&s.dataset.mod?s.dataset.mod:"";}
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+
+var L5=["Not at all","Completely"];
+var BANKS={"base": {"title": "Six quick questions", "sub": "Tap 1 (not at all) to 5 (completely).", "items": [{"id": "b1", "type": "likert", "construct": "declarative", "q": "I can tell what a set of data can and cannot prove."}, {"id": "b2", "type": "likert", "construct": "monitoring", "q": "When I see a chart, I check how it was made before I believe it."}, {"id": "b3", "type": "likert", "construct": "procedural", "q": "If someone gave me code, I could explain what it does line by line."}, {"id": "b4", "type": "choice", "construct": "debugging", "q": "When code or a formula doesn't work, what do you usually do first?", "opts": ["Ask AI to fix it", "Read the error message carefully", "Change things until it works", "Start again", "Give up"]}, {"id": "b5", "type": "choice", "construct": "usage", "q": "How much coding have you done?", "opts": ["None", "A little at school", "Some projects of my own", "Quite a lot"]}, {"id": "b6", "type": "text", "construct": "goal", "q": "What would you like to be able to build or find out with data?"}]}, "m1": {"title": "Module 1", "sub": "About reading data.", "items": [{"id": "m1a", "type": "likert", "construct": "conditional", "q": "I can tell the difference between a question data can answer and a decision people have to make."}, {"id": "m1b", "type": "choice", "construct": "error-analysis", "q": "Which question was hardest to judge?", "opts": ["Which item made most money", "Should they stop selling fruit", "Do students prefer savoury food", "None were hard"]}, {"id": "m1c", "type": "text", "construct": "transfer", "q": "Write one claim you have seen where the data didn't actually measure the thing being claimed."}]}, "m2": {"title": "Module 2", "sub": "About charts and claims.", "items": [{"id": "m2a", "type": "likert", "construct": "monitoring", "q": "I can spot when a chart is technically true but misleading."}, {"id": "m2b", "type": "choice", "construct": "error-analysis", "q": "Which broken claim was hardest to catch?", "opts": ["This proves homework causes lost sleep", "Students across the country", "The invented 3.7 hours", "The school should reduce homework", "I caught them all"]}, {"id": "m2c", "type": "choice", "construct": "prior-behaviour", "q": "Before today, had you ever checked where a chart's axis started?", "opts": ["Never thought about it", "Sometimes", "Usually", "Always"]}, {"id": "m2d", "type": "text", "construct": "evaluation", "q": "Why is 'two things move together' not the same as 'one causes the other'?"}]}, "m3": {"title": "Module 3", "sub": "About reading code.", "items": [{"id": "m3a", "type": "choice", "construct": "calibration", "q": "How many outputs did you predict correctly?", "opts": ["All three", "Two", "One", "None"]}, {"id": "m3b", "type": "choice", "construct": "calibration", "q": "When you were wrong, how sure had you been?", "opts": ["Very sure", "Fairly sure", "Not sure", "I was right every time"]}, {"id": "m3c", "type": "likert", "construct": "conditional", "q": "I would now refuse to run code I cannot explain."}, {"id": "m3d", "type": "text", "construct": "evaluation", "q": "Which of the three surprised you, and why?"}]}, "m4": {"title": "Module 4", "sub": "About describing bugs.", "items": [{"id": "m4a", "type": "likert", "construct": "procedural", "q": "I can describe a problem so that someone else could help me without asking five questions first."}, {"id": "m4b", "type": "choice", "construct": "debugging", "q": "Which part of the bug report was hardest to write?", "opts": ["Expected", "Actual", "Exact error", "Already tried", "None were hard"]}, {"id": "m4c", "type": "choice", "construct": "debugging", "q": "Did writing it out give you an idea about the cause?", "opts": ["Yes, I solved it myself", "Yes, a partial idea", "No", "I did not try it on a real bug"]}, {"id": "m4d", "type": "text", "construct": "transfer", "q": "Where else, outside code, would this four-part method work?"}]}, "m5": {"title": "Module 5", "sub": "About safety and honesty.", "items": [{"id": "m5a", "type": "likert", "construct": "declarative", "q": "I know what to remove from a dataset before sharing it with any tool."}, {"id": "m5b", "type": "likert", "construct": "conditional", "q": "I know when AI-written code is too risky to run."}, {"id": "m5c", "type": "choice", "construct": "disagreement", "q": "Did you disagree with any of our four answers?", "opts": ["No, all fair", "Yes, one of them", "Yes, more than one"]}, {"id": "m5d", "type": "text", "construct": "reasoning", "q": "Why can someone be identified from data even with their name removed?"}]}, "m6": {"title": "Capstone", "sub": "About the ten-student dataset.", "items": [{"id": "m6a", "type": "choice", "construct": "integrity", "q": "Did you write your expectation before looking at the numbers properly?", "opts": ["Yes", "No", "I wrote it afterwards"]}, {"id": "m6b", "type": "choice", "construct": "evaluation", "q": "What did you do with student 5, the one who breaks the pattern?", "opts": ["Explained it in my conclusion", "Mentioned it briefly", "Ignored it", "Did not notice it"]}, {"id": "m6c", "type": "likert", "construct": "evaluation", "q": "I can state what my own conclusion cannot prove."}, {"id": "m6d", "type": "choice", "construct": "evaluation", "q": "Did the chatbot itself claim anything the data does not support?", "opts": ["Yes, and I caught it", "Yes, but I only noticed after", "No", "I could not tell"]}, {"id": "m6e", "type": "text", "construct": "evaluation", "q": "What third factor could explain both the sleep and the scores?"}]}, "post": {"title": "Final questions", "sub": "The first four are the same as at the start.", "items": [{"id": "p1", "type": "likert", "construct": "declarative", "q": "I can tell what a set of data can and cannot prove."}, {"id": "p2", "type": "likert", "construct": "monitoring", "q": "When I see a chart, I check how it was made before I believe it."}, {"id": "p3", "type": "likert", "construct": "procedural", "q": "If someone gave me code, I could explain what it does line by line."}, {"id": "p4", "type": "choice", "construct": "debugging", "q": "When code or a formula doesn't work, what will you do first now?", "opts": ["Ask AI to fix it", "Read the error message carefully", "Change things until it works", "Start again", "Give up"]}, {"id": "p5", "type": "likert", "construct": "intention", "q": "I will predict the output before running AI-written code."}, {"id": "p6", "type": "choice", "construct": "course-feedback", "q": "Which part was most useful?", "opts": ["Reading data", "Charts that mislead", "Predicting code output", "The bug report", "Safe and honest", "The capstone"]}, {"id": "p7", "type": "text", "construct": "course-feedback", "q": "What was confusing, boring or missing?"}, {"id": "p8", "type": "text", "construct": "intention", "q": "One thing you will always do before running code you didn't write."}]}};
+
+/* ============ BUILD DECK ============ */
+var deck=document.getElementById("deck");
+var tpl=document.getElementById("slides");
+deck.appendChild(tpl.content.cloneNode(true));
+tpl.remove();
+var slides=$$(".slide",deck);
+var cur=0;
+
+/* ============ M&E ============ */
+slides.forEach(function(sl){
+  var host=sl.querySelector(".me");if(!host)return;
+  var bank=BANKS[host.dataset.me];if(!bank)return;
+  var mod=sl.dataset.mod||"";
+  var html='<h3>'+bank.title+'</h3><p class="sub">'+bank.sub+'</p>';
+  bank.items.forEach(function(it){
+    html+='<div class="meq" data-item="'+it.id+'"><span class="qt">'+it.q+'</span>';
+    if(it.type==="likert"){
+      html+='<div class="likert">';
+      for(var n=1;n<=5;n++)html+='<button type="button" data-val="'+n+'">'+n+'</button>';
+      html+='</div><div class="lends"><span>'+L5[0]+'</span><span>'+L5[1]+'</span></div>';
+    }else if(it.type==="choice"){
+      html+='<div class="opts" style="margin-top:7px">';
+      it.opts.forEach(function(o){html+='<button type="button" class="opt" data-val="'+o.replace(/"/g,"&quot;")+'">'+o+'</button>';});
+      html+='</div>';
+    }else{
+      html+='<textarea rows="3" style="margin-top:7px"></textarea>';
+    }
+    html+='</div>';
+  });
+  html+='<p class="saved">Saved. Your answers travel with you to the last screen.</p>';
+  host.innerHTML=html;
+  host.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-val]");if(!b)return;
+    var box=b.closest(".meq"),id=box.dataset.item;
+    var item=bank.items.filter(function(x){return x.id===id;})[0];
+    $$("button[data-val]",box).forEach(function(o){o.classList.remove("on");o.classList.remove("picked");});
+    b.classList.add(b.parentNode.classList.contains("likert")?"on":"picked");
+    rec(id,mod,item.q,b.dataset.val);
+    host.querySelector(".saved").classList.add("on");
+  });
+  host.addEventListener("input",function(e){
+    if(e.target.tagName!=="TEXTAREA")return;
+    var box=e.target.closest(".meq"),id=box.dataset.item;
+    var item=bank.items.filter(function(x){return x.id===id;})[0];
+    rec(id,mod,item.q,e.target.value);
+    host.querySelector(".saved").classList.add("on");
+  });
+});
+
+/* ============ NAV ============ */
+var rail=$("#rail"),pos=$("#pos"),modLabel=$("#modLabel"),nextBtn=$("#next"),prevBtn=$("#prev");
+function show(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  slides[cur].classList.remove("on");
+  cur=i;slides[cur].classList.add("on");
+  deck.scrollTop=0;
+  rail.style.width=((cur+1)/slides.length*100)+"%";
+  pos.textContent=(cur+1)+"/"+slides.length;
+  modLabel.textContent=slides[cur].dataset.mod||"";
+  prevBtn.style.visibility=cur===0?"hidden":"visible";
+  nextBtn.textContent=cur===0?"Start":(cur===slides.length-1?"Done":"Next");
+  nextBtn.disabled=cur===slides.length-1;
+  if(READY){Sawaal.setScreen(cur);if(cur===slides.length-1)Sawaal.complete();}
+}
+function findIncomplete(slide){
+  var missing=[];
+  $$(".meq",slide).forEach(function(box){
+    if(box.querySelector("button[data-val]")){ // likert or choice — text-only meqs are optional
+      var ans=STATE.answers[box.dataset.item];
+      if(!ans||ans.a===undefined||ans.a===null||ans.a==="")missing.push(box);
+    }
+  });
+  $$(".act .qcard[data-q]",slide).forEach(function(card){
+    if(!card.dataset.done)missing.push(card);
+  });
+  $$(".predict",slide).forEach(function(p){
+    if(!p.dataset.done)missing.push(p);
+  });
+  $$(".doc",slide).forEach(function(doc){
+    if(!doc.dataset.done)missing.push(doc.closest(".actbody")||doc);
+  });
+  return missing;
+}
+function goNext(){
+  var missing=findIncomplete(slides[cur]);
+  if(missing.length){
+    missing.forEach(function(el){
+      el.classList.add("needs-answer");
+      setTimeout(function(){el.classList.remove("needs-answer");},1600);
+    });
+    missing[0].scrollIntoView({behavior:"smooth",block:"center"});
+    var old=nextBtn.textContent;
+    nextBtn.textContent="Answer above first";
+    nextBtn.classList.add("warn");
+    setTimeout(function(){nextBtn.textContent=old;nextBtn.classList.remove("warn");},1600);
+    return;
+  }
+  show(cur+1);
+}
+nextBtn.addEventListener("click",goNext);
+prevBtn.addEventListener("click",function(){show(cur-1);});
+document.addEventListener("keydown",function(e){
+  var t=e.target.tagName;
+  if(t==="TEXTAREA"||t==="INPUT"||t==="SELECT")return;
+  if(e.key==="ArrowRight")goNext();
+  if(e.key==="ArrowLeft")show(cur-1);
+});
+var tx=0,ty=0;
+deck.addEventListener("touchstart",function(e){tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;},{passive:true});
+deck.addEventListener("touchend",function(e){
+  var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8){dx<0?goNext():show(cur-1);}
+},{passive:true});
+
+var toc=$("#toc"),tocList=$("#tocList");
+slides.forEach(function(sl,i){
+  var a=sl.querySelector(".act>header h3"),h=sl.querySelector("h1,h2");
+  var b=document.createElement("button");b.className="tocItem";
+  b.innerHTML=(i+1)+". "+(a?a.textContent:(h?h.textContent:"Screen "+(i+1)))+"<span>"+(sl.dataset.mod||"")+"</span>";
+  b.addEventListener("click",function(){toc.classList.remove("on");show(i);});
+  tocList.appendChild(b);
+});
+$("#menuBtn").addEventListener("click",function(){toc.classList.add("on");});
+$("#tocClose").addEventListener("click",function(){toc.classList.remove("on");});
+
+var pid=$("#pid");
+if(pid)pid.addEventListener("input",function(){
+  STATE.pid=pid.value.trim();updateExportSummary();
+  if(Sawaal.mode==="local")rec("code_name","Getting started","Code name",STATE.pid);
+});
+
+/* ============ CHOICE ACTIVITIES ============ */
+function applyActivityAnswer(card,val,isRestore){
+  var act=card.closest(".act").dataset.act;
+  var opts=$$(".opt",card),opt=null;
+  opts.forEach(function(o){if(o.dataset.v===val)opt=o;});
+  if(!opt||card.dataset.done)return;
+  card.dataset.done="1";
+  var correct=opt.hasAttribute("data-correct");
+  opts.forEach(function(o){
+    o.disabled=true;
+    if(o===opt)o.classList.add("picked",correct?"right":"wrong");
+    else if(o.hasAttribute("data-correct"))o.classList.add("right");
+    else o.classList.add("dim");
+  });
+  var fb=card.querySelector(".fb");
+  fb.className="fb on "+(correct?"ok":"no");
+  fb.innerHTML="<b>"+(correct?"Yes.":"Have another look.")+"</b>"+(opt.dataset.fb||"");
+  if(!SCORES[act])SCORES[act]={right:0,total:0};
+  SCORES[act].right+=correct?1:0;SCORES[act].total+=1;
+  if(!isRestore)rec(act+"_"+card.dataset.q,modOf(opt),card.querySelector(".qt").textContent.slice(0,140),opt.dataset.v,correct?1:0);
+  var body=card.closest(".actbody");
+  if($$(".qcard[data-done]",body).length===$$(".qcard",body).length){
+    var st=body.querySelector(".stamp[data-stamp]");
+    if(st){
+      var s=SCORES[act];
+      st.textContent=s.right+" of "+s.total+" — "+(s.right===s.total?"clean sweep":(s.right>=s.total*0.6?"solid":"worth a second read"));
+      st.classList.add("on");
+      if(s.right<s.total*0.6)st.style.borderColor=st.style.color="#E23A2E";
+      if(!isRestore)rec(act+"_score","Activity score","Score on "+act,s.right+"/"+s.total,s.right);
+    }
+  }
+}
+function restoreActivitiesUI(){
+  $$(".act[data-act] .qcard[data-q]").forEach(function(card){
+    var act=card.closest(".act").dataset.act;
+    var ans=STATE.answers[act+"_"+card.dataset.q];
+    if(ans)applyActivityAnswer(card,ans.a,true);
+  });
+}
+document.addEventListener("click",function(e){
+  var opt=e.target.closest(".act .opts .opt");if(!opt)return;
+  var card=opt.closest(".qcard");if(!card)return;
+  if(card.dataset.done)return;
+  applyActivityAnswer(card,opt.dataset.v,false);
+});
+
+/* ============ PREDICT THEN CHECK ============ */
+$$(".predict").forEach(function(p){
+  var id=p.dataset.p,guess=null,conf=null;
+  $$(".opts .opt",p).forEach(function(o){
+    o.addEventListener("click",function(){
+      if(p.dataset.done)return;
+      $$(".opts .opt",p).forEach(function(x){x.classList.remove("picked");});
+      o.classList.add("picked");guess=o.dataset.v;
+    });
+  });
+  var gi=p.querySelector("[data-guess]");
+  if(gi)gi.addEventListener("input",function(){guess=gi.value;});
+  var cw=document.createElement("div");
+  cw.className="conf";
+  cw.innerHTML='<span>Before you look — how sure are you?</span><div class="likert">'+
+    [1,2,3,4,5].map(function(n){return '<button type="button" data-c="'+n+'">'+n+'</button>';}).join("")+
+    '</div><div class="lends"><span>Guessing</span><span>Certain</span></div>';
+  p.insertBefore(cw,p.querySelector("[data-reveal]"));
+  cw.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-c]");if(!b||p.dataset.done)return;
+    $$("button[data-c]",cw).forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on");conf=parseInt(b.dataset.c,10);
+  });
+  p.querySelector("[data-reveal]").addEventListener("click",function(){
+    if(p.dataset.done)return;
+    if(guess===null||guess===""){alert("Commit to an answer first. Guessing badly is part of the exercise.");return;}
+    if(conf===null){alert("Say how sure you are first.");return;}
+    finishPredict(p,guess,conf,false);
+  });
+});
+function finishPredict(p,guess,conf,isRestore){
+  if(p.dataset.done)return;
+  p.dataset.done="1";
+  var id=p.dataset.p;
+  var correct="";
+  var picked=null;
+  $$(".opts .opt",p).forEach(function(o){if(o.dataset.v===String(guess)){picked=o;o.classList.add("picked");}});
+  if(picked)correct=picked.hasAttribute("data-correct")?1:0;
+  else if(p.dataset.num){
+    var v=parseFloat(String(guess).replace(/[, ]/g,""));
+    var target=parseFloat(p.dataset.num),f=parseFloat(p.dataset.factor||"2");
+    correct=(isFinite(v)&&v>0&&v<=target*f&&v>=target/f)?1:0;
+  }
+  $$(".opts .opt",p).forEach(function(o){
+    o.disabled=true;
+    if(o.hasAttribute("data-correct"))o.classList.add("right");
+    else if(o.classList.contains("picked"))o.classList.add("wrong");
+    else o.classList.add("dim");
+  });
+  var cw=p.querySelector(".conf");if(cw)cw.classList.add("lock");
+  var rb=p.querySelector(".revealbox");if(rb)rb.classList.add("on");
+  var cal=p.querySelector(".cal");
+  if(cal&&correct!==""){
+    if(correct===1&&conf>=4){cal.className="cal on good";cal.textContent="Right, and you knew it. That is what confidence should look like.";}
+    else if(correct===0&&conf>=4){cal.className="cal on over";cal.textContent="Wrong, and you were sure. This is the exact feeling to distrust — it is how people accept a wrong AI answer.";}
+    else if(correct===1&&conf<=2){cal.className="cal on under";cal.textContent="Right, but you did not trust yourself. Worth noticing: you knew more than you thought.";}
+    else {cal.className="cal on";cal.textContent="Wrong, but you were unsure. Unsure is a useful signal — it tells you what to check.";}
+  }
+  if(!isRestore){
+    rec("predict_"+id,modOf(p),(p.querySelector(".qt")||{textContent:id}).textContent.slice(0,140),String(guess),correct);
+    rec("confidence_"+id,modOf(p),"Confidence before checking: "+id,String(conf),"");
+  }
+}
+function restorePredict(){
+  $$(".predict").forEach(function(p){
+    var id=p.dataset.p,ans=STATE.answers["predict_"+id],cAns=STATE.answers["confidence_"+id];
+    if(!ans)return;
+    var conf=cAns?parseInt(cAns.a,10):3;
+    var cw=p.querySelector(".conf");
+    if(cw&&cAns)$$("button[data-c]",cw).forEach(function(b){if(b.dataset.c===String(cAns.a))b.classList.add("on");});
+    finishPredict(p,ans.a,conf,true);
+  });
+}
+
+/* ============ BUILDERS ============ */
+$$(".builder").forEach(function(b){
+  var id=b.dataset.id,parts=$$("[data-part]",b),act=b.closest(".act");
+  var out=$("[data-out]",act),meter=$("[data-meter]",act),label=$("[data-label]",act),tip=$("[data-tipout]",act);
+  var kw=b.dataset.keywords?new RegExp(b.dataset.keywords,"i"):null;
+  function grow(el){el.style.height="auto";el.style.height=Math.max(62,el.scrollHeight+2)+"px";}
+  function update(){
+    var vals=parts.map(function(p){return p.value.trim();});
+    var text=vals.filter(Boolean).join("\n\n");
+    out.textContent=text||out.dataset.empty||"Your text will appear here as you type.";
+    var btn=document.createElement("button");btn.className="copy";btn.setAttribute("data-copy","");btn.textContent="Copy";
+    out.appendChild(btn);
+    var filled=vals.filter(function(v){return v.length>12;}).length;
+    var words=text.split(/\s+/).filter(Boolean).length;
+    var score=Math.round(filled*(80/parts.length));
+    if(words>35)score+=10;
+    if(kw&&kw.test(text))score+=10;
+    score=Math.min(100,score);
+    meter.style.width=score+"%";
+    meter.style.background=score<40?"#E23A2E":(score<70?"#FFB703":"#0F7B6C");
+    label.textContent=score===0?"Empty":(score<40?"Thin":(score<70?"Getting there":(score<90?"Strong":"Excellent")));
+    var missing=null;
+    for(var i=0;i<parts.length;i++){if(vals[i].length<13){missing=parts[i].dataset.tip;break;}}
+    tip.textContent=missing?("Next: "+missing):(b.dataset.done||"All parts filled. Run it, then change one line and run it again to see what that line was doing.");
+    if(text)rec(id,modOf(b),b.dataset.q||("Text built in "+id),text,score);
+  }
+  parts.forEach(function(p){p.addEventListener("input",function(){grow(p);update();});});
+  var chips=act.querySelector(".chips[data-examples]");
+  if(chips){
+    var data=JSON.parse(act.querySelector("script.exdata").textContent);
+    chips.addEventListener("click",function(e){
+      var c=e.target.closest(".chip");if(!c)return;
+      var ex=data[c.dataset.ex];
+      parts.forEach(function(p,i){p.value=ex?(ex[i]||""):"";grow(p);p.dispatchEvent(new Event("input",{bubbles:true}));});
+      update();
+    });
+  }
+  update();
+  b.__restore=function(){parts.forEach(grow);update();};
+});
+
+/* ============ HUNTS ============ */
+function evaluateHunt(doc,isRestore){
+  if(doc.dataset.done)return;
+  doc.dataset.done="1";
+  var act=doc.closest(".act"),id=act.dataset.act,fbBox=$("[data-huntfb]",act);
+  var hits=0,bad=0,fa=0,html="",flagged=[];
+  $$(".sus",doc).forEach(function(s,n){
+    var isBad=s.dataset.v==="bad",isFlagged=s.classList.contains("flag");
+    if(isFlagged)flagged.push(n);
+    s.style.background="";
+    if(isBad){bad++;if(isFlagged){hits++;s.classList.add("hit");}else s.classList.add("shown");}
+    else if(isFlagged){fa++;s.classList.add("miss");}
+    var v=isBad?(isFlagged?"You caught it. ":"Missed — ")
+      :(s.dataset.v==="soft"?(isFlagged?"Good instinct. ":"Worth flagging too — ")
+      :(isFlagged?"This one was actually fine. ":"Correctly left alone. "));
+    html+='<div class="'+(isBad?"bad":"fine")+'"><b>'+(n+1)+'. </b>'+v+s.dataset.note+'</div>';
+  });
+  fbBox.innerHTML=html;
+  var st=act.querySelector(".stamp[data-stamp]");
+  if(st){
+    st.textContent=hits+" of "+bad+" caught"+(fa?", "+fa+" false alarm"+(fa>1?"s":""):"");
+    st.classList.add("on");
+    if(hits<bad*0.6)st.style.borderColor=st.style.color="#E23A2E";
+  }
+  if(!isRestore){
+    rec(id+"_flags",modOf(doc),"Sentences flagged in "+id,flagged);
+    rec(id+"_score",modOf(doc),"Flaws caught in "+id,hits+"/"+bad+" (false alarms: "+fa+")",hits);
+  }
+}
+$$(".doc").forEach(function(doc){
+  var act=doc.closest(".act"),chk=$("[data-huntcheck]",act),rst=$("[data-huntreset]",act);
+  doc.addEventListener("click",function(e){
+    var s=e.target.closest(".sus");if(!s||doc.dataset.done)return;
+    s.classList.toggle("flag");
+    s.style.background=s.classList.contains("flag")?"#FFE9A8":"";
+  });
+  chk.addEventListener("click",function(){evaluateHunt(doc,false);});
+  if(rst)rst.addEventListener("click",function(){
+    delete doc.dataset.done;$("[data-huntfb]",act).innerHTML="";
+    var st=act.querySelector(".stamp[data-stamp]");if(st){st.classList.remove("on");st.style.borderColor=st.style.color="";}
+    $$(".sus",doc).forEach(function(s){s.className="sus";s.style.background="";});
+    rec(act.dataset.act+"_flags",modOf(doc),"Sentences flagged in "+act.dataset.act,null);
+  });
+});
+function restoreHunt(){
+  $$(".doc").forEach(function(doc){
+    var act=doc.closest(".act"),id=act.dataset.act;
+    var f=STATE.answers[id+"_flags"];
+    if(!f||!Array.isArray(f.a))return;
+    var spans=$$(".sus",doc);
+    f.a.forEach(function(n){if(spans[n])spans[n].classList.add("flag");});
+    evaluateHunt(doc,true);
+  });
+}
+
+/* ============ TIMERS ============ */
+$$(".timer").forEach(function(t){
+  var total=parseInt(t.dataset.mins,10)*60,left=total,idt=null;
+  var view=t.querySelector(".tv"),btn=t.querySelector("button");
+  function paint(){var m=Math.floor(left/60),s=left%60;view.textContent=m+":"+(s<10?"0":"")+s;}
+  btn.addEventListener("click",function(){
+    if(idt){clearInterval(idt);idt=null;btn.textContent="Resume";return;}
+    btn.textContent="Pause";t.classList.remove("done");
+    idt=setInterval(function(){
+      left--;paint();
+      if(left<=0){clearInterval(idt);idt=null;t.classList.add("done");view.textContent="Time";btn.textContent="Reset";left=total;}
+    },1000);
+  });
+  paint();
+});
+
+/* ============ COPY ============ */
+function copyText(txt,btn){
+  function done(){if(!btn)return;var o=btn.textContent;btn.textContent="Copied";btn.classList.add("done");
+    setTimeout(function(){btn.textContent=o;btn.classList.remove("done");},1600);}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,function(){fb(txt);done();});
+  else{fb(txt);done();}
+}
+function fb(txt){var ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-copy]");if(!b)return;
+  var box=b.parentNode.cloneNode(true);var inner=box.querySelector("[data-copy]");if(inner)inner.remove();
+  copyText(box.textContent.trim(),b);
+});
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-copyall]");if(!b)return;
+  var txt=$$(b.dataset.copyall).map(function(x,i){return (b.dataset.prefix||"Step ")+(i+1)+": "+x.value;}).join("\n\n");
+  copyText(txt,b);
+  rec(b.dataset.store||"copied_steps",modOf(b),b.dataset.q||"Steps written",txt);
+});
+
+/* ============ CHIP FILL (plain text targets) ============ */
+$$(".chips[data-fillnext]").forEach(function(c){
+  c.addEventListener("click",function(e){
+    var chip=e.target.closest(".chip");if(!chip)return;
+    var inputs=$$(c.dataset.fillnext);
+    for(var i=0;i<inputs.length;i++){
+      if(!inputs[i].value.trim()){inputs[i].value=chip.textContent;inputs[i].dispatchEvent(new Event("input",{bubbles:true}));inputs[i].focus();return;}
+    }
+  });
+});
+
+/* ============ FREE TEXT STORE ============ */
+document.addEventListener("input",function(e){
+  var el=e.target;if(!el.dataset||!el.dataset.store)return;
+  var lab=el.id?document.querySelector('label[for="'+el.id+'"]'):null;
+  var q=lab?lab.textContent.trim().slice(0,140):(el.dataset.tip?el.dataset.tip:el.dataset.store);
+  rec(el.dataset.store,modOf(el),q,el.value);
+});
+function restoreStoredFields(){
+  $$("[data-store]").forEach(function(el){
+    var ans=STATE.answers[el.dataset.store];
+    if(ans&&ans.a!=null)el.value=ans.a;
+  });
+  $$(".builder").forEach(function(b){if(b.__restore)b.__restore();});
+  if(STATE.answers.code_name&&!pid.value){pid.value=STATE.answers.code_name.a||"";STATE.pid=pid.value;}
+}
+function restoreMeqUI(){
+  $$(".meq").forEach(function(box){
+    var id=box.dataset.item,ans=STATE.answers[id];
+    if(!ans)return;
+    var buttons=$$("button[data-val]",box);
+    if(buttons.length){
+      buttons.forEach(function(b){
+        if(String(b.dataset.val)===String(ans.a))b.classList.add(b.parentNode.classList.contains("likert")?"on":"picked");
+      });
+    }else{
+      var ta=box.querySelector("textarea");
+      if(ta)ta.value=ans.a;
+    }
+  });
+  $$(".me").forEach(function(host){
+    var saved=host.querySelector(".saved");
+    if(saved&&host.querySelector(".meq .on,.meq .picked"))saved.classList.add("on");
+  });
+}
+
+/* ============ EXPORT ============ */
+function rowsOut(){
+  var out=[["course","participant_code","item_id","module","question","answer","correct","timestamp"]];
+  Object.keys(STATE.answers).forEach(function(k){
+    var a=STATE.answers[k];
+    out.push([COURSE,STATE.pid||"(no code)",k,a.mod,a.q,String(a.a==null?"":a.a),String(a.correct),a.t]);
+  });
+  return out;
+}
+function csv(){return rowsOut().map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""').replace(/\r?\n/g," / ")+'"';}).join(",");}).join("\n");}
+function updateExportSummary(){
+  var el=$("#exportSummary");if(!el)return;
+  var n=Object.keys(STATE.answers).length;
+  var online=Sawaal.mode==="online"||Sawaal.mode==="offline";
+  el.textContent=(STATE.pid?"Code name "+STATE.pid+". ":(online?"":"No code name set — go back to the second screen if your teacher needs one. "))+n+" answers recorded, including every check-in, everything you built, and your activity scores."+(online?" They are already saved online; this download is your own copy.":"");
+}
+function dl(name,text,type){
+  try{
+    var blob=new Blob([text],{type:type}),url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
+  }catch(e){showRaw();}
+}
+function showRaw(){var b=$("#rawBox");b.value=csv();b.classList.remove("hide");b.select();}
+if($("#dlCsv"))$("#dlCsv").addEventListener("click",function(){dl(COURSE+"-"+(STATE.pid||"anon")+".csv","\ufeff"+csv(),"text/csv;charset=utf-8");});
+if($("#dlJson"))$("#dlJson").addEventListener("click",function(){dl(COURSE+"-"+(STATE.pid||"anon")+".json",JSON.stringify(STATE,null,2),"application/json");});
+if($("#showRaw"))$("#showRaw").addEventListener("click",showRaw);
+
+/* ============ PLATFORM: open, restore, resume ============ */
+function applyMode(state){
+  var online=state.mode==="online"||state.mode==="offline";
+  if(online&&state.student){
+    STATE.pid=state.student.code;
+    pid.value=state.student.code;
+    pid.classList.add("hide");
+    var lab=pid.parentNode.querySelector('label[for="pid"]');if(lab)lab.classList.add("hide");
+    var hint=$("#pidHint");if(hint)hint.classList.add("hide");
+    $("#pidTitle").textContent="Your secret key";
+    var ps=$("#pidSigned");ps.textContent=state.student.code;ps.classList.remove("hide");
+    $("#saveNote").textContent="Saved online as you go, so you can stop and carry on later on any phone or computer. Sign in with the same school, class and secret key.";
+    $("#exportLead").textContent="Your answers are already saved online, so there's nothing you have to hand in. If you'd like your own copy, download it here.";
+    $("#exportNote").classList.add("hide");
+    $("#doneSaved").classList.remove("hide");
+    $("#doneBack").classList.remove("hide");
+  }
+  if(state.mode==="local"){
+    $("#saveNote").textContent="You're not signed in, so your answers stay on this device only. Open the menu (☰) and choose Sign in to save.";
+  }
+}
+Sawaal.start().then(function(state){
+  RESTORING=true;
+  try{
+    Object.keys(state.answers).forEach(function(k){STATE.answers[k]=state.answers[k];});
+    applyMode(state);
+    restoreMeqUI();
+    restoreStoredFields();
+    restoreActivitiesUI();
+    restorePredict();
+    restoreHunt();
+    updateExportSummary();
+  }finally{RESTORING=false;}
+  show(state.completed?0:(state.screen||0));  /* finished students start from the top to reread */
+  READY=true;
+});
+
+slides[0].classList.add("on");show(0);updateExportSummary();
+window.addEventListener("beforeunload",function(e){
+  if(Sawaal.mode==="local"&&Object.keys(STATE.answers).length>3){e.preventDefault();e.returnValue="";}
+});
+})();
+</script>
+</body>
+</html>
