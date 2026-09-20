@@ -10,8 +10,8 @@
 //  NEVER put the "service_role" or "secret" key here.
 // =====================================================================
 window.SAWAAL_CONFIG = {
-  supabaseUrl: "https://YOUR-PROJECT.supabase.co",
-  supabaseKey: "YOUR-ANON-KEY",
+  supabaseUrl: "https://apghjxrmjmbenxxdtann.supabase.co",
+  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwZ2hqeHJtam1iZW54eGR0YW5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTM3NzksImV4cCI6MjEwNTQ4OTc3OX0.NC9Vs22LFIpyBDD98XVdTsrq5ba-rxvFVf-DVwBKzkQ",
 
   // Classes students can pick from on the sign-in form.
   classes: ["5", "6", "7", "8", "9", "10", "11", "12"],
