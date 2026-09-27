@@ -65,6 +65,14 @@ body{background:var(--slate);color:var(--ink);font-family:var(--body);font-size:
 #modLabel{font-size:13px;color:#9FB0C6;max-width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:520px){#modLabel{display:none}}
 
+
+/* ThinkHumanly logo */
+.th-logo{display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;padding:3px 7px;height:44px;flex:none}
+.th-logo img{height:36px;width:auto;display:block}
+.th-by{display:inline-flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:8px 14px 8px 12px;margin-top:22px;color:#1D1A16;font-size:13px;font-weight:600;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.th-by img{height:52px;width:auto;display:block}
+@media (max-width:420px){#bar{gap:6px}#pos{min-width:38px;font-size:12px}#bar button{padding:12px 12px}#next{min-width:96px;white-space:nowrap}.th-logo{padding:3px 5px}.th-logo img{height:32px}}
+
 /* ---------- contents overlay ---------- */
 #toc{position:fixed;inset:0;background:rgba(12,17,24,.97);color:#fff;z-index:70;display:none;overflow-y:auto;padding:24px}
 #toc.on{display:block}
@@ -369,6 +377,7 @@ th{background:#F3EFE6;font-weight:700}
   <main id="deck"></main>
   <nav id="bar">
     <button id="menuBtn" aria-label="Open contents">☰</button>
+    <span class="th-logo"><img src="../images/logo.png" alt="ThinkHumanly" onerror="this.parentNode.style.display='none'"></span>
     <button id="prev">Back</button>
     <span id="pos">1/1</span>
     <span id="sawaal-status" aria-live="polite"></span>
@@ -398,6 +407,7 @@ th{background:#F3EFE6;font-weight:700}
         <span>🏅 7 missions, 7 badges</span>
         <span>📱 Works on a phone</span>
       </div>
+      <div class="th-by"><img src="../images/logo.png" alt="ThinkHumanly" onerror="this.parentNode.style.display='none'"><span>A ThinkHumanly<br>course</span></div>
     </div>
     <div class="covart" aria-hidden="true">
       <svg viewBox="0 0 100 100" class="mascot-xl"><use href="#sawaali"/></svg>
@@ -1565,6 +1575,7 @@ Don't rewrite my question. Instead:
       <p style="color:#fff;font-size:22px;font-family:var(--disp);font-weight:800;margin:0;line-height:1.25">If the thinking didn't happen in your head, it didn't happen.</p>
     </div>
     <p id="doneSaved" class="hide" style="color:#B9C6D6;margin-top:20px">Your answers are saved. You can come back and read them any time.</p>
+    <div><div class="th-by"><img src="../images/logo.png" alt="ThinkHumanly" onerror="this.parentNode.style.display='none'"><span>Made with care by<br>ThinkHumanly</span></div></div>
     <a id="doneBack" class="hide" href="../index.html" style="display:inline-block;margin-top:8px;background:var(--marigold);color:#231B08;border-radius:12px;padding:12px 18px;font-weight:700;text-decoration:none">See all courses</a>
   </div>
 </section>
