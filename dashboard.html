@@ -78,6 +78,16 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
 .auth{max-width:400px;margin:70px auto;padding:0 16px}
 .auth label{display:block;font-weight:600;margin:14px 0 5px}.auth input{width:100%}
 .auth .btn{width:100%;justify-content:center;margin-top:16px;padding:12px}
+/* home-page on/off switch */
+.sw{position:relative;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;user-select:none;background:#2A3849;border:1px solid #3E4E63;border-radius:8px;padding:5px 10px}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.sw .track{width:36px;height:20px;border-radius:99px;background:#5B6B80;position:relative;transition:background .15s;flex:none}
+.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked + .track{background:#0F7B6C}
+.sw input:checked + .track::after{transform:translateX(16px)}
+.sw input:focus-visible + .track{outline:2px solid #FFB703;outline-offset:2px}
+.sw.busy{opacity:.6;pointer-events:none}
+.sw.locked{opacity:.65;cursor:not-allowed}
 @media (max-width:640px){h1{font-size:22px}.top .brand small{display:none}}
 </style>
 </head>
@@ -92,6 +102,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
   <div class="top"><div class="in">
     <div class="brand">Sawaal<small>dashboard</small></div>
     <select id="course" aria-label="Course"></select>
+    <label class="sw hide" id="homeSw" title="Show or hide this course on the home page"><input type="checkbox" id="showHome"><span class="track"></span><span id="homeSwText">On home page</span></label>
     <button id="refresh" type="button">Refresh</button>
   </div></div>
   <div class="filters"><div class="in">
@@ -114,7 +125,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
   var api = Sawaal.api;
   var $ = function (id) { return document.getElementById(id); };
   var COURSES = (window.SAWAAL_COURSES || []).filter(function (c) { return c && c.id; });
-  var S = { course: null, school: "", cls: "", tab: "overview", data: null, student: null, freeText: null };
+  var S = { course: null, school: "", cls: "", tab: "overview", data: null, student: null, freeText: null, hidden: [], switchReady: false };
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function answerText(a) { if (a == null) return ""; if (typeof a === "string") return a; if (Array.isArray(a)) return a.join(", "); return JSON.stringify(a); }
@@ -164,7 +175,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
       prepare(d);
       $("vLogin").classList.add("hide"); $("vApp").classList.remove("hide");
       $("loaded").textContent = "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      fillCourses(); fillFilters(); render();
+      fillCourses(); fillFilters(); render(); paintSwitch();
     }, function (err) {
       $("loaded").textContent = "";
       if (!S.data) showError(api.friendly(err));
@@ -197,7 +208,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
     if (!ids.length) ids = ["(none)"];
     $("course").innerHTML = ids.map(function (id) {
       var c = COURSES.find(function (x) { return x.id === id; });
-      return '<option value="' + esc(id) + '">' + esc(c ? c.title : id) + "</option>";
+      var off = S.hidden.indexOf(id) >= 0 || (c && c.hidden);
+      return '<option value="' + esc(id) + '">' + esc((c ? c.title : id) + (c && off ? "  (off home page)" : "")) + "</option>";
     }).join("");
     $("course").value = S.course;
   }
@@ -216,7 +228,49 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
     $("cls").innerHTML = '<option value="">All classes</option>' + cl.map(function (c) { return '<option value="' + esc(c) + '">Class ' + esc(c) + "</option>"; }).join("");
     $("cls").value = S.cls;
   }
-  $("course").onchange = function () { S.course = this.value; S.student = null; S.freeText = null; load(); };
+  /* ---- home page on/off switch ---- */
+  function loadHidden() {
+    return api.rpc("sawaal_hidden_courses", {}, { timeout: 15000 }).then(function (list) {
+      S.hidden = list || []; S.switchReady = true;
+      if (S.data) fillCourses();
+      paintSwitch();
+    }, function () { S.switchReady = false; paintSwitch(); });
+  }
+  function paintSwitch() {
+    var box = $("homeSw"), cb = $("showHome"), txt = $("homeSwText"), id = S.course;
+    var c = COURSES.find(function (x) { return x.id === id; });
+    if (!c) { box.classList.add("hide"); return; }   // not in courses.js, so never on the home page anyway
+    box.classList.remove("hide");
+    box.classList.remove("locked"); cb.disabled = false;
+    if (c.hidden) {
+      cb.checked = false; cb.disabled = true; box.classList.add("locked");
+      txt.textContent = "Hidden in courses.js";
+      box.title = "This course has hidden: true in courses.js. Remove that line to control it with this switch.";
+      return;
+    }
+    if (!S.switchReady) {
+      cb.checked = true; cb.disabled = true; box.classList.add("locked");
+      txt.textContent = "Switch not set up yet";
+      box.title = "Run the latest setup.sql in Supabase to turn this switch on.";
+      return;
+    }
+    var on = S.hidden.indexOf(id) < 0;
+    cb.checked = on;
+    txt.textContent = on ? "On home page" : "Off home page";
+    box.title = on ? "Students can see this course on the home page. Click to hide it." : "Hidden from the home page (the link still works). Click to show it.";
+  }
+  $("showHome").onchange = function () {
+    var cb = this, id = S.course, want = cb.checked, box = $("homeSw");
+    box.classList.add("busy"); $("homeSwText").textContent = "Saving…";
+    api.rpc("sawaal_set_course_visible", { p_course: id, p_visible: want }).then(function (list) {
+      S.hidden = list || []; box.classList.remove("busy"); fillCourses(); paintSwitch();
+    }, function (err) {
+      box.classList.remove("busy"); cb.checked = !want; paintSwitch();
+      alert("Couldn't change it. " + api.friendly(err));
+    });
+  };
+
+  $("course").onchange = function () { S.course = this.value; S.student = null; S.freeText = null; paintSwitch(); load(); };
   $("school").onchange = function () { S.school = this.value; S.cls = ""; S.student = null; fillFilters(); render(); };
   $("cls").onchange = function () { S.cls = this.value; S.student = null; render(); };
   document.querySelectorAll("#tabs button").forEach(function (b) {
@@ -496,6 +550,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
     showError("The keys in config.js haven't been filled in yet, or you opened this file straight from your computer. Put it on GitHub Pages first (see the README).");
   } else {
     load().catch(function () {});
+    loadHidden();
   }
 })();
 </script>
