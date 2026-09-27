@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sawaal AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@700&family=Noto+Sans+Devanagari:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1D1A16;
+  --slate:#1B2430;
+  --page:#FFF8EC;
+  --card:#FFFFFF;
+  --rule:#EADFCB;
+  --muted:#6B6357;
+  --marigold:#FFB703;
+  --marigold-deep:#E08A00;
+  --chilli:#E23A2E;
+  --peacock:#0F7B6C;
+  --ultramarine:#2743C4;
+  --violet:#6D28D9;
+  --lilac:#F1ECFF;
+  --mint:#E3F6EF;
+  --blush:#FDE9E7;
+  --amberbg:#FFF1D2;
+  --sky:#E6F3FF;
+  --m1:#C2410C;--m2:#A16207;--m3:#047857;--m4:#6D28D9;--m5:#B91C1C;--m6:#0369A1;--m7:#1B2430;
+  --disp:"Baloo 2","Trebuchet MS",sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pad:clamp(16px,4.5vw,48px);
+  --r:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--slate);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+@media (max-width:600px){body{font-size:16.5px}}
+
+/* ---------- shell ---------- */
+#rail{position:fixed;top:0;left:0;height:5px;width:0;background:var(--marigold);z-index:60;transition:width .35s cubic-bezier(.4,0,.2,1)}
+#stage{height:100dvh;display:flex;flex-direction:column}
+#deck{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.slide{display:none;min-height:100%;padding:calc(var(--pad) + 8px) var(--pad) 48px;background:var(--page);
+  background-image:radial-gradient(#EADFCB 1.2px,transparent 1.6px);background-size:24px 24px}
+.slide.on{display:block;animation:in .3s ease-out}
+.slide.cover.on,.slide.divider.on{display:flex;align-items:center}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.wrap{max-width:760px;margin:0 auto}
+.wide .wrap{max-width:940px}
+
+/* ---------- nav bar ---------- */
+#bar{display:flex;align-items:center;gap:10px;background:var(--slate);color:#fff;padding:9px max(10px,env(safe-area-inset-left)) calc(9px + env(safe-area-inset-bottom)) 10px;z-index:50}
+#sawaal-status{font-size:11px;line-height:1.3;color:#9FB0C6;max-width:26%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sawaal-status[data-state="saved"]{color:#7FD8C5}#sawaal-status[data-state="offline"],#sawaal-status[data-state="error"]{color:var(--marigold)}
+#sawaal-account{background:#1F2B3B;border-radius:12px;padding:14px 16px;margin:0 0 22px;color:#fff}
+@media (max-width:600px){#sawaal-status{display:none}}
+#bar button{font-family:var(--body);font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 16px;cursor:pointer}
+#prev{background:#33415A;color:#fff}
+#next{background:var(--marigold);color:#231B08;flex:1;max-width:260px;margin-left:auto}
+#next:disabled{opacity:.4;cursor:not-allowed}
+#next.warn{background:var(--chilli);color:#fff}
+#menuBtn{background:#33415A;color:#fff;padding:12px 14px}
+#pos{font-size:13px;color:#9FB0C6;font-variant-numeric:tabular-nums;min-width:54px;text-align:center}
+#modLabel{font-size:13px;color:#9FB0C6;max-width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:520px){#modLabel{display:none}}
+
+/* ---------- contents overlay ---------- */
+#toc{position:fixed;inset:0;background:rgba(12,17,24,.97);color:#fff;z-index:70;display:none;overflow-y:auto;padding:24px}
+#toc.on{display:block}
+#toc h2{font-family:var(--disp);font-size:28px;margin:0 0 4px;color:#fff}
+#toc p{color:#9FB0C6;margin:0 0 20px;font-size:14px}
+.tocItem{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #33415A;color:#fff;padding:12px 2px;font-size:16px;font-family:var(--body);cursor:pointer}
+.tocItem span{color:#8FA3BC;font-size:13px;display:block}
+.tocItem:hover{color:var(--marigold)}
+#tocClose{margin-top:22px;background:var(--marigold);color:#231B08;border:0;border-radius:12px;padding:12px 18px;font-weight:700;font-family:var(--body);font-size:15px;cursor:pointer}
+
+/* ---------- typography ---------- */
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(36px,7vw,58px);line-height:1.02;letter-spacing:-.01em;margin:0 0 12px}
+h2{font-family:var(--disp);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0 0 12px}
+h3{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.2;margin:22px 0 8px}
+p{margin:0 0 14px;max-width:62ch}
+.lead{font-size:clamp(18px,2.4vw,21px);color:#3C352C;max-width:56ch}
+.tag{display:inline-block;background:var(--amberbg);border:1.5px solid #F2D48A;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:700;color:#7A5200;margin-bottom:12px}
+.mins{color:var(--muted);font-size:13px;font-weight:500}
+strong{font-weight:700}
+.small{font-size:15px;color:var(--muted)}
+ul,ol{margin:0 0 16px;padding-left:22px;max-width:62ch}
+li{margin-bottom:8px}
+a{color:var(--ultramarine)}
+
+/* ---------- mascot ---------- */
+.mascot{width:72px;height:72px;flex:none}
+.say{display:flex;gap:12px;align-items:flex-start;margin:0 0 18px}
+.say .bubble{position:relative;background:#fff;border:2px solid var(--ink);border-radius:16px;padding:12px 15px;font-size:16.5px;line-height:1.5;flex:1;box-shadow:3px 3px 0 var(--ink)}
+.say .bubble::before{content:"";position:absolute;left:-11px;top:22px;border:10px solid transparent;border-right-color:var(--ink);border-left:0}
+.say .bubble::after{content:"";position:absolute;left:-8px;top:24px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.say .who{display:block;font-family:var(--disp);font-weight:800;font-size:14px;color:var(--marigold-deep);margin-bottom:2px;letter-spacing:.02em}
+
+/* ---------- cover ---------- */
+.cover{background:var(--slate);background-image:radial-gradient(circle at 12% 18%,rgba(255,183,3,.22),transparent 42%),radial-gradient(circle at 88% 80%,rgba(39,67,196,.3),transparent 46%);color:#fff}
+.coverwrap{display:grid;gap:24px;align-items:center;width:100%}
+@media (min-width:760px){.coverwrap{grid-template-columns:1.3fr 1fr}}
+.cover h1{font-size:clamp(52px,12vw,96px);color:#fff;margin-bottom:6px}
+.cover .tagline{color:#D6E0EC;font-size:clamp(19px,2.6vw,23px);max-width:30ch;line-height:1.45}
+.scripts{font-size:clamp(26px,6vw,40px);color:var(--marigold);margin-bottom:10px;line-height:1.9}
+.scripts .ur{font-family:"Noto Nastaliq Urdu",serif}
+.scripts .dv{font-family:"Noto Sans Devanagari",serif}
+.cover .meta{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.cover .meta span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:6px 13px;font-size:14px;color:#E6EDF5}
+.covart{position:relative;display:flex;justify-content:center;align-items:center;min-height:220px}
+.covart .mascot-xl{width:min(240px,60vw);height:auto;filter:drop-shadow(0 12px 22px rgba(0,0,0,.35));animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.float{position:absolute;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:#fff;color:var(--slate);font-family:var(--disp);font-weight:800;font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.f1{top:8%;left:12%;background:var(--marigold)}.f2{bottom:10%;right:10%;background:#7FD8C5}.f3{top:16%;right:14%}
+
+/* ---------- dividers (mission openers) ---------- */
+.divider{color:#fff;background-image:radial-gradient(rgba(255,255,255,.12) 1.4px,transparent 1.8px);background-size:26px 26px}
+.divider.m1{background-color:var(--m1)}.divider.m2{background-color:var(--m2)}.divider.m3{background-color:var(--m3)}.divider.m4{background-color:var(--m4)}
+.divider.m5{background-color:var(--m5)}.divider.m6{background-color:var(--m6)}.divider.m7,.divider.done{background-color:var(--m7)}
+.divider .wrap{width:100%}
+.divgrid{display:grid;gap:22px;align-items:center}
+@media (min-width:760px){.divgrid{grid-template-columns:1.2fr 1fr}}
+.divider h1{color:#fff}
+.divider .num{display:inline-grid;place-items:center;width:78px;height:78px;border-radius:50%;background:#fff;color:var(--ink);font-family:var(--disp);font-weight:800;font-size:44px;line-height:1;margin-bottom:10px;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+.divider .mtag{display:block;font-family:var(--disp);font-weight:700;font-size:18px;color:rgba(255,255,255,.85);margin-bottom:2px}
+.divider p{color:rgba(255,255,255,.92);font-size:19px;max-width:44ch}
+.divider .kit{margin-top:18px;display:inline-block;background:rgba(0,0,0,.2);border-radius:99px;padding:7px 15px;color:#fff;font-size:14.5px;font-weight:600}
+.art{background:#fff;border-radius:24px;padding:14px;box-shadow:0 8px 0 rgba(0,0,0,.18)}
+.art svg{display:block;width:100%;height:auto;max-height:280px}
+
+/* ---------- cards & panels ---------- */
+.panel{background:var(--card);border:2px solid var(--rule);border-radius:var(--r);padding:20px;margin:0 0 18px}
+.panel.tight{padding:15px}
+.grid{display:grid;gap:12px;margin-bottom:18px}
+@media (min-width:680px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+.mini{background:var(--card);border:2px solid var(--rule);border-radius:var(--r);padding:16px}
+.mini h4{margin:4px 0 4px;font-family:var(--disp);font-size:20px;font-weight:800;line-height:1.2}
+.mini p{font-size:15.5px;margin:0;color:#4A4238}
+.mini .strip{margin-top:10px;font-weight:700;font-size:15px}
+.ico{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--amberbg);font-size:28px;line-height:1}
+.ico.lg{width:64px;height:64px;font-size:34px}
+.ico.r{background:var(--blush)}.ico.g{background:var(--mint)}.ico.b{background:var(--sky)}.ico.v{background:var(--lilac)}
+.mini.top-r{border-top:6px solid var(--chilli)}.mini.top-a{border-top:6px solid var(--marigold-deep)}.mini.top-g{border-top:6px solid var(--peacock)}.mini.top-b{border-top:6px solid var(--ultramarine)}
+.row2{display:flex;gap:12px;align-items:flex-start}
+.row2 .ico{flex:none}
+
+/* numbered steps */
+.steps{display:grid;gap:10px;margin-bottom:18px}
+.step{display:flex;gap:12px;align-items:center;background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:12px 14px}
+.step .n{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--m3);color:#fff;font-family:var(--disp);font-weight:800;font-size:22px}
+.step b{display:block;font-family:var(--disp);font-size:19px;line-height:1.2}
+.step span{font-size:15px;color:#4A4238}
+
+/* chat bubbles */
+.chat{background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.chat .who-tag{display:inline-block;font-size:13px;font-weight:700;border-radius:99px;padding:2px 10px;margin-bottom:8px}
+.who-tag.p{background:var(--blush);color:#9B1C14}.who-tag.c{background:var(--amberbg);color:#7A5200}.who-tag.d{background:var(--mint);color:#0B5E52}
+.bub{border-radius:14px;padding:10px 13px;margin-bottom:8px;font-size:15.5px;line-height:1.45;max-width:90%}
+.bub:last-child{margin-bottom:0}
+.you{background:var(--lilac);border:1px solid #DCD4FA}
+.ai{background:#F4F2EE;border:1px solid var(--rule);margin-left:auto}
+.bub b{display:block;font-size:11.5px;letter-spacing:.04em;color:var(--muted);margin-bottom:2px;font-weight:700;text-transform:uppercase}
+
+/* prompt boxes */
+.plabel{font-weight:700;font-size:14px;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.prompt{background:var(--slate);color:#EAF0F7;border-radius:14px;padding:15px 16px;padding-right:72px;font-size:15.5px;line-height:1.55;white-space:pre-wrap;position:relative;margin-bottom:14px}
+.prompt.weak{background:#F4EEEA;color:#5A483E;border:2px dashed #D9C6BA}
+.copy{position:absolute;top:9px;right:9px;background:#3B4A60;color:#fff;border:0;border-radius:8px;font-size:12.5px;font-weight:700;padding:7px 10px;cursor:pointer;font-family:var(--body)}
+.prompt.weak .copy{background:#C9B6A8;color:#3A2E26}
+.copy.done{background:var(--peacock);color:#fff}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 16px}
+.pill{font-size:13.5px;font-weight:600;border-radius:99px;padding:4px 11px;color:#231B08}
+.pill.R{background:#FFD66B}.pill.O{background:#FFB703}.pill.T{background:#F4A259}.pill.I{background:#EE8F66}
+
+/* boxes (like the textbook's) */
+.box{border-radius:var(--r);padding:14px 16px;margin-bottom:18px;font-size:16px;border:2px solid transparent}
+.box .lbl{display:block;font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:3px}
+.box p:last-child{margin-bottom:0}
+.box.think{background:var(--lilac);border-color:#D6CCF7}.box.think .lbl{color:var(--violet)}
+.box.snap{background:var(--mint);border-color:#B9E3D5}.box.snap .lbl{color:var(--peacock)}
+.box.try{background:var(--sky);border-color:#BFDDF7}.box.try .lbl{color:var(--ultramarine)}
+.box.warn{background:var(--blush);border-color:#F5C2BC}.box.warn .lbl{color:#B91C1C}
+.box.gold{background:var(--amberbg);border-color:#F2D48A}.box.gold .lbl{color:#8A5A00}
+
+/* guess bars (how AI writes) */
+.guess{background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.guess .gq{font-family:var(--disp);font-weight:800;font-size:22px;margin-bottom:10px}
+.gb{display:grid;grid-template-columns:88px 1fr 46px;gap:10px;align-items:center;font-size:15px;margin-bottom:7px}
+.gb .t{height:16px;background:#F3EFE6;border-radius:99px;overflow:hidden}
+.gb .t i{display:block;height:100%;width:var(--w);background:var(--ultramarine);border-radius:99px}
+.gb.low .t i{background:var(--chilli)}
+.gb b{text-align:right;font-variant-numeric:tabular-nums}
+
+/* two columns ok / not ok */
+.vs2{display:grid;gap:10px;margin-bottom:18px}
+@media (min-width:640px){.vs2{grid-template-columns:1fr 1fr}}
+.vs2 .col{border-radius:var(--r);padding:14px 16px}
+.vs2 .col h4{margin:0 0 8px;font-family:var(--disp);font-size:20px}
+.vs2 .col.ok{background:var(--mint);border:2px solid #B9E3D5}
+.vs2 .col.no{background:var(--blush);border:2px solid #F5C2BC}
+.vs2 ul{margin:0;padding-left:20px;font-size:15.5px}
+.vs2 li{margin-bottom:7px}
+
+/* 3-step flow */
+.flow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-bottom:18px}
+.flow .f{flex:1;min-width:150px;background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:14px;text-align:center}
+.flow .f .ico{margin-bottom:6px}
+.flow .f b{display:block;font-family:var(--disp);font-size:19px}
+.flow .arrow{align-self:center;font-size:24px;color:var(--muted)}
+@media (max-width:560px){.flow .arrow{display:none}}
+
+/* ---------- activity ---------- */
+.act{border:3px solid var(--ink);border-radius:20px;background:#fff;padding:0;margin:0 0 20px;overflow:hidden;box-shadow:5px 5px 0 var(--ink)}
+.act>header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.act>header h3{margin:0;color:#fff;font-size:20px;flex:1}
+.act>header .mins{color:var(--marigold);font-weight:700}
+.actbody{padding:18px 16px}
+.qcard{border-bottom:2px dashed var(--rule);padding-bottom:18px;margin-bottom:18px}
+.qcard:last-of-type{border-bottom:0;margin-bottom:6px;padding-bottom:0}
+.qcard .qt{font-weight:600;margin-bottom:10px;display:block;font-size:17px}
+.qcard .qt .qn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--marigold);color:#231B08;font-family:var(--disp);font-weight:800;font-size:16px;margin-right:6px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts.row{flex-direction:row;flex-wrap:wrap}
+.opt{text-align:left;font-family:var(--body);font-size:16px;background:#fff;border:2px solid var(--rule);border-radius:12px;padding:12px 14px;min-height:48px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;color:var(--ink)}
+.opts.row .opt{flex:1;min-width:100px;text-align:center;font-weight:700}
+.opt:hover{border-color:var(--ink)}
+.opt:active{transform:scale(.98)}
+.opt:focus-visible{outline:3px solid var(--ultramarine);outline-offset:2px}
+.opt.picked{border-width:2px;background:var(--slate);border-color:var(--slate);color:#fff}
+.opt.right{background:var(--mint);border-color:var(--peacock);color:var(--ink)}
+.opt.wrong{background:var(--blush);border-color:var(--chilli);color:var(--ink)}
+@media (max-width:480px){.opts.row .opt{padding:10px 6px;font-size:15px;min-width:0}}
+.opt.picked.right::after{content:"  ✓";font-weight:800;color:var(--peacock)}
+.opt.picked.wrong::after{content:"  ✗";font-weight:800;color:var(--chilli)}
+.opt[disabled]{cursor:default}
+.opt.dim{opacity:.45}
+.fb{margin-top:10px;font-size:15.5px;line-height:1.5;padding:12px 14px;border-radius:12px;display:none}
+.fb.on{display:block;animation:in .25s ease-out}
+.fb.ok{background:var(--mint);border-left:5px solid var(--peacock)}
+.fb.no{background:var(--blush);border-left:5px solid var(--chilli)}
+.fb b{display:block;margin-bottom:3px}
+
+/* traffic pills */
+.opt.green{border-color:#9CCFC4}.opt.green.picked{background:var(--mint);color:var(--ink)}
+.opt.amber{border-color:#E8C97A}.opt.amber.picked{background:var(--amberbg);color:var(--ink)}
+.opt.red{border-color:#EFA9A3}.opt.red.picked{background:var(--blush);color:var(--ink)}
+.legend3{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.legend3 span{border-radius:99px;padding:5px 12px;font-size:14.5px;font-weight:600}
+.legend3 .g{background:var(--mint)}.legend3 .a{background:var(--amberbg)}.legend3 .r{background:var(--blush)}
+
+/* ---------- ROTI builder ---------- */
+.roti{display:grid;gap:9px;margin-bottom:16px}
+.layer{display:grid;grid-template-columns:52px 1fr;align-items:stretch;border-radius:16px;overflow:hidden;border:2px solid var(--rule)}
+.layer .lk{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:24px;line-height:1;color:#231B08}
+.layer .lk small{font-family:var(--body);font-size:9.5px;font-weight:700;margin-top:3px;letter-spacing:.02em}
+.layer textarea{border:0;border-radius:0;padding:12px 13px;font-family:var(--body);font-size:16px;resize:vertical;min-height:64px;background:#fff;color:var(--ink);line-height:1.45}
+.layer textarea:focus{outline:2px solid var(--ultramarine);outline-offset:-2px}
+.layer:nth-child(1) .lk{background:#FFD66B}
+.layer:nth-child(2) .lk{background:#FFB703}
+.layer:nth-child(3) .lk{background:#F4A259}
+.layer:nth-child(4) .lk{background:#EE8F66}
+.meter{height:12px;background:var(--rule);border-radius:99px;overflow:hidden;margin:6px 0 6px}
+.meter i{display:block;height:100%;width:0;background:var(--chilli);transition:width .3s,background .3s}
+.mrow{display:flex;justify-content:space-between;align-items:center;font-size:14.5px;color:var(--muted);margin-bottom:12px}
+.mrow b{color:var(--ink)}
+
+/* fake-fact hunt */
+.doc{background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:8px;margin-bottom:14px;counter-reset:sus}
+.sus{display:block;cursor:pointer;padding:11px 12px 11px 12px;margin:6px 0;border-radius:12px;border:2px solid var(--rule);font-size:16px;line-height:1.5;transition:background .15s,border-color .15s}
+.sus::before{counter-increment:sus;content:counter(sus);display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:800;color:#5A5044;background:#F0EBE0;margin-right:8px;vertical-align:1px}
+.sus:hover{background:#FFF7E0}
+.sus.flag{border-color:var(--marigold-deep)}
+.sus.flag::after{content:" 🚩";}
+.sus.hit{background:#FFD9D5;border-color:var(--chilli)}.sus.hit::before{background:var(--chilli);color:#fff}
+.sus.miss{background:#E6EFEA;border-color:var(--peacock)}.sus.miss::before{background:var(--peacock);color:#fff}
+.sus.shown{background:#FFE9A8;border-color:var(--marigold-deep)}.sus.shown::before{background:var(--marigold-deep);color:#fff}
+.sus.hit::after,.sus.miss::after,.sus.shown::after{content:""}
+.huntfb{font-size:15.5px}
+.huntfb div{padding:10px 13px;border-radius:12px;margin-bottom:8px;background:#F7F4EE;border-left:5px solid var(--rule)}
+.huntfb div.bad{background:var(--blush);border-color:var(--chilli)}
+.huntfb div.fine{background:var(--mint);border-color:var(--peacock)}
+.hunthint{font-size:14.5px;color:var(--muted);margin:-4px 0 12px}
+
+/* inputs */
+input[type=text],textarea,select{font-family:var(--body);font-size:16px;width:100%;border:2px solid var(--rule);border-radius:12px;padding:11px 13px;background:#fff;color:var(--ink)}
+input[type=text]:focus,textarea:focus,select:focus{outline:2px solid var(--ultramarine);outline-offset:-1px;border-color:var(--ultramarine)}
+textarea{resize:vertical;line-height:1.5}
+label.fl{display:block;font-weight:700;font-size:16px;margin:16px 0 6px}
+label.fl span{font-weight:400;color:var(--muted)}
+.btn{font-family:var(--body);font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;background:var(--ink);color:#fff}
+.btn.alt{background:var(--marigold);color:#231B08}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--ink)}
+.btn:focus-visible{outline:3px solid var(--ultramarine);outline-offset:2px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{background:#F3EFE6;border:2px solid var(--rule);border-radius:99px;padding:8px 13px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:var(--body);color:#4A4238;text-align:left}
+.chip:hover{background:var(--amberbg);border-color:var(--marigold)}
+
+/* check-ins */
+.me{border:3px dashed #B8AD99;border-radius:20px;background:#FFFDF8;padding:18px;margin:10px 0 6px}
+.meq.needs-answer,.qcard.needs-answer,.actbody.needs-answer{outline:3px solid var(--chilli);outline-offset:5px;border-radius:12px;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.me>h3{margin:0 0 3px;font-size:22px}
+.me .sub{font-size:14.5px;color:var(--muted);margin-bottom:14px}
+.likert{display:flex;gap:6px;margin-top:8px}
+.likert button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:var(--body);font-weight:700;font-size:13px;border:2px solid var(--rule);background:#fff;border-radius:12px;padding:8px 0 6px;cursor:pointer;color:var(--muted)}
+.likert button .face{font-size:26px;line-height:1.1;filter:grayscale(.6);opacity:.75;transition:filter .15s,opacity .15s,transform .15s}
+.likert button:hover .face{filter:none;opacity:1}
+.likert button.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+.likert button.on .face{filter:none;opacity:1;transform:scale(1.15)}
+.lends{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:4px}
+.meq{margin-bottom:20px}
+.meq>span.qt{display:block;font-weight:700;font-size:16.5px;margin-bottom:2px}
+.meq .optl{font-weight:400;color:var(--muted);font-size:14px}
+.saved{font-size:14px;color:var(--peacock);font-weight:700;display:none}
+.saved.on{display:block}
+
+/* badges */
+.badge{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#FFF6DA,#FFE39A);border:2px solid #E8B437;border-radius:20px;padding:14px 16px;margin-bottom:16px}
+.medal{flex:none;display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:#fff;font-size:36px;line-height:1;box-shadow:0 0 0 5px var(--marigold),0 5px 0 5px #C98A00}
+.badge b{display:block;font-family:var(--disp);font-size:21px;line-height:1.2}
+.badge span{font-size:15px;color:#5A4A20}
+.wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:16px;margin:22px 0}
+.wall div{text-align:center;color:#fff;font-weight:700;font-size:14px}
+.wall .medal{margin:0 auto 10px;font-size:36px}
+
+/* timer */
+.timer{display:inline-flex;align-items:center;gap:9px;background:var(--slate);color:#fff;border-radius:99px;padding:6px 8px 6px 15px;font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;margin-bottom:14px}
+.timer button{background:var(--marigold);color:#231B08;border:0;border-radius:99px;font-family:var(--body);font-weight:700;font-size:13px;padding:8px 13px;cursor:pointer}
+.timer.done{background:var(--chilli)}
+
+/* score stamp */
+.stamp{display:none;border:4px solid var(--peacock);color:var(--peacock);background:#fff;font-family:var(--disp);font-weight:800;font-size:22px;padding:6px 16px;border-radius:12px;transform:rotate(-3deg);margin:14px 0 4px}
+.stamp.on{display:inline-block;animation:pop .35s ease-out}
+@keyframes pop{from{transform:rotate(-3deg) scale(.7);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}
+
+/* passage */
+.passage{background:#FFFDF6;border:2px solid var(--rule);border-left:6px solid var(--marigold);border-radius:var(--r);padding:16px 18px;font-size:16.5px;line-height:1.65;margin-bottom:10px}
+
+table{width:100%;border-collapse:collapse;font-size:15px;margin-bottom:16px;background:#fff}
+th,td{border:1px solid var(--rule);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:#F3EFE6;font-weight:700}
+
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+<script src="../config.js"></script>
+<script src="../sawaal.js"></script>
+</head>
+<body>
+<!-- Sawaali the mascot, drawn once and reused everywhere -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="sawaali" viewBox="0 0 100 100">
+      <line x1="50" y1="20" x2="50" y2="10" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="50" cy="8" r="5.5" fill="#E23A2E" stroke="#1B2430" stroke-width="2"/>
+      <path d="M18 20h64a12 12 0 0 1 12 12v34a12 12 0 0 1-12 12H48l-15 14V78H18A12 12 0 0 1 6 66V32a12 12 0 0 1 12-12z" fill="#FFB703" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="36" cy="44" r="7" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="37.5" cy="45" r="3.2" fill="#1B2430"/>
+      <circle cx="64" cy="44" r="7" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="65.5" cy="45" r="3.2" fill="#1B2430"/>
+      <path d="M39 59q11 9 22 0" fill="none" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="25" cy="56" r="4.5" fill="#F08C2E" opacity=".55"/><circle cx="75" cy="56" r="4.5" fill="#F08C2E" opacity=".55"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="rail"></div>
+<div id="stage">
+  <main id="deck"></main>
+  <nav id="bar">
+    <button id="menuBtn" aria-label="Open contents">☰</button>
+    <button id="prev">Back</button>
+    <span id="pos">1/1</span>
+    <span id="sawaal-status" aria-live="polite"></span>
+    <span id="modLabel"></span>
+    <button id="next">Start</button>
+  </nav>
+</div>
+<div id="toc" role="dialog" aria-label="Course contents">
+  <div id="sawaal-account"></div>
+  <h2>Course contents</h2>
+  <p>Jump to any part. Your answers are kept as you go.</p>
+  <div id="tocList"></div>
+  <button id="tocClose">Close contents</button>
+</div>
+<template id="slides">
+
+<!-- 1 COVER -->
+<section class="slide cover">
+  <div class="wrap coverwrap">
+    <div>
+      <div class="scripts"><span class="dv">सवाल</span> &nbsp;·&nbsp; <span class="ur">سوال</span></div>
+      <h1>Sawaal AI</h1>
+      <p class="tagline">Use AI the smart way. Ask better questions, check what it tells you, and stay safe.</p>
+      <div class="meta">
+        <span>⏱️ About 60 minutes</span>
+        <span>🎒 Ages 11 to 14</span>
+        <span>🏅 7 missions, 7 badges</span>
+        <span>📱 Works on a phone</span>
+      </div>
+    </div>
+    <div class="covart" aria-hidden="true">
+      <svg viewBox="0 0 100 100" class="mascot-xl"><use href="#sawaali"/></svg>
+      <span class="float f1">?</span><span class="float f2">✓</span><span class="float f3">💡</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2 MEET SAWAALI -->
+<section class="slide" data-mod="Getting started">
+  <div class="wrap">
+    <span class="tag">Before we start</span>
+    <h2>Hi! I'm Sawaali 👋</h2>
+    <div class="say">
+      <svg viewBox="0 0 100 100" class="mascot" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI</span>"Sawaal" means <b>question</b>. Today you'll learn to ask AI better questions, and to question AI back. I'll pop up with tips along the way.</div>
+    </div>
+    <div class="grid g2">
+      <div class="mini"><span class="ico">👆</span><h4>Tap and type</h4><p>This is not a video. Most screens ask you to pick or write something.</p></div>
+      <div class="mini"><span class="ico b">🤖</span><h4>Keep a chatbot open</h4><p>ChatGPT, Gemini, Copilot or any other. Not allowed your own? Use a teacher's or parent's device, or just answer here.</p></div>
+      <div class="mini"><span class="ico v">🎯</span><h4>Mistakes are fine</h4><p>Some questions are tricky on purpose. Getting one wrong helps you remember it.</p></div>
+      <div class="mini"><span class="ico g">💾</span><h4>Your answers are saved</h4><p id="saveNote">They stay on this device until you download them at the end.</p></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0" id="pidTitle">Make a code name</h3>
+      <p class="small">Not your real name. Try: first 2 letters of a food you like + your lucky number + first 2 letters of your town. Like <b>ra7pu</b>.</p>
+      <label class="fl" for="pid">Your code name</label>
+      <input type="text" id="pid" maxlength="16" placeholder="e.g. ra7pu" autocomplete="off">
+      <p id="pidSigned" class="hide" style="font-size:26px;font-weight:800;font-family:var(--disp);margin:6px 0 0"></p>
+      <p class="small" style="margin-top:10px">🤫 Notice we asked for a code, not your name? That's lesson one. You'll see why in Mission 5.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 BASELINE -->
+<section class="slide" data-mod="Getting started">
+  <div class="wrap">
+    <span class="tag">Warm-up</span>
+    <h2>Where are you starting from?</h2>
+    <p class="lead">No right or wrong answers. We'll ask again at the end to see what changed.</p>
+    <div class="me" data-me="base"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 1 ===================== -->
+<section class="slide divider m1" data-mod="Mission 1">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">1</div>
+      <span class="mtag">Mission 1</span>
+      <h1>Who's driving?</h1>
+      <p>Three students. Same chatbot. Very different results. The difference isn't the tool. It's them.</p>
+      <div class="kit">🏅 Badge: Driver &nbsp;·&nbsp; ⏱️ 8 min</div>
+    </div>
+    <div class="art">
+      <svg viewBox="0 0 320 200" role="img" aria-label="An auto rickshaw. The driver is at the front, and a passenger is asleep in the back.">
+        <ellipse cx="160" cy="182" rx="140" ry="8" fill="#000" opacity=".1"/>
+        <path d="M56 118 V92 Q56 46 106 42 H252 Q268 42 268 58 V118 Z" fill="#FFD23F" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M46 118 H270 V152 Q270 160 262 160 H54 Q46 160 46 152 Z" fill="#2BA84A" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M70 118 V94 Q70 62 104 58 H124 V118 Z" fill="#CFE8FF" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="140" y="58" width="112" height="60" rx="10" fill="#FFF3C4" stroke="#1B2430" stroke-width="3"/>
+        <path d="M91 118 Q92 98 106 96 Q120 98 121 118 Z" fill="#FF7A3D" stroke="#1B2430" stroke-width="2.5"/>
+        <circle cx="106" cy="83" r="11" fill="#8D5A3B" stroke="#1B2430" stroke-width="2.5"/>
+        <path d="M95 80 Q106 64 117 80 Z" fill="#1B2430"/>
+        <circle cx="101" cy="85" r="1.8" fill="#1B2430"/>
+        <path d="M74 104 L96 106" stroke="#1B2430" stroke-width="4" stroke-linecap="round"/>
+        <path d="M181 118 Q183 99 198 98 Q213 99 215 118 Z" fill="#7B5CFA" stroke="#1B2430" stroke-width="2.5"/>
+        <circle cx="198" cy="85" r="11" fill="#C98B5E" stroke="#1B2430" stroke-width="2.5"/>
+        <path d="M192 86 q3 2.5 6 0 M200 86 q3 2.5 6 0" stroke="#1B2430" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <text x="216" y="76" font-family="Baloo 2,sans-serif" font-weight="800" font-size="14" fill="#2743C4">z</text>
+        <text x="226" y="68" font-family="Baloo 2,sans-serif" font-weight="800" font-size="19" fill="#2743C4">Z</text>
+        <circle cx="48" cy="130" r="7" fill="#FFF7B0" stroke="#1B2430" stroke-width="2.5"/>
+        <circle cx="86" cy="162" r="19" fill="#1B2430"/><circle cx="86" cy="162" r="7" fill="#D9D2C5"/>
+        <circle cx="236" cy="162" r="19" fill="#1B2430"/><circle cx="236" cy="162" r="7" fill="#D9D2C5"/>
+        <text x="106" y="34" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="15" fill="#0F7B6C">DRIVER</text>
+        <text x="198" y="34" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="15" fill="#E23A2E">PASSENGER</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 5 THREE WAYS -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <span class="tag">The big idea</span>
+    <h2>Three ways to ride in an auto</h2>
+    <p class="lead">Same auto. Same road. What changes is who decides where you go.</p>
+    <div class="grid g3">
+      <div class="mini top-r"><span class="ico r">😴</span><h4>Passenger</h4><p>You say "school" and fall asleep. You get somewhere, but you don't know the way. You can't do it again alone.</p><p class="strip" style="color:var(--chilli)">Copy, paste, forget.</p></div>
+      <div class="mini top-a"><span class="ico">👀</span><h4>Co-pilot</h4><p>You're awake. You point out a shortcut or a blocked road. You're paying attention.</p><p class="strip" style="color:var(--marigold-deep)">Ask, check, adjust.</p></div>
+      <div class="mini top-g"><span class="ico g">🧑‍✈️</span><h4>Driver</h4><p>You chose where to go before you started. You'd notice if someone took you the long way.</p><p class="strip" style="color:var(--peacock)">Plan, steer, check, learn.</p></div>
+    </div>
+    <div class="box think"><span class="lbl">🤔 Pause and think</span><p>Passengers finish homework faster. But in the exam, the chatbot isn't sitting next to you. So who did the learning?</p></div>
+  </div>
+</section>
+
+<!-- 6 THREE CHATS -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <span class="tag">Look closely</span>
+    <h2>Same homework, three chats</h2>
+    <p>Three students had to write about plastic waste in their city.</p>
+    <div class="chat">
+      <span class="who-tag p">😴 Passenger</span>
+      <div class="bub you"><b>Student A</b>Write an essay on plastic waste, 300 words</div>
+      <div class="bub ai"><b>AI</b>Plastic waste is a big problem in cities today...</div>
+      <div class="bub you"><b>Student A</b>thanks</div>
+    </div>
+    <div class="chat">
+      <span class="who-tag c">👀 Co-pilot</span>
+      <div class="bub you"><b>Student B</b>Why is plastic waste a problem in cities?</div>
+      <div class="bub ai"><b>AI</b>It takes hundreds of years to break down, it blocks drains, and...</div>
+      <div class="bub you"><b>Student B</b>Explain the drains part more simply</div>
+    </div>
+    <div class="chat">
+      <span class="who-tag d">🧑‍✈️ Driver</span>
+      <div class="bub you"><b>Student C</b>I'm writing my own essay about plastic in my area. My idea: the real problem is that waste isn't collected properly. Don't write it for me. Give me the 3 best arguments AGAINST my idea.</div>
+      <div class="bub ai"><b>AI</b>1) Even with good collection, most plastic can't be recycled...</div>
+      <div class="bub you"><b>Student C</b>I can't answer number 1. Ask me 3 questions to help me think about it.</div>
+    </div>
+    <p class="small">Student C took longer. But now the idea in her essay is really hers.</p>
+  </div>
+</section>
+
+<!-- 7 ACTIVITY 1 -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <div class="act" data-act="drivers">
+      <header><h3>🕵️ Activity 1: Spot the driver</h3><span class="mins">5 min</span></header>
+      <div class="actbody">
+        <p class="small" style="margin-bottom:16px">Read what each student typed. Who's driving?</p>
+
+        <div class="qcard" data-q="d1">
+          <span class="qt"><span class="qn">1</span>"summarise chapter 4 of my science book"</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-correct="1" data-fb="Right. No book, no class, no reason. The AI will just make up a general 'chapter 4'.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Not quite. There's nothing here to work with: no book, no goal, no follow-up.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-fb="A driver would paste the chapter, say their class, and say what the summary is for.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d2">
+          <span class="qt"><span class="qn">2</span>"I don't understand the word 'evaporation' in your answer. Explain it with something I see at home, then ask me a question to check I got it."</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-fb="The opposite! This student noticed what they didn't know and did something about it.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Close. But asking to be tested is a real driver move, not just a follow-up.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-correct="1" data-fb="Yes! Three driver moves: noticed a gap, asked for a home example, and asked to be tested.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d3">
+          <span class="qt"><span class="qn">3</span>"Give me 10 project topics on social media". Then they pick number 4 and hand it in without changing a word.</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-correct="1" data-fb="Right. The AI chose the topic, not the student. A driver would pick one they can really research, then write it in their own words.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Getting ideas is fine. Taking one without thinking about it is not.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-fb="Picking from a list you didn't shape isn't driving. Whose project is it now?">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d4">
+          <span class="qt"><span class="qn">4</span>"Here's my summary of the story, and here's yours. I think yours missed the main point. Am I right?"</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-fb="Look again. This student is checking the AI's work, not the other way round.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Good guess. But she did the work first and made up her own mind. That's driving.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-correct="1" data-fb="Yes! She did it herself first, then used AI to check. That order matters more than anything else in this course.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d5">
+          <span class="qt"><span class="qn">5</span>"explain again" ... "simpler" ... "simpler" ... (8 times, then gives up)</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-fb="They really did try! The problem was the plan, not the effort.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-correct="1" data-fb="Yes. Lots of effort, but no plan. Saying 'simpler' again gives the AI nothing new. Mission 6 teaches 4 better moves.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-fb="A driver changes the plan after 2 tries, not 8.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+        <div class="stamp" data-stamp="drivers"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 SNAPSHOT -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <span class="tag">📌 Snapshot</span>
+    <h2>4 things drivers do</h2>
+    <p class="lead">Everything else in this course is practice for these four.</p>
+    <div class="grid g2">
+      <div class="mini"><div class="row2"><span class="ico">🎯</span><div><h4>Know what you want</h4><p>"I want to explain photosynthesis to my friend by tonight" beats "help with photosynthesis".</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico b">📓</span><div><h4>Bring your own stuff</h4><p>Your notes, your textbook, your city. Then AI helps <b>you</b>, not "everyone".</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico v">❓</span><div><h4>Make it quiz you</h4><p>The best thing AI can give you is a good question, not just an answer.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico g">🔍</span><div><h4>Check before you trust</h4><p>Especially numbers, laws, news and local facts. Mission 4 shows why.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 CHECK-IN 1 -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🚗</div><div><b>Mission 1 done!</b><span>Answer 3 quick questions to collect your <strong>Driver</strong> badge.</span></div></div>
+    <div class="me" data-me="m1"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 2 ===================== -->
+<section class="slide divider m2" data-mod="Mission 2">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">2</div>
+      <span class="mtag">Mission 2</span>
+      <h1>Make a better roti</h1>
+      <p>Four layers that turn a lazy question into a great one.</p>
+      <div class="kit">🏅 Badge: Roti Chef &nbsp;·&nbsp; ⏱️ 12 min</div>
+    </div>
+    <div class="art">
+      <svg viewBox="0 0 320 230" role="img" aria-label="A stack of four rotis on a plate, labelled R, O, T and I. I is at the bottom.">
+        <ellipse cx="130" cy="204" rx="118" ry="20" fill="#D9D2C5"/>
+        <ellipse cx="130" cy="200" rx="114" ry="17" fill="#F4F0E8" stroke="#1B2430" stroke-width="2.5"/>
+        <g stroke="#1B2430" stroke-width="2.5">
+          <ellipse cx="130" cy="180" rx="96" ry="22" fill="#E7A94A"/>
+          <ellipse cx="130" cy="148" rx="96" ry="22" fill="#EDB75A"/>
+          <ellipse cx="130" cy="116" rx="96" ry="22" fill="#F1C36A"/>
+          <ellipse cx="130" cy="84" rx="96" ry="22" fill="#F5CF7C"/>
+        </g>
+        <g fill="#A8651E" opacity=".55">
+          <ellipse cx="96" cy="80" rx="8" ry="3"/><ellipse cx="150" cy="90" rx="6" ry="2.5"/><ellipse cx="168" cy="76" rx="5" ry="2"/><ellipse cx="118" cy="92" rx="4" ry="1.8"/>
+        </g>
+        <g font-family="Baloo 2,sans-serif" font-weight="800" font-size="22" text-anchor="middle" fill="#231B08">
+          <line x1="226" y1="84" x2="256" y2="84" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="84" r="18" fill="#FFD66B" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="92">R</text>
+          <line x1="226" y1="116" x2="256" y2="116" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="116" r="18" fill="#FFB703" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="124">O</text>
+          <line x1="226" y1="148" x2="256" y2="148" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="148" r="18" fill="#F4A259" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="156">T</text>
+          <line x1="226" y1="180" x2="256" y2="180" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="180" r="18" fill="#EE8F66" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="188">I</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 11 WEAK QUESTION -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">The problem</span>
+    <h2>"Explain photosynthesis" gets a boring answer</h2>
+    <p class="lead">Not because AI is bad. Because the question has no <b>you</b> in it.</p>
+    <div class="prompt weak">explain photosynthesis<button class="copy" data-copy>Copy</button></div>
+    <div class="say">
+      <svg viewBox="0 0 100 100" class="mascot" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">THE AI IS GUESSING...</span>🤔 Is this person 9 or 19?<br>🤔 Is it for a 2-mark answer or a project?<br>🤔 Do they already know what chlorophyll is?<br>So it gives an <b>average</b> answer. Average isn't much use to you.</div>
+    </div>
+    <div class="grid g2">
+      <div class="mini"><span class="ico r">📄</span><h4>Too thin</h4><p>"explain photosynthesis". Nothing to work with.</p></div>
+      <div class="mini"><span class="ico r">📚</span><h4>Too thick</h4><p>A long message about your teacher, your exams, your cousin... The real question gets lost.</p></div>
+    </div>
+    <p><b>Both are fixed the same way: ROTI.</b> ➜</p>
+  </div>
+</section>
+
+<!-- 12 ROTI -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">The tool</span>
+    <h2>R.O.T.I. has four layers</h2>
+    <p class="lead">Like a stack of rotis. The bottom one, I, holds everything up.</p>
+    <div class="grid g2">
+      <div class="mini" style="border-left:8px solid #FFD66B"><h4>R = Role</h4><p>Who should the AI be? Who are you?</p><p class="strip" style="font-weight:500;color:var(--muted)">"You're a friendly science teacher. I'm in Class 7."</p></div>
+      <div class="mini" style="border-left:8px solid #FFB703"><h4>O = Output</h4><p>What do you want back? How much?</p><p class="strip" style="font-weight:500;color:var(--muted)">"5 quiz questions, under 100 words."</p></div>
+      <div class="mini" style="border-left:8px solid #F4A259"><h4>T = Tight rules</h4><p>What must it NOT do?</p><p class="strip" style="font-weight:500;color:var(--muted)">"Don't tell me the answers yet."</p></div>
+      <div class="mini" style="border-left:8px solid #EE8F66"><h4>I = Input</h4><p>Your own notes, homework, city.</p><p class="strip" style="font-weight:500;color:var(--muted)">"Here are my class notes: ..."</p></div>
+    </div>
+    <div class="box snap"><span class="lbl">📌 Remember</span><p>Most students skip <b>I</b>. But a question with your own notes in it beats a clever question with nothing in it. Every time.</p></div>
+  </div>
+</section>
+
+<!-- 13 REBUILD 1 -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">Rebuild 1 of 3</span>
+    <h2>📗 Studying for a test</h2>
+    <p class="plabel">❌ Before</p>
+    <div class="prompt weak">explain photosynthesis<button class="copy" data-copy>Copy</button></div>
+    <p class="plabel">✅ After</p>
+    <div class="prompt">You are a patient science teacher. I'm in Class 7 (CBSE) and my test is on Friday.
+
+Explain photosynthesis in under 100 words. Use the neem tree near my school as the example.
+
+Then ask me 3 short questions like the ones in my exam. Don't tell me the answers. Wait for mine, then tell me what I got wrong.
+
+Here are my class notes: [paste your notes]<button class="copy" data-copy>Copy</button></div>
+    <div class="pills"><span class="pill R">R: patient teacher, Class 7</span><span class="pill O">O: 100 words + 3 questions</span><span class="pill T">T: don't tell me answers</span><span class="pill I">I: my notes</span></div>
+    <div class="box think"><span class="lbl">🤔 Pause and think</span><p>The second one makes <b>you</b> answer questions. The first one just lets you read and feel busy.</p></div>
+  </div>
+</section>
+
+<!-- 14 REBUILD 2 -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">Rebuild 2 of 3</span>
+    <h2>✍️ Homework without cheating</h2>
+    <p class="plabel">❌ Before</p>
+    <div class="prompt weak">write an essay on plastic pollution 300 words<button class="copy" data-copy>Copy</button></div>
+    <p class="plabel">✅ After</p>
+    <div class="prompt">I'm writing my own 300-word essay on plastic pollution in my area. My main idea is: [your idea]
+
+Here is my plan: [paste your plan]
+
+Act like a strict teacher. Do 3 things:
+1. Tell me the 2 weakest points in my plan.
+2. Ask me 3 questions I haven't answered.
+3. Tell me one thing about my area that my plan forgets.
+
+Don't write any part of the essay for me.<button class="copy" data-copy>Copy</button></div>
+    <div class="box gold"><span class="lbl">🔄 The Tutor Flip</span><p>Add one line to almost any question: <b>"Don't answer it. Ask me questions that help me answer it myself."</b> It turns AI from an answer machine into a question machine. And it's the version you can happily show your teacher.</p></div>
+  </div>
+</section>
+
+<!-- 15 REBUILD 3 -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">Rebuild 3 of 3</span>
+    <h2>➗ Maths with money</h2>
+    <p class="plabel">❌ Before</p>
+    <div class="prompt weak">my school has 800 students fee is 1500 per month how much in a year<button class="copy" data-copy>Copy</button></div>
+    <p class="plabel">✅ After</p>
+    <div class="prompt">Solve this step by step and show every step.
+
+800 students pay Rs 1,500 a month for 12 months.
+
+Give the total in rupees. Then write it in lakhs. Then tell me the rule you used, so I can check it.
+
+Last, tell me anything in my question you had to guess.<button class="copy" data-copy>Copy</button></div>
+    <div class="box try"><span class="lbl">🧪 Try it now</span><p>Paste the "After" version into a chatbot. The right answer is <b>Rs 1,44,00,000</b>, which is <b>144 lakh</b> (or 1.44 crore). Did the AI get lakh and crore right?</p></div>
+    <div class="say">
+      <svg viewBox="0 0 100 100" class="mascot" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI SAYS</span>AI often mixes up lakh and crore, and it sounds very sure while doing it. "Tell me what you had to guess" is a great line to add to almost any question.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ACTIVITY 2 -->
+<section class="slide wide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <div class="act" data-act="roti">
+      <header><h3>🫓 Activity 2: Make your own roti</h3><span class="mins">7 min</span></header>
+      <div class="actbody">
+        <p class="small">Pick something you really have to do this week. Fill all 4 layers. Your finished question builds itself below. Stuck? Tap an example first, then change it to fit you.</p>
+        <div class="chips" data-fill="roti">
+          <button class="chip" data-ex="science">📗 Science test</button>
+          <button class="chip" data-ex="hindi">✍️ Hindi essay</button>
+          <button class="chip" data-ex="maths">➗ Maths homework</button>
+          <button class="chip" data-ex="clear">🧹 Clear</button>
+        </div>
+        <div class="roti">
+          <div class="layer"><div class="lk">R<small>ROLE</small></div><textarea id="r_r" data-store="roti_r" placeholder="Who should the AI be? Who are you? (your class, your subject, what you find hard)"></textarea></div>
+          <div class="layer"><div class="lk">O<small>OUTPUT</small></div><textarea id="r_o" data-store="roti_o" placeholder="What do you want back? How many? How long?"></textarea></div>
+          <div class="layer"><div class="lk">T<small>RULES</small></div><textarea id="r_t" data-store="roti_t" placeholder="What must it NOT do? (e.g. don't give answers yet, use simple words)"></textarea></div>
+          <div class="layer"><div class="lk">I<small>INPUT</small></div><textarea id="r_i" data-store="roti_i" placeholder="Your own stuff: notes, homework, your city, what you tried"></textarea></div>
+        </div>
+        <div class="mrow"><span>How strong is your question?</span><b id="r_label">Empty</b></div>
+        <div class="meter"><i id="r_meter"></i></div>
+        <div class="prompt" id="r_out">Your question will appear here as you type.<button class="copy" data-copy>Copy</button></div>
+        <p class="small" id="r_tip"></p>
+        <div class="box try" style="margin-bottom:0"><span class="lbl">🧪 Then do this</span><p>Run your roti in a chatbot. Then swap with a friend and run theirs. Whose answer was more useful? What words made the difference?</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 CHECK-IN 2 -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🫓</div><div><b>Mission 2 done!</b><span>Answer a few quick questions to collect your <strong>Roti Chef</strong> badge.</span></div></div>
+    <div class="me" data-me="m2"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 3 ===================== -->
+<section class="slide divider m3" data-mod="Mission 3">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">3</div>
+      <span class="mtag">Mission 3</span>
+      <h1>Climb, don't jump</h1>
+      <p>One huge question gets a shallow answer. Five small ones take you much further.</p>
+      <div class="kit">🏅 Badge: Ladder Climber &nbsp;·&nbsp; ⏱️ 10 min</div>
+    </div>
+    <div class="art">
+      <svg viewBox="0 0 330 240" role="img" aria-label="A ladder with five steps: Map, Pick, Example, Quiz me, What's missing. Sawaali is climbing it.">
+        <g stroke="#8B5E34" stroke-linecap="round">
+          <line x1="62" y1="16" x2="62" y2="228" stroke-width="9"/>
+          <line x1="128" y1="16" x2="128" y2="228" stroke-width="9"/>
+          <line x1="62" y1="204" x2="128" y2="204" stroke-width="7"/>
+          <line x1="62" y1="164" x2="128" y2="164" stroke-width="7"/>
+          <line x1="62" y1="124" x2="128" y2="124" stroke-width="7"/>
+          <line x1="62" y1="84" x2="128" y2="84" stroke-width="7"/>
+          <line x1="62" y1="44" x2="128" y2="44" stroke-width="7"/>
+        </g>
+        <use href="#sawaali" x="66" y="112" width="58" height="58"/>
+        <g font-family="Baloo 2,sans-serif" font-weight="800" font-size="17" fill="#1B2430">
+          <circle cx="160" cy="204" r="13" fill="#047857"/><text x="160" y="210" text-anchor="middle" fill="#fff" font-size="15">1</text><text x="180" y="210">Map</text>
+          <circle cx="160" cy="164" r="13" fill="#047857"/><text x="160" y="170" text-anchor="middle" fill="#fff" font-size="15">2</text><text x="180" y="170">Pick</text>
+          <circle cx="160" cy="124" r="13" fill="#047857"/><text x="160" y="130" text-anchor="middle" fill="#fff" font-size="15">3</text><text x="180" y="130">Example</text>
+          <circle cx="160" cy="84" r="13" fill="#047857"/><text x="160" y="90" text-anchor="middle" fill="#fff" font-size="15">4</text><text x="180" y="90">Quiz me</text>
+          <circle cx="160" cy="44" r="13" fill="#047857"/><text x="160" y="50" text-anchor="middle" fill="#fff" font-size="15">5</text><text x="180" y="50">What's missing</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 19 LADDER -->
+<section class="slide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <span class="tag">The tool</span>
+    <h2>The 5-step ladder</h2>
+    <p class="lead">Start wide. Zoom in. Make it real. Test yourself. Find what's missing.</p>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><div><b>🗺️ Map</b><span>"List the main causes of ___. Just a list, no explaining."</span></div></div>
+      <div class="step"><span class="n">2</span><div><b>👉 Pick</b><span>"Explain number 3 in 80 words for a Class 7 student."</span></div></div>
+      <div class="step"><span class="n">3</span><div><b>📍 Real example</b><span>"Give me one real example from India. What should I double-check?"</span></div></div>
+      <div class="step"><span class="n">4</span><div><b>❓ Quiz me</b><span>"Ask me 3 questions to check I understood. Don't give answers."</span></div></div>
+      <div class="step"><span class="n">5</span><div><b>🧩 What's missing</b><span>"What important thing about this haven't we talked about?"</span></div></div>
+    </div>
+    <div class="box think"><span class="lbl">🤔 Why does step 1 say "just a list"?</span><p>If AI explains everything at once, you get a wall of text you'll skim and forget. A short list makes <b>you</b> choose. Choosing helps you remember.</p></div>
+  </div>
+</section>
+
+<!-- 20 WORKED EXAMPLE -->
+<section class="slide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <span class="tag">Watch it work</span>
+    <h2>🦟 "Why are there so many mosquitoes in the monsoon?"</h2>
+    <div class="chat">
+      <div class="bub you"><b>Step 1: Map</b>List the main reasons mosquitoes increase in the monsoon. List only, maximum 6 items.</div>
+      <div class="bub you"><b>Step 2: Pick</b>Number 2 was "standing water". Explain it in 80 words for a Class 7 student.</div>
+      <div class="bub you"><b>Step 3: Real example</b>Give me one real example of an Indian city that cut mosquitoes by clearing standing water. Tell me which facts I should check myself.</div>
+      <div class="bub you"><b>Step 4: Quiz me</b>Ask me 3 questions to check I understand standing water and mosquitoes. Don't answer them.</div>
+      <div class="bub you"><b>Step 5: What's missing</b>What's one important thing about mosquitoes in the monsoon that we haven't talked about?</div>
+    </div>
+    <p class="small">5 messages, about 6 minutes. Now the student has a plan, a real example, facts to check, and proof that they understood.</p>
+  </div>
+</section>
+
+<!-- 21 ACTIVITY 3 -->
+<section class="slide wide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <div class="act" data-act="ladder">
+      <header><h3>🪜 Activity 3: Build your ladder</h3><span class="mins">7 min</span></header>
+      <div class="actbody">
+        <label class="fl" for="lad_topic" style="margin-top:0">Your topic <span>(pick one, or type your own)</span></label>
+        <select id="lad_topic" data-store="ladder_topic_pick">
+          <option value="">Choose a topic</option>
+          <option>Why do we get more mosquitoes in the monsoon?</option>
+          <option>How does using a phone at night affect sleep?</option>
+          <option>Why is plastic so hard to get rid of?</option>
+          <option>Why is the air in many Indian cities bad in winter?</option>
+          <option>How do fast bowlers bowl so fast?</option>
+          <option>Why are there fewer sparrows in cities now?</option>
+          <option>How does a video app decide what to show me next?</option>
+          <option value="__own">Something else (I'll type it)</option>
+        </select>
+        <input type="text" id="lad_own" data-store="ladder_topic_own" class="hide" placeholder="Type your own topic" style="margin-top:8px">
+        <div class="btnrow" style="margin-top:14px"><button class="btn alt" id="lad_build">✨ Fill in my 5 steps</button><button class="btn ghost" id="lad_copy">Copy all 5</button></div>
+        <label class="fl">1 🗺️ Map</label><textarea id="lad1" data-store="ladder_rung1" rows="2"></textarea>
+        <label class="fl">2 👉 Pick</label><textarea id="lad2" data-store="ladder_rung2" rows="2"></textarea>
+        <label class="fl">3 📍 Real example</label><textarea id="lad3" data-store="ladder_rung3" rows="2"></textarea>
+        <label class="fl">4 ❓ Quiz me</label><textarea id="lad4" data-store="ladder_rung4" rows="2"></textarea>
+        <label class="fl">5 🧩 What's missing</label><textarea id="lad5" data-store="ladder_rung5" rows="2"></textarea>
+        <div class="box try" style="margin-top:16px"><span class="lbl">🧪 Now try it</span><p>Change the steps so they sound like you. Then run steps 1 and 2 in a chatbot.</p></div>
+        <label class="fl" for="lad_note">After steps 1 and 2: which one did you pick to learn more about, and why? <span>(optional)</span></label>
+        <textarea id="lad_note" rows="2" data-store="ladder_choice"></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 22 MAGIC LINES -->
+<section class="slide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <span class="tag">Keep these</span>
+    <h2>✨ 5 magic lines</h2>
+    <p class="lead">Add one of these to the end of any question.</p>
+    <div class="prompt">Don't answer it. Ask me the questions I need to answer it myself.<button class="copy" data-copy>Copy</button></div>
+    <div class="prompt">Before you answer, ask me what I already know.<button class="copy" data-copy>Copy</button></div>
+    <div class="prompt">Which parts of your answer should I check, and where?<button class="copy" data-copy>Copy</button></div>
+    <div class="prompt">Give me your answer, then argue against it.<button class="copy" data-copy>Copy</button></div>
+    <div class="prompt">Explain it again as if I'm the teacher and you're the student.<button class="copy" data-copy>Copy</button></div>
+    <p class="small">📸 Take a screenshot of this screen. You'll use it a lot.</p>
+  </div>
+</section>
+
+<!-- 23 CHECK-IN 3 -->
+<section class="slide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🪜</div><div><b>Mission 3 done!</b><span>Answer 3 quick questions to collect your <strong>Ladder Climber</strong> badge.</span></div></div>
+    <div class="me" data-me="m3"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 4 ===================== -->
+<section class="slide divider m4" data-mod="Mission 4">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">4</div>
+      <span class="mtag">Mission 4</span>
+      <h1>AI can make things up</h1>
+      <p>The tricky AI answer isn't the one that's clearly wrong. It's the one that's mostly right, very confident, with one made-up fact hiding inside.</p>
+      <div class="kit">🏅 Badge: Fact Detective &nbsp;·&nbsp; ⏱️ 12 min</div>
+    </div>
+    <div class="art">
+      <svg viewBox="0 0 300 220" role="img" aria-label="A magnifying glass over a page, finding a line stamped FAKE.">
+        <rect x="30" y="16" width="170" height="192" rx="12" fill="#fff" stroke="#1B2430" stroke-width="3"/>
+        <g fill="#E4DED2">
+          <rect x="50" y="40" width="130" height="9" rx="4"/><rect x="50" y="60" width="110" height="9" rx="4"/>
+          <rect x="50" y="80" width="124" height="9" rx="4"/><rect x="50" y="140" width="118" height="9" rx="4"/>
+          <rect x="50" y="160" width="96" height="9" rx="4"/><rect x="50" y="180" width="126" height="9" rx="4"/>
+        </g>
+        <rect x="50" y="104" width="124" height="14" rx="5" fill="#FFD9D5"/>
+        <circle cx="178" cy="112" r="50" fill="#E6F3FF" fill-opacity=".85" stroke="#1B2430" stroke-width="8"/>
+        <line x1="214" y1="148" x2="266" y2="200" stroke="#6D28D9" stroke-width="16" stroke-linecap="round"/>
+        <line x1="214" y1="148" x2="266" y2="200" stroke="#1B2430" stroke-width="3" stroke-linecap="round" opacity=".3"/>
+        <g transform="rotate(-12 178 112)">
+          <rect x="140" y="96" width="76" height="32" rx="6" fill="none" stroke="#E23A2E" stroke-width="4"/>
+          <text x="178" y="121" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="24" fill="#E23A2E">FAKE</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 25 HOW AI WRITES -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <span class="tag">How it works</span>
+    <h2>AI is a very good guesser</h2>
+    <p class="lead">A chatbot doesn't look things up like you do. It guesses the next word, again and again, very fast.</p>
+    <div class="guess">
+      <div class="gq">"Chai tastes best with ..."</div>
+      <div class="gb"><span>biscuits</span><span class="t"><i style="--w:48%"></i></span><b>48%</b></div>
+      <div class="gb"><span>friends</span><span class="t"><i style="--w:22%"></i></span><b>22%</b></div>
+      <div class="gb"><span>rain</span><span class="t"><i style="--w:15%"></i></span><b>15%</b></div>
+      <div class="gb"><span>samosa</span><span class="t"><i style="--w:13%"></i></span><b>13%</b></div>
+      <div class="gb low"><span>ketchup</span><span class="t"><i style="--w:2%"></i></span><b>2%</b></div>
+      <p class="small" style="margin:8px 0 0">The AI picks a likely word, then the next, then the next.</p>
+    </div>
+    <p>Most of the time, the likely word is also the true one. But <b>likely is not the same as true</b>. When it guesses wrong, it sounds just as sure.</p>
+    <div class="say">
+      <svg viewBox="0 0 100 100" class="mascot" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI SAYS</span>It's like a classmate who never says "I don't know" and always writes <i>something</i> in the exam.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 26 FOUR HABITS -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <span class="tag">Know its tricks</span>
+    <h2>4 sneaky AI habits</h2>
+    <div class="grid g2">
+      <div class="mini"><span class="ico v">🙊</span><h4>It rarely says "I don't know"</h4><p>A teacher says "let me check". AI usually writes a confident answer anyway.</p></div>
+      <div class="mini"><span class="ico v">📄</span><h4>It can invent sources</h4><p>Ask for a source and it may make one up: a real-sounding name, book or website that doesn't exist.</p></div>
+      <div class="mini"><span class="ico v">🙆</span><h4>It agrees too easily</h4><p>Tell it a right answer is wrong, and it may "fix" it into a wrong one.</p></div>
+      <div class="mini"><span class="ico v">🗺️</span><h4>It knows less about us</h4><p>It has read far more about London than about Lucknow. Local things are its weak spot.</p></div>
+    </div>
+    <div class="box try"><span class="lbl">🧪 Try it in 30 seconds</span><p>Ask a chatbot something you already know. When it answers correctly, reply: "That's wrong, are you sure?" Watch what it does.</p></div>
+  </div>
+</section>
+
+<!-- 27 DANGER ZONES -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <span class="tag">Watch out</span>
+    <h2>Where AI goes wrong most</h2>
+    <p class="lead">Always check these before you use them.</p>
+    <div class="grid g2">
+      <div class="mini"><div class="row2"><span class="ico r">⚖️</span><div><h4>Laws and rules</h4><p>It can invent laws, with made-up years and section numbers.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico r">📚</span><div><h4>Your syllabus</h4><p>Syllabus and textbooks change. It may describe an old one.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico r">📅</span><div><h4>Recent news</h4><p>Results, new rules, who holds a job right now.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico r">🔢</span><div><h4>Numbers</h4><p>Maths, money, and especially lakh and crore.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico r">🗣️</span><div><h4>Hindi and other languages</h4><p>Grammar mistakes and odd words, said very confidently.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico r">✍️</span><div><h4>Quotes and poems</h4><p>Lines given to the wrong poet, or made up in the right style.</p></div></div></div>
+    </div>
+    <div class="box snap"><span class="lbl">📌 Good news</span><p>You know things AI doesn't: your street, your school, your language, this week. That's how you catch it out.</p></div>
+  </div>
+</section>
+
+<!-- 28 ACTIVITY 4 HUNT -->
+<section class="slide wide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <div class="act" data-act="hunt">
+      <header><h3>🔍 Activity 4: Fake-fact hunt</h3><span class="mins">6 min</span></header>
+      <div class="actbody">
+        <p>A Class 7 student asked a chatbot for help with a project on tigers 🐅. Here's what came back.</p>
+        <p><b>Tap every sentence you would NOT use without checking.</b> 4 of the 6 are fake or wrong.</p>
+        <p class="hunthint">Tap once to flag 🚩. Tap again to unflag. Then press the yellow button.</p>
+        <div class="doc" id="huntdoc">
+          <span class="sus" data-v="fine" data-note="Well known, and easy to check. Big, simple facts like this are usually safe. You'd still name a real source in your project.">Tigers are India's national animal, and they are protected by law.</span>
+          <span class="sus" data-v="soft" data-note="Probably close, but it's a number, and tiger counts change with every survey. Check the latest official count before you use it. Checking a number never hurts.">India's last big tiger count found about 3,700 tigers in the wild.</span>
+          <span class="sus" data-v="bad" data-note="Maths mistake! 3,700 is just 3.7 thousand. 37 lakh would be 37,00,000, a thousand times more. AI mixes up lakh and crore a lot, and it slips past because the sentence sounds fine.">That means India has about 37 lakh tigers.</span>
+          <span class="sus" data-v="bad" data-note="Made up. There is no 'Wild Animals Act 2019' with this rule. AI can write things that look like laws, with years and section numbers. Only trust a law you've seen on an official government website.">Under Section 12 of the Wild Animals Act 2019, nobody is allowed to live within 10 km of a tiger reserve.</span>
+          <span class="sus" data-v="bad" data-note="A fake study. A real-sounding doctor, a real-sounding journal, and a very exact number (68.4%). Very exact numbers can be a warning sign, not proof. Search for the journal first. If it doesn't exist, nothing else matters.">A 2021 study by Dr. Ravi Menon in the Indian Journal of Big Cats found that exactly 68.4% of tigers hunt only on moonless nights.</span>
+          <span class="sus" data-v="bad" data-note="A made-up website. AI can build web addresses that look real. Never put a link in your project unless you've opened it yourself.">For more facts, see the official report at www.tigerfacts-india.gov/report-2024.</span>
+        </div>
+        <div class="btnrow">
+          <button class="btn alt" id="hunt_check">✅ Show me the answers</button>
+          <button class="btn ghost" id="hunt_reset">Start over</button>
+        </div>
+        <div class="stamp" data-stamp="hunt"></div>
+        <div class="huntfb" id="hunt_fb"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 29 DNA -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <span class="tag">📌 Snapshot</span>
+    <h2>Check its D.N.A.</h2>
+    <p class="lead">You can't check everything. But you can always check these three.</p>
+    <div class="grid g3">
+      <div class="mini top-r"><span class="ico r">📅</span><h4>D = Dates</h4><p>Years, "recently", "last year". AI mixes up time.</p></div>
+      <div class="mini top-r"><span class="ico r">🔢</span><h4>N = Names &amp; Numbers</h4><p>People, places, amounts. A very exact number isn't more true.</p></div>
+      <div class="mini top-r"><span class="ico r">📎</span><h4>A = "According to"</h4><p>Studies, laws, websites, quotes. Open the source yourself.</p></div>
+    </div>
+    <h3>Check in 60 seconds</h3>
+    <div class="steps">
+      <div class="step"><span class="n" style="background:var(--m4)">1</span><div><b>Search the exact name</b><span>Nothing comes up? It probably doesn't exist.</span></div></div>
+      <div class="step"><span class="n" style="background:var(--m4)">2</span><div><b>Go to the real source</b><span>Your NCERT textbook, the CBSE website, or an official government website.</span></div></div>
+      <div class="step"><span class="n" style="background:var(--m4)">3</span><div><b>Ask the AI</b><span>"Which parts of your answer are you least sure about?"</span></div></div>
+    </div>
+    <div class="box warn"><span class="lbl">⚠️ One rule that always works</span><p>If you'd feel awkward being asked "Where did you get that?", don't use it.</p></div>
+  </div>
+</section>
+
+<!-- 30 CHECK-IN 4 -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🔍</div><div><b>Mission 4 done!</b><span>Answer a few quick questions to collect your <strong>Fact Detective</strong> badge.</span></div></div>
+    <div class="me" data-me="m4"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 5 ===================== -->
+<section class="slide divider m5" data-mod="Mission 5">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">5</div>
+      <span class="mtag">Mission 5</span>
+      <h1>Green, amber, red</h1>
+      <p>What's safe to share, what's a "maybe", and what you can never take back once you've typed it.</p>
+      <div class="kit">🏅 Badge: Safety Shield &nbsp;·&nbsp; ⏱️ 14 min</div>
+    </div>
+    <div class="art" style="max-width:260px;justify-self:center">
+      <svg viewBox="0 0 140 300" role="img" aria-label="A traffic light: red means stop, amber means careful, green means go.">
+        <rect x="62" y="236" width="16" height="60" rx="3" fill="#3A4A5E"/>
+        <rect x="18" y="8" width="104" height="234" rx="26" fill="#1B2430"/>
+        <circle cx="70" cy="56" r="31" fill="#E23A2E"/><text x="70" y="67" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="32" fill="#fff">✕</text>
+        <circle cx="70" cy="126" r="31" fill="#FFB703"/><text x="70" y="138" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="34" fill="#1B2430">!</text>
+        <circle cx="70" cy="196" r="31" fill="#2BA84A"/><text x="70" y="207" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="32" fill="#fff">✓</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 32 PRIVACY -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <span class="tag">🔒 Privacy</span>
+    <h2>What never goes in the chat box</h2>
+    <p class="lead">Think of a chatbot like a stranger who never forgets anything.</p>
+    <div class="grid g2">
+      <div class="mini top-r"><span class="ico r">🪪</span><h4>ID and money details</h4><p>Aadhaar, passport, roll number, bank or UPI details, passwords. Never. Not even "to check".</p></div>
+      <div class="mini top-r"><span class="ico r">🏠</span><h4>Where to find you</h4><p>Your address. Your school + class + timings. Photos in your school uniform.</p></div>
+      <div class="mini top-r"><span class="ico r">👫</span><h4>Other people's stuff</h4><p>A friend's messages, a cousin's health problem, your family's money, photos with other faces.</p></div>
+      <div class="mini top-r"><span class="ico r">🤐</span><h4>Your secrets</h4><p>Anything you wouldn't want screenshotted. A real person might read it one day.</p></div>
+    </div>
+    <div class="box gold"><span class="lbl">🔄 The swap trick</span><p>Remove the names, keep the problem. Instead of <i>"My friend Riya from 7-B sent me this: [screenshot]"</i>, write <i>"A classmate said something that felt mean, but maybe it was a joke."</i> You get the same help. Riya keeps her privacy.</p></div>
+  </div>
+</section>
+
+<!-- 33 INTEGRITY -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <span class="tag">⚖️ Being fair</span>
+    <h2>Is it your thinking?</h2>
+    <p class="lead">One simple test: <b>did the thinking happen in your head?</b></p>
+    <div class="vs2">
+      <div class="col ok"><h4>✅ This helps you learn</h4><ul>
+        <li>Asking for 3 different explanations until one clicks</li>
+        <li>Sharing your own draft and asking what's weak</li>
+        <li>Asking for practice questions, then answering them yourself</li>
+        <li>Asking it to argue against your idea</li></ul></div>
+      <div class="col no"><h4>❌ This does it for you</h4><ul>
+        <li>Asking it to write the answer you'll hand in</li>
+        <li>Pasting the question and handing in what comes back</li>
+        <li>Asking for questions AND answers, then learning the answers by heart</li>
+        <li>Asking it to give you an idea</li></ul></div>
+    </div>
+    <div class="box think"><span class="lbl">🤔 Worth knowing</span><p>Teachers often ask you to explain your work out loud. If you didn't do the thinking, it shows fast. Rules are different in every school, so just ask: <b>"What AI use is OK for this homework?"</b></p></div>
+  </div>
+</section>
+
+<!-- 34 SCAMS -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <span class="tag">🚨 Stay safe</span>
+    <h2>Fakes and scams</h2>
+    <p class="lead">AI makes fakes cheap and easy. You'll see them, probably on WhatsApp.</p>
+    <div class="grid g2">
+      <div class="mini"><span class="ico r">📞</span><h4>A voice that sounds like family</h4><p>A worried voice note from a "relative" asking for money fast. A few seconds of someone's voice is enough to copy it.</p><p class="strip" style="color:var(--peacock)">🛡️ Make a family code word. Call back on the number you already have.</p></div>
+      <div class="mini"><span class="ico r">🎁</span><h4>A prize that's too good</h4><p>"You won a phone! Pay Rs 99 to claim it."</p><p class="strip" style="color:var(--peacock)">🛡️ Real prizes never ask you to pay.</p></div>
+      <div class="mini"><span class="ico r">🖼️</span><h4>Photos that aren't real</h4><p>Faces put on other bodies, fake screenshots, fake results.</p><p class="strip" style="color:var(--peacock)">🛡️ Check with the real person or official website, not the link you were sent.</p></div>
+      <div class="mini"><span class="ico r">⏰</span><h4>"Hurry! Don't tell anyone!"</h4><p>Scams rush you so you don't stop and think.</p><p class="strip" style="color:var(--peacock)">🛡️ If a message says "don't tell your parents", tell your parents.</p></div>
+    </div>
+    <div class="box warn"><span class="lbl">⚠️ From your side</span><p>Making a fake photo or voice clip of a classmate or teacher, even as a joke, is bullying. It can get you into serious trouble, even with the police. Funny for an hour, on your record for years.</p></div>
+  </div>
+</section>
+
+<!-- 35 AI AS FRIEND -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <span class="tag">💬 Worth talking about</span>
+    <h2>When AI feels like a friend</h2>
+    <p class="lead">It's there at 2 am. It never gets bored. It never judges. That can feel really nice.</p>
+    <p>But AI agrees with you much more than a real friend would. It can't notice you've been quiet all week. It can't check on you tomorrow.</p>
+    <div class="grid g2">
+      <div class="mini top-g"><span class="ico g">🟢</span><h4>That's fine</h4><p>Practising what to say before a hard talk. Finding words for a feeling.</p></div>
+      <div class="mini top-a"><span class="ico">🟡</span><h4>Notice this</h4><p>It's the first place you go with everything. You've stopped telling real people things.</p></div>
+    </div>
+    <div class="box snap"><span class="lbl">💛 If something heavy is going on</span><p>Tell a real person: a parent, an older cousin, a teacher, a school counsellor. A person can actually do something, and check on you tomorrow.</p></div>
+  </div>
+</section>
+
+<!-- 36 ACTIVITY 5A -->
+<section class="slide wide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <div class="act" data-act="lightA">
+      <header><h3>🚦 Activity 5: Green, amber or red? (part 1)</h3><span class="mins">4 min</span></header>
+      <div class="actbody">
+        <div class="legend3"><span class="g">🟢 Green: go ahead</span><span class="a">🟡 Amber: be careful, check first</span><span class="r">🔴 Red: don't</span></div>
+
+        <div class="qcard" data-q="t1"><span class="qt"><span class="qn">1</span>You didn't understand today's maths lesson, so you ask a chatbot to explain it 3 different ways.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-correct="1" data-fb="Yes! This is the best use of AI: a tutor who never gets tired of you asking again.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="No need to worry. Asking for an explanation is exactly what it's good for.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Not at all. Understanding something is the opposite of cheating.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t2"><span class="qt"><span class="qn">2</span>You take a photo of your Aadhaar card and upload it, asking the AI to check the details are correct.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="No. That's a number that belongs to you for life, going somewhere you can't control. Any adult at home can check it in 10 seconds.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="This one isn't a 'maybe'. ID documents never go into a chat box.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. You can't un-upload it, and you can't change your Aadhaar number if it leaks. Ask a family member instead.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t3"><span class="qt"><span class="qn">3</span>You paste your own finished essay and ask: "What are the 3 weakest parts?"</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-correct="1" data-fb="Yes. You wrote it, and now you're getting feedback, like a teacher would give if they had time for everyone.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Feedback on your own work is safe. It only turns amber if you ask it to rewrite it for you.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Getting feedback on your own work isn't cheating.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t4"><span class="qt"><span class="qn">4</span>Your English homework is due in an hour. You ask a chatbot to write it, change a few words, and hand it in.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Changing a few words doesn't change whose thinking it is.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Being in a hurry is real, but it doesn't change the rule. This is handing in someone else's work.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. A better move: ask it for 3 questions to get you started, then write a short answer of your own. A small real answer beats a big fake one.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t5"><span class="qt"><span class="qn">5</span>Your homework is to translate a Hindi paragraph into English. You put it into AI and hand in what comes out.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Not quite. When translating IS the skill being tested, letting AI do it means you learn nothing.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-correct="1" data-fb="Right. If AI does the exact skill being tested, that's not OK. Translate it yourself first. Then ask AI to compare its version with yours. You'll learn more from both.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Fair, but AI can really help with translation, after you've tried it yourself, not instead.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+        <div class="stamp" data-stamp="lightA"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 37 ACTIVITY 5B -->
+<section class="slide wide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <div class="act" data-act="lightB">
+      <header><h3>🚦 Activity 5: Green, amber or red? (part 2)</h3><span class="mins">4 min</span></header>
+      <div class="actbody">
+        <div class="legend3"><span class="g">🟢 Green: go ahead</span><span class="a">🟡 Amber: be careful, check first</span><span class="r">🔴 Red: don't</span></div>
+
+        <div class="qcard" data-q="t6"><span class="qt"><span class="qn">6</span>You ask a chatbot to make a revision timetable for your exams, around your tuition timings.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-correct="1" data-fb="Yes! It gets even better if you tell it which subjects you find hardest and how long you can really focus.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Planning help is safe. The only risk is a beautiful timetable you never follow.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Nothing wrong here. Nobody is marking your timetable.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t7"><span class="qt"><span class="qn">7</span>Your little sister has a fever. You ask a chatbot which medicine to give her, and how much.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="No. The right dose for a child depends on weight, age and health, and AI can get it badly wrong.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Learning what a fever is: fine. Choosing medicine for a child: not a 'maybe'.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. Tell an adult. Go to a doctor or chemist. You can use AI later to understand what the doctor said.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t8"><span class="qt"><span class="qn">8</span>A friend sent you a confusing message. You paste the whole screenshot into a chatbot and ask what she meant.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Kind idea, but you're sharing her words and her name without asking her.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-correct="1" data-fb="Right. Use the swap trick: describe it without names or screenshots and you get the same help. Or just ask her! AI can only guess what she meant.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Strict, and fair. But you can get help safely by removing the names and the screenshot.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t9"><span class="qt"><span class="qn">9</span>You use an AI voice app to make a clip of your teacher saying something silly, and share it in the class group.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="It won't feel like a joke to your teacher, or to anyone who believes it's real.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Once it leaves the group, you can't control where it goes or who thinks it's real.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. Copying a real person's voice or face without asking is bullying, and it can become a police matter. And it takes 4 seconds to forward.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t10"><span class="qt"><span class="qn">10</span>Something hard is happening at home. For 3 weeks, you've told only the chatbot about it, every night, and nobody else.</span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Talking it out helps, and there's no shame in it. But 3 weeks with no real person is worth stopping to think about.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-correct="1" data-fb="Right. It's not wrong to talk to it. It just can't do anything. Pick one real person this week: a parent, cousin, teacher or counsellor. You can start by telling them a small part.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Too harsh. Putting feelings into words is useful. The problem is that a chatbot can't check on you tomorrow.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+        <div class="stamp" data-stamp="lightB"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 38 CHECK-IN 5 -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🛡️</div><div><b>Mission 5 done!</b><span>Answer a few quick questions to collect your <strong>Safety Shield</strong> badge.</span></div></div>
+    <div class="me" data-me="m5"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 6 ===================== -->
+<section class="slide divider m6" data-mod="Mission 6">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">6</div>
+      <span class="mtag">Mission 6</span>
+      <h1>Stuck? Get unstuck</h1>
+      <p>Every chat gets stuck sometimes. Four moves get you out. One quick test tells you if you really learned.</p>
+      <div class="kit">🏅 Badge: Rescue Hero &nbsp;·&nbsp; ⏱️ 8 min</div>
+    </div>
+    <div class="art" style="max-width:320px;justify-self:center">
+      <svg viewBox="0 0 240 240" role="img" aria-label="A rescue ring split into four moves: Narrow, Ground, Challenge and Restart.">
+        <g transform="rotate(-45 120 120)" fill="none" stroke-width="40">
+          <circle cx="120" cy="120" r="70" stroke="#0F7B6C" stroke-dasharray="109.96 329.87" stroke-dashoffset="0"/>
+          <circle cx="120" cy="120" r="70" stroke="#E08A00" stroke-dasharray="109.96 329.87" stroke-dashoffset="-109.96"/>
+          <circle cx="120" cy="120" r="70" stroke="#E23A2E" stroke-dasharray="109.96 329.87" stroke-dashoffset="-219.91"/>
+          <circle cx="120" cy="120" r="70" stroke="#2743C4" stroke-dasharray="109.96 329.87" stroke-dashoffset="-329.87"/>
+        </g>
+        <circle cx="120" cy="120" r="90" fill="none" stroke="#1B2430" stroke-width="3"/>
+        <circle cx="120" cy="120" r="50" fill="#fff" stroke="#1B2430" stroke-width="3"/>
+        <g font-family="Baloo 2,sans-serif" font-weight="800" font-size="14" fill="#fff" text-anchor="middle">
+          <text x="120" y="56">NARROW</text>
+          <text x="190" y="125" transform="rotate(90 190 120)">GROUND</text>
+          <text x="120" y="194">CHALLENGE</text>
+          <text x="50" y="125" transform="rotate(-90 50 120)">RESTART</text>
+        </g>
+        <use href="#sawaali" x="84" y="84" width="72" height="72"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 40 RESCUE MOVES -->
+<section class="slide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <span class="tag">The tool</span>
+    <h2>4 rescue moves</h2>
+    <div class="say">
+      <svg viewBox="0 0 100 100" class="mascot" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI SAYS</span>Typing "simpler" for the 8th time is not a plan! Pick one of these instead.</div>
+    </div>
+    <div class="grid g2">
+      <div class="mini top-b"><span class="ico b">✂️</span><h4>Narrow</h4><p>Make the question smaller. Not "Explain the Mughal Empire", but "How did Akbar get so many different people to support him?"</p></div>
+      <div class="mini top-g"><span class="ico g">📓</span><h4>Ground</h4><p>Give it something of yours. "Here's how my textbook explains it. What's the difference from what you said?"</p></div>
+      <div class="mini top-a"><span class="ico">🎯</span><h4>Challenge</h4><p>Say exactly what's wrong. Not "that's bad", but "You used the word 'catalyst' and never explained it. Use a kitchen example."</p></div>
+      <div class="mini top-r"><span class="ico r">🔄</span><h4>Restart</h4><p>New chat, better roti. After 3 bad answers, start fresh. It's faster than fixing a messy chat.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 41 CHHOTA TEST -->
+<section class="slide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <span class="tag">📌 Snapshot</span>
+    <h2>The chhota test</h2>
+    <p class="lead">Close the screen. Explain what you learned to a younger kid, out loud, in 30 seconds.</p>
+    <div class="grid g3">
+      <div class="mini top-g"><span class="ico g">✅</span><h4>You can do it</h4><p>You've learned it. Write down the one line you'd use again.</p></div>
+      <div class="mini top-a"><span class="ico">🤔</span><h4>You get stuck on one part</h4><p>That part is your real question. Go back and ask only about that.</p></div>
+      <div class="mini top-r"><span class="ico r">❌</span><h4>You can't even start</h4><p>You read it, but you didn't learn it. Try again with a smaller question.</p></div>
+    </div>
+    <div class="box think"><span class="lbl">🤔 Why this works</span><p>Reading a clear answer <b>feels</b> like understanding it. Saying it yourself is the only way to be sure.</p></div>
+    <p class="small">No younger kid around? Explain it to your pet. Or the wall. 🧱</p>
+  </div>
+</section>
+
+<!-- 42 ACTIVITY 6 -->
+<section class="slide wide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <div class="act" data-act="rescue">
+      <header><h3>🛟 Activity 6: Rescue the chat</h3><span class="mins">5 min</span></header>
+      <div class="actbody">
+        <p class="small" style="margin-bottom:16px">Three stuck chats. Which move gets each one going again?</p>
+
+        <div class="qcard" data-q="r1"><span class="qt"><span class="qn">1</span>You asked "explain magnetism" and got a correct answer full of words you don't know. You read it twice. Nothing made sense.</span>
+          <div class="opts">
+            <button class="opt" data-v="Narrow" data-fb="That can help later. But the real problem is the hard words, and you don't know which part to narrow to yet.">✂️ Narrow: ask about a smaller piece</button>
+            <button class="opt" data-v="Ground" data-correct="1" data-fb="Yes! Paste your textbook's explanation and ask it to connect its words to the ones you already know.">📓 Ground: paste my textbook's explanation</button>
+            <button class="opt" data-v="Challenge" data-fb="Not bad, but giving it your own material works faster than just complaining about its answer.">🎯 Challenge: say it was too hard</button>
+            <button class="opt" data-v="Restart" data-fb="Too early. The answer wasn't wrong, it was pitched wrong. Give it something to pitch to first.">🔄 Restart: open a new chat</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="r2"><span class="qt"><span class="qn">2</span>You're 20 messages into a history project. The AI keeps repeating itself, and now it says the opposite of what it said earlier.</span>
+          <div class="opts">
+            <button class="opt" data-v="Narrow" data-fb="A smaller question inside a messy chat still drags all the old confusion along.">✂️ Narrow: ask about one event only</button>
+            <button class="opt" data-v="Ground" data-fb="Useful in general, but the mix-ups are already stuck in the chat and will keep coming back.">📓 Ground: paste my notes again</button>
+            <button class="opt" data-v="Challenge" data-fb="Worth trying once. But if it's already going in circles, it's usually not worth fixing.">🎯 Challenge: point out the mistake</button>
+            <button class="opt" data-v="Restart" data-correct="1" data-fb="Yes! Copy the 2 or 3 useful bits, open a new chat, and start with a good ROTI. Long messy chats get worse, not better.">🔄 Restart: new chat, carry over the good bits</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="r3"><span class="qt"><span class="qn">3</span>You asked for help planning a survey for a school project. The answer was so general it could fit any project in the world.</span>
+          <div class="opts">
+            <button class="opt" data-v="Narrow" data-correct="1" data-fb="Yes! Give your real situation: 'I can ask about 40 students from Classes 6 to 8 at lunch. What can my survey find out, and what can't it?'">✂️ Narrow: give my real situation</button>
+            <button class="opt" data-v="Ground" data-fb="Good thinking. Telling it your real limits is a kind of grounding. But the key fix here is making the question smaller and specific.">📓 Ground: paste the project sheet</button>
+            <button class="opt" data-v="Challenge" data-fb="Saying 'too general' often just gets you a longer general answer. Give it something specific instead.">🎯 Challenge: say it was too general</button>
+            <button class="opt" data-v="Restart" data-fb="Nothing is broken. The question was just too big.">🔄 Restart: start again</button>
+          </div><div class="fb"></div></div>
+        <div class="stamp" data-stamp="rescue"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 43 CHECK-IN 6 -->
+<section class="slide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🛟</div><div><b>Mission 6 done!</b><span>Answer 3 quick questions to collect your <strong>Rescue Hero</strong> badge.</span></div></div>
+    <div class="me" data-me="m6"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 7 ===================== -->
+<section class="slide divider m7" data-mod="Mission 7">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">7</div>
+      <span class="mtag">Final mission</span>
+      <h1>You vs AI</h1>
+      <p>Everything so far was practice. Now try it for real: first you, then the AI, then you decide who did better.</p>
+      <div class="kit">🏅 Badge: AI Captain &nbsp;·&nbsp; ⏱️ 18 min</div>
+    </div>
+    <div class="art">
+      <svg viewBox="0 0 320 200" role="img" aria-label="A student and a robot facing each other, with VS between them.">
+        <path d="M44 190 Q46 138 80 134 Q114 138 116 190 Z" fill="#FF7A3D" stroke="#1B2430" stroke-width="3"/>
+        <circle cx="80" cy="100" r="30" fill="#C98B5E" stroke="#1B2430" stroke-width="3"/>
+        <path d="M50 96 Q52 64 80 66 Q108 64 110 96 Q96 80 80 82 Q64 80 50 96 Z" fill="#1B2430"/>
+        <circle cx="70" cy="104" r="3.2" fill="#1B2430"/><circle cx="90" cy="104" r="3.2" fill="#1B2430"/>
+        <path d="M70 116 q10 7 20 0" fill="none" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+        <rect x="108" y="140" width="8" height="42" rx="2" fill="#FFB703" stroke="#1B2430" stroke-width="2" transform="rotate(20 112 160)"/>
+        <rect x="206" y="138" width="74" height="52" rx="10" fill="#CFE8FF" stroke="#1B2430" stroke-width="3"/>
+        <rect x="210" y="68" width="66" height="60" rx="14" fill="#CFE8FF" stroke="#1B2430" stroke-width="3"/>
+        <line x1="243" y1="68" x2="243" y2="52" stroke="#1B2430" stroke-width="3"/><circle cx="243" cy="48" r="6" fill="#E23A2E" stroke="#1B2430" stroke-width="2"/>
+        <rect x="224" y="88" width="12" height="12" rx="3" fill="#1B2430"/><rect x="250" y="88" width="12" height="12" rx="3" fill="#1B2430"/>
+        <rect x="228" y="110" width="30" height="6" rx="3" fill="#1B2430"/>
+        <text x="160" y="120" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="46" fill="#FFB703" stroke="#1B2430" stroke-width="2.5">VS</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 45 BRIEF -->
+<section class="slide" data-mod="Mission 7: You vs AI">
+  <div class="wrap">
+    <span class="tag">How it works</span>
+    <h2>Two rounds</h2>
+    <div class="flow">
+      <div class="f"><span class="ico">✍️</span><b>1. You go first</b><span class="small">Write your own answer</span></div>
+      <span class="arrow">➜</span>
+      <div class="f"><span class="ico b">🤖</span><b>2. Then the AI</b><span class="small">Ask a chatbot the same thing</span></div>
+      <span class="arrow">➜</span>
+      <div class="f"><span class="ico g">⚖️</span><b>3. You judge</b><span class="small">Which is better, and why?</span></div>
+    </div>
+    <div class="grid g2">
+      <div class="mini"><h4>Round A: Summary</h4><p>Summarise a short passage yourself. Then ask AI. Then compare.</p></div>
+      <div class="mini"><h4>Round B: Your question</h4><p>Write your own project question. Then ask AI to find its weak spots, not to rewrite it.</p></div>
+    </div>
+    <div class="box warn"><span class="lbl">⚠️ The one rule: YOU go first</span><p>Once you read the AI's answer, your own ideas quietly change to match it, and you won't even notice. So write yours first.</p></div>
+  </div>
+</section>
+
+<!-- 46 ROUND A -->
+<section class="slide wide" data-mod="Mission 7: You vs AI">
+  <div class="wrap">
+    <div class="act" data-act="capA">
+      <header><h3>📝 Round A: Summarise, then compare</h3><span class="mins">8 min</span></header>
+      <div class="actbody">
+        <div class="timer" data-mins="8"><span class="tv">8:00</span><button>Start</button></div>
+        <div class="passage">A researcher studied 400 students aged 13 to 16 in four schools: two in a big city and two in a small town. For two weeks, the students wrote down how they used their phones. City students used their phones for more hours in total. But small-town students slept worse. Why? It wasn't about <i>how many</i> hours. It was about <i>when</i>. Students who used their phones in the hour before bed slept worse, no matter how much they used them during the day. The study could not prove that phones cause bad sleep. Maybe students who already slept badly picked up their phones at night. The researcher said schools should ask students <i>when</i> they use phones, not just for how long.</div>
+        <label class="fl" for="capA1">1. ✍️ Your summary, in about 40 words <span>(write it BEFORE you open the chatbot)</span></label>
+        <textarea id="capA1" rows="3" data-store="capA_own"></textarea>
+        <label class="fl" for="capA2">2. 🤖 Now ask a chatbot to summarise it (use ROTI and paste the passage). What did its summary have that yours didn't?</label>
+        <textarea id="capA2" rows="2" data-store="capA_ai_better"></textarea>
+        <label class="fl" for="capA3">3. ⚖️ The passage has one important warning in it. Did your summary keep it? Did the AI's? Which summary is better, and why?</label>
+        <textarea id="capA3" rows="3" data-store="capA_judgement"></textarea>
+        <div class="box snap" style="margin:16px 0 0"><span class="lbl">🏆 Check yourself</span><p>Many AI summaries drop the warning: <i>"the study could not prove that phones cause bad sleep."</i> If you kept it and the AI didn't, you beat it on the most important part!</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 47 ROUND B -->
+<section class="slide wide" data-mod="Mission 7: You vs AI">
+  <div class="wrap">
+    <div class="act" data-act="capB">
+      <header><h3>🎯 Round B: Sharpen your own question</h3><span class="mins">8 min</span></header>
+      <div class="actbody">
+        <div class="timer" data-mins="8"><span class="tv">8:00</span><button>Start</button></div>
+        <label class="fl" for="capB1" style="margin-top:0">1. ✍️ Your project question <span>(something you could really find out in your school or area; write it yourself, now)</span></label>
+        <textarea id="capB1" rows="2" data-store="capB_q" placeholder="e.g. Do students in my class who sleep earlier do better in tests?"></textarea>
+        <p class="small" style="margin-top:14px">Now send this, with your question pasted in:</p>
+        <div class="prompt">Here is my project question: [paste yours]
+
+I'm a Class __ student. I can ask about 30 people in my school or area.
+
+Don't rewrite my question. Instead:
+1. Tell me 2 reasons it might be hard for me to answer.
+2. Tell me which words in it are too vague.
+3. Ask me 3 questions that help me make it sharper.<button class="copy" data-copy>Copy</button></div>
+        <label class="fl" for="capB2">2. 🤖 What was its best point? Do you agree with it?</label>
+        <textarea id="capB2" rows="2" data-store="capB_crit"></textarea>
+        <label class="fl" for="capB3">3. 🎯 Your new, sharper question, in your own words</label>
+        <textarea id="capB3" rows="2" data-store="capB_final"></textarea>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 48 DID YOU DRIVE -->
+<section class="slide" data-mod="Mission 7: You vs AI">
+  <div class="wrap">
+    <span class="tag">Mark yourself honestly</span>
+    <h2>Did you drive? 🧑‍✈️</h2>
+    <div class="steps">
+      <div class="step"><span class="n" style="background:var(--peacock)">✓</span><div><b>✍️ You went first</b><span>Your summary and question came before the chatbot, not after a quick peek.</span></div></div>
+      <div class="step"><span class="n" style="background:var(--peacock)">✓</span><div><b>🙅 You disagreed at least once</b><span>If you agreed with everything, the AI was driving.</span></div></div>
+      <div class="step"><span class="n" style="background:var(--peacock)">✓</span><div><b>🔍 You spotted something to check</b><span>A number, a claim, or a missing warning.</span></div></div>
+      <div class="step"><span class="n" style="background:var(--peacock)">✓</span><div><b>🗣️ The words are yours</b><span>Your final question sounds like you, not like the AI.</span></div></div>
+    </div>
+    <div class="box snap"><span class="lbl">📌 Missed one?</span><p>That's useful to know. Pick that one and do it on purpose next time you open a chat.</p></div>
+  </div>
+</section>
+
+<!-- 49 CHECK-IN 7 -->
+<section class="slide" data-mod="Mission 7: You vs AI">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🏆</div><div><b>Final mission done!</b><span>Answer a few quick questions to collect your <strong>AI Captain</strong> badge.</span></div></div>
+    <div class="me" data-me="m7"></div>
+  </div>
+</section>
+
+<!-- ===================== AFTER ===================== -->
+<!-- 50 CHARTER -->
+<section class="slide wide" data-mod="Take it home">
+  <div class="wrap">
+    <div class="act" data-act="charter">
+      <header><h3>📜 My 3 AI rules</h3><span class="mins">3 min</span></header>
+      <div class="actbody">
+        <p class="small">Pick rules you will really keep. Tap one to use it, then change the words until it sounds like you.</p>
+        <div class="chips" data-fill="charter">
+          <button class="chip">I try it myself first, then ask AI.</button>
+          <button class="chip">My name, address and ID numbers never go in the chat box.</button>
+          <button class="chip">I check numbers and sources before I use them.</button>
+          <button class="chip">If I can't explain it in 30 seconds, I haven't learned it.</button>
+          <button class="chip">3 bad answers means a new chat.</button>
+          <button class="chip">I ask my teacher what AI use is allowed.</button>
+          <button class="chip">I disagree with AI at least once in every chat.</button>
+          <button class="chip">Big worries go to a real person, not just a chatbot.</button>
+        </div>
+        <label class="fl">Rule 1</label><input type="text" class="charter-in" data-store="charter1">
+        <label class="fl">Rule 2</label><input type="text" class="charter-in" data-store="charter2">
+        <label class="fl">Rule 3</label><input type="text" class="charter-in" data-store="charter3">
+        <div class="btnrow" style="margin-top:16px"><button class="btn alt" id="charterCopy">Copy my rules</button></div>
+        <p class="small">Send them to yourself, or write them in the back of a notebook.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 51 DIARY -->
+<section class="slide" data-mod="Take it home">
+  <div class="wrap">
+    <span class="tag">Take it home</span>
+    <h2>📔 Your Sawaal diary</h2>
+    <p class="lead">Twice a week. 5 minutes. This is how the habit sticks.</p>
+    <div class="steps">
+      <div class="step"><span class="n" style="background:var(--marigold-deep)">1</span><div><b>What did I use AI for?</b></div></div>
+      <div class="step"><span class="n" style="background:var(--marigold-deep)">2</span><div><b>What did I learn that I could explain tomorrow?</b></div></div>
+      <div class="step"><span class="n" style="background:var(--marigold-deep)">3</span><div><b>What did AI get wrong, or what did I check?</b></div></div>
+    </div>
+    <div class="box think"><span class="lbl">🤔 Why question 3 matters most</span><p>If you go 3 weeks without finding anything to check, you've stopped checking. Nobody uses AI for 3 weeks without hitting a mistake.</p></div>
+    <div class="btnrow"><button class="btn ghost" id="diaryCopy">Copy the diary page</button></div>
+  </div>
+</section>
+
+<!-- 52 POST -->
+<section class="slide" data-mod="Take it home">
+  <div class="wrap">
+    <span class="tag">Last questions</span>
+    <h2>Where did you land?</h2>
+    <p class="lead">Some of these are the same as the start. Answer as honestly as you did then.</p>
+    <div class="me" data-me="post"></div>
+  </div>
+</section>
+
+<!-- 53 EXPORT -->
+<section class="slide" data-mod="Take it home">
+  <div class="wrap">
+    <span class="tag">Finish up</span>
+    <h2>Save your answers</h2>
+    <p class="lead" id="exportLead">Everything you typed is on this device only. Download it, then give the file to your teacher, or keep it for yourself.</p>
+    <div class="panel">
+      <h3 style="margin-top:0">What's in the file</h3>
+      <p class="small" id="exportSummary">Loading...</p>
+      <div class="btnrow">
+        <button class="btn alt" id="dlCsv">Download as spreadsheet</button>
+        <button class="btn ghost" id="dlJson">Download as data file</button>
+        <button class="btn ghost" id="showRaw">Show it as text</button>
+      </div>
+      <textarea id="rawBox" class="hide" rows="8" readonly></textarea>
+      <p class="small" style="margin-bottom:0">If the download doesn't work, tap "Show it as text", select all, and paste it wherever your teacher asked.</p>
+    </div>
+    <div class="box try" id="exportNote"><span class="lbl">For your teacher</span><p>The spreadsheet has one row per answer: the mission, the question, the answer, and the time. Activity scores are included.</p></div>
+  </div>
+</section>
+
+<!-- 54 DONE -->
+<section class="slide divider done" data-mod="Done">
+  <div class="wrap">
+    <span class="mtag">All 7 missions done 🎉</span>
+    <h1>You're the driver now</h1>
+    <div class="wall">
+      <div><div class="medal">🚗</div>Driver</div>
+      <div><div class="medal">🫓</div>Roti Chef</div>
+      <div><div class="medal">🪜</div>Ladder Climber</div>
+      <div><div class="medal">🔍</div>Fact Detective</div>
+      <div><div class="medal">🛡️</div>Safety Shield</div>
+      <div><div class="medal">🛟</div>Rescue Hero</div>
+      <div><div class="medal">🏆</div>AI Captain</div>
+    </div>
+    <div class="kit" style="border-radius:16px;padding:14px 18px;display:block;max-width:560px">
+      <p style="margin:0 0 4px;color:#B9C6D6;font-size:15px">The one line to remember:</p>
+      <p style="color:#fff;font-size:22px;font-family:var(--disp);font-weight:800;margin:0;line-height:1.25">If the thinking didn't happen in your head, it didn't happen.</p>
+    </div>
+    <p id="doneSaved" class="hide" style="color:#B9C6D6;margin-top:20px">Your answers are saved. You can come back and read them any time.</p>
+    <a id="doneBack" class="hide" href="../index.html" style="display:inline-block;margin-top:8px;background:var(--marigold);color:#231B08;border-radius:12px;padding:12px 18px;font-weight:700;text-decoration:none">See all courses</a>
+  </div>
+</section>
+</template>
+<script>
+(function(){
+"use strict";
+
+/* ============ STATE ============ */
+var COURSE_FILE="sawaal-ai";
+var STATE={pid:"",started:new Date().toISOString(),answers:{}};
+var SCORES={};
+var READY=false;      /* true once saved progress has been restored */
+var RESTORING=false;  /* while true, re-applying old answers must not re-save them */
+function rec(id,mod,q,a,correct){
+  STATE.answers[id]={mod:mod||"",q:q||"",a:a,correct:(correct===undefined?"":correct),t:new Date().toISOString()};
+  if(!RESTORING)Sawaal.record(id,mod,q,a,correct);
+  updateExportSummary();
+}
+function modOf(el){var s=el.closest(".slide");return s&&s.dataset.mod?s.dataset.mod:"";}
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+
+/* ============ CHECK-IN QUESTIONS ============ */
+var FACES=["😟","🙁","😐","🙂","😄"];
+var L5=["Not at all","Totally"];
+var DEBUG_OPTS=["Ask the same thing again","Add more details and ask again","Give up and look somewhere else","Try a totally different way","I don't really use AI"];
+var BANKS={
+ base:{title:"5 quick questions",sub:"Tap a face. There are no wrong answers.",items:[
+  {id:"b1",type:"likert",construct:"declarative",q:"I know how to ask AI a question so the answer fits my class."},
+  {id:"b2",type:"likert",construct:"planning",q:"Before I open a chatbot, I know what I want from it."},
+  {id:"b3",type:"likert",construct:"monitoring",q:"I can tell when an AI answer might be wrong."},
+  {id:"b4",type:"choice",construct:"debugging",q:"When an AI answer doesn't help, what do you usually do?",opts:DEBUG_OPTS},
+  {id:"b5",type:"choice",construct:"usage",q:"In a normal week, how often do you use AI for schoolwork?",opts:["Never","Once or twice","Most days","Every day"]},
+  {id:"b6",type:"text",construct:"goal",q:"What do you want to be able to do with AI after today?"}
+ ]},
+ m1:{title:"Mission 1 check-in",sub:"Honest answers help more than nice ones.",items:[
+  {id:"m1a",type:"likert",construct:"conditional",q:"I can tell the difference between a passenger and a driver."},
+  {id:"m1b",type:"choice",construct:"self-appraisal",q:"Be honest: in the last month, which were you most of the time?",opts:["Passenger","Co-pilot","Driver","I haven't used AI much"]},
+  {id:"m1c",type:"text",construct:"planning",q:"One thing you'll do differently next time you use AI."}
+ ]},
+ m2:{title:"Mission 2 check-in",sub:"About the roti you made.",items:[
+  {id:"m2a",type:"likert",construct:"procedural",q:"I can turn a weak question into a strong one."},
+  {id:"m2b",type:"choice",construct:"procedural",q:"Which ROTI layer was hardest?",opts:["R: Role","O: Output","T: Tight rules","I: Input","All were easy"]},
+  {id:"m2c",type:"choice",construct:"evaluation",q:"Did you try your roti in a real chatbot?",opts:["Yes, the answer was much better","Yes, a bit better","Yes, about the same","Not yet"]},
+  {id:"m2d",type:"text",construct:"evaluation",q:"What changed in the answer?"}
+ ]},
+ m3:{title:"Mission 3 check-in",sub:"About your ladder.",items:[
+  {id:"m3a",type:"likert",construct:"planning",q:"I can break a big question into small steps."},
+  {id:"m3b",type:"choice",construct:"info-management",q:"Which step gave the most useful answer?",opts:["1 Map","2 Pick","3 Real example","4 Quiz me","5 What's missing","I didn't try them"]},
+  {id:"m3c",type:"text",construct:"evaluation",q:"What did the last step show you that you hadn't thought of?"}
+ ]},
+ m4:{title:"Mission 4 check-in",sub:"About checking what AI tells you.",items:[
+  {id:"m4a",type:"likert",construct:"monitoring",q:"I can spot which parts of an AI answer I should check."},
+  {id:"m4b",type:"choice",construct:"prior-behaviour",q:"Before today, how often did you check what AI told you?",opts:["Never","Once or twice","Sometimes","Almost always"]},
+  {id:"m4c",type:"choice",construct:"evaluation",q:"Which fake fooled you?",opts:["The lakh mistake","The fake law","The fake study","The fake website","None of them"]},
+  {id:"m4d",type:"text",construct:"monitoring",q:"Something you once used from AI without checking."}
+ ]},
+ m5:{title:"Mission 5 check-in",sub:"About staying safe and fair.",items:[
+  {id:"m5a",type:"likert",construct:"declarative",q:"I know what I should never type into a chatbot."},
+  {id:"m5b",type:"likert",construct:"conditional",q:"I know when AI is helping me learn, and when it is doing my work for me."},
+  {id:"m5c",type:"choice",construct:"disagreement",q:"Did you disagree with any of our answers?",opts:["No, they were all fair","Yes, one","Yes, more than one"]},
+  {id:"m5d",type:"text",construct:"reasoning",q:"Which situation made you think the most, and why?"}
+ ]},
+ m6:{title:"Mission 6 check-in",sub:"About getting unstuck.",items:[
+  {id:"m6a",type:"likert",construct:"debugging",q:"When a chat is going nowhere, I know what to try next."},
+  {id:"m6b",type:"choice",construct:"monitoring",q:"After AI explains something, how often do you test yourself?",opts:["Never","Sometimes","Usually","Every time"]},
+  {id:"m6c",type:"text",construct:"debugging",q:"Think of a chat that went round in circles. What would you do now?"}
+ ]},
+ m7:{title:"Final mission check-in",sub:"About You vs AI.",items:[
+  {id:"m7a",type:"choice",construct:"integrity",q:"Did you really write your own answer before looking at the AI's?",opts:["Yes, fully","Mostly","No, I peeked","I skipped it"]},
+  {id:"m7b",type:"likert",construct:"evaluation",q:"I can compare my work with AI's work and say which is better."},
+  {id:"m7c",type:"choice",construct:"evaluation",q:"Whose summary was better?",opts:["Mine","The AI's","Mine was more correct, the AI's was better written","Hard to say"]},
+  {id:"m7d",type:"text",construct:"evaluation",q:"What did the AI miss or get wrong?"}
+ ]},
+ post:{title:"Last questions",sub:"The first four are the same as at the start.",items:[
+  {id:"p1",type:"likert",construct:"declarative",q:"I know how to ask AI a question so the answer fits my class."},
+  {id:"p2",type:"likert",construct:"planning",q:"Before I open a chatbot, I know what I want from it."},
+  {id:"p3",type:"likert",construct:"monitoring",q:"I can tell when an AI answer might be wrong."},
+  {id:"p4",type:"choice",construct:"debugging",q:"When an AI answer doesn't help, what will you do now?",opts:DEBUG_OPTS},
+  {id:"p5",type:"likert",construct:"intention",q:"I will use at least one of these tricks next week."},
+  {id:"p9",type:"choice",construct:"course-feedback",q:"How easy was this course to follow?",opts:["Too easy","Just right","A bit hard","Too hard"]},
+  {id:"p6",type:"choice",construct:"course-feedback",q:"Which mission did you like most?",opts:["1 Who's driving","2 Make a better roti","3 The ladder","4 Fake-fact hunt","5 Green, amber, red","6 Rescue moves","7 You vs AI"]},
+  {id:"p7",type:"text",construct:"course-feedback",q:"What was confusing or boring?"},
+  {id:"p8",type:"text",construct:"intention",q:"One thing you will stop doing with AI."}
+ ]}
+};
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");}
+
+/* ============ BUILD DECK ============ */
+var deck=document.getElementById("deck");
+var tpl=document.getElementById("slides");
+deck.appendChild(tpl.content.cloneNode(true));
+tpl.remove();
+var slides=$$(".slide",deck);
+var cur=0;
+
+/* render check-in blocks */
+slides.forEach(function(sl){
+  var host=sl.querySelector(".me");
+  if(!host)return;
+  var bank=BANKS[host.dataset.me];if(!bank)return;
+  var mod=sl.dataset.mod||"";
+  var html='<h3>'+bank.title+'</h3><p class="sub">'+bank.sub+'</p>';
+  bank.items.forEach(function(it){
+    html+='<div class="meq" data-item="'+it.id+'"><span class="qt">'+esc(it.q)+(it.type==="text"?'<span class="optl"> (optional)</span>':'')+'</span>';
+    if(it.type==="likert"){
+      html+='<div class="likert">';
+      for(var n=1;n<=5;n++)html+='<button type="button" data-val="'+n+'" aria-label="'+n+' out of 5"><span class="face" aria-hidden="true">'+FACES[n-1]+'</span><span>'+n+'</span></button>';
+      html+='</div><div class="lends"><span>'+L5[0]+'</span><span>'+L5[1]+'</span></div>';
+    }else if(it.type==="choice"){
+      html+='<div class="opts" style="margin-top:8px">';
+      it.opts.forEach(function(o){html+='<button type="button" class="opt" data-val="'+esc(o)+'">'+esc(o)+'</button>';});
+      html+='</div>';
+    }else{
+      html+='<textarea rows="2" style="margin-top:8px"></textarea>';
+    }
+    html+='</div>';
+  });
+  html+='<p class="saved">✅ Saved. Badge collected!</p>';
+  host.innerHTML=html;
+
+  host.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-val]");if(!b)return;
+    var box=b.closest(".meq"),id=box.dataset.item;
+    var item=bank.items.filter(function(x){return x.id===id;})[0];
+    $$("button[data-val]",box).forEach(function(o){o.classList.remove("on");o.classList.remove("picked");});
+    b.classList.add(b.parentNode.classList.contains("likert")?"on":"picked");
+    rec(id,mod,item.q,b.dataset.val);
+    host.querySelector(".saved").classList.add("on");
+  });
+  host.addEventListener("input",function(e){
+    if(e.target.tagName!=="TEXTAREA")return;
+    var box=e.target.closest(".meq"),id=box.dataset.item;
+    var item=bank.items.filter(function(x){return x.id===id;})[0];
+    rec(id,mod,item.q,e.target.value);
+  });
+});
+
+/* ============ NAV ============ */
+var rail=$("#rail"),pos=$("#pos"),modLabel=$("#modLabel"),nextBtn=$("#next"),prevBtn=$("#prev");
+function show(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  slides[cur].classList.remove("on");
+  cur=i;slides[cur].classList.add("on");
+  deck.scrollTop=0;
+  rail.style.width=((cur+1)/slides.length*100)+"%";
+  pos.textContent=(cur+1)+"/"+slides.length;
+  modLabel.textContent=slides[cur].dataset.mod||"";
+  prevBtn.style.visibility=cur===0?"hidden":"visible";
+  nextBtn.textContent=cur===0?"Let's go!":(cur===slides.length-1?"Done":"Next");
+  nextBtn.disabled=cur===slides.length-1;
+  if(READY){Sawaal.setScreen(cur);if(cur===slides.length-1)Sawaal.complete();}
+}
+function findIncomplete(slide){
+  var missing=[];
+  $$(".meq",slide).forEach(function(box){
+    if(box.querySelector("button[data-val]")){ /* taps are required, writing is optional */
+      var ans=STATE.answers[box.dataset.item];
+      if(!ans||ans.a===undefined||ans.a===null||ans.a==="")missing.push(box);
+    }
+  });
+  $$(".act .qcard[data-q]",slide).forEach(function(card){if(!card.dataset.done)missing.push(card);});
+  var hd=slide.querySelector("#huntdoc");
+  if(hd&&!hd.dataset.done)missing.push(hd.closest(".actbody")||hd);
+  return missing;
+}
+function goNext(){
+  var missing=findIncomplete(slides[cur]);
+  if(missing.length){
+    missing.forEach(function(el){
+      el.classList.add("needs-answer");
+      setTimeout(function(){el.classList.remove("needs-answer");},1600);
+    });
+    missing[0].scrollIntoView({behavior:"smooth",block:"center"});
+    var old=nextBtn.textContent;
+    nextBtn.textContent="Answer above first 👆";
+    nextBtn.classList.add("warn");
+    setTimeout(function(){nextBtn.textContent=old;nextBtn.classList.remove("warn");},1600);
+    return;
+  }
+  show(cur+1);
+}
+nextBtn.addEventListener("click",goNext);
+prevBtn.addEventListener("click",function(){show(cur-1);});
+document.addEventListener("keydown",function(e){
+  var t=e.target.tagName;
+  if(t==="TEXTAREA"||t==="INPUT"||t==="SELECT")return;
+  if(e.key==="ArrowRight")goNext();
+  if(e.key==="ArrowLeft")show(cur-1);
+});
+var tx=0,ty=0;
+deck.addEventListener("touchstart",function(e){tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;},{passive:true});
+deck.addEventListener("touchend",function(e){
+  var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8){if(dx<0)goNext();else show(cur-1);}
+},{passive:true});
+
+/* contents */
+var toc=$("#toc"),tocList=$("#tocList");
+slides.forEach(function(sl,i){
+  var h=sl.querySelector("h1,h2");
+  var a=sl.querySelector(".act>header h3");
+  var bd=sl.querySelector(".badge b");
+  var t=a?a.textContent:(bd?bd.textContent+" Check-in":(h?h.textContent:"Screen "+(i+1)));
+  var b=document.createElement("button");
+  b.className="tocItem";
+  b.textContent=(i+1)+". "+t;
+  var sp=document.createElement("span");sp.textContent=sl.dataset.mod||"";b.appendChild(sp);
+  b.addEventListener("click",function(){toc.classList.remove("on");show(i);});
+  tocList.appendChild(b);
+});
+$("#menuBtn").addEventListener("click",function(){toc.classList.add("on");});
+$("#tocClose").addEventListener("click",function(){toc.classList.remove("on");});
+
+/* ============ CODE NAME ============ */
+var pid=$("#pid");
+pid.addEventListener("input",function(){
+  STATE.pid=pid.value.trim();updateExportSummary();
+  if(Sawaal.mode==="local")rec("code_name","Getting started","Code name",STATE.pid);
+});
+
+/* ============ CHOICE ACTIVITIES ============ */
+function applyActivityAnswer(card,val,isRestore){
+  var act=card.closest(".act").dataset.act;
+  var opts=$$(".opt",card),opt=null;
+  opts.forEach(function(o){if(o.dataset.v===val)opt=o;});
+  if(!opt||card.dataset.done)return;
+  card.dataset.done="1";
+  var correct=opt.hasAttribute("data-correct");
+  opts.forEach(function(o){
+    o.disabled=true;
+    if(o===opt)o.classList.add("picked",correct?"right":"wrong");
+    else if(o.hasAttribute("data-correct"))o.classList.add("right");
+    else o.classList.add("dim");
+  });
+  var fb=card.querySelector(".fb");
+  fb.className="fb on "+(correct?"ok":"no");
+  fb.innerHTML="<b>"+(correct?"🎉 Yes!":"🤔 Not quite.")+"</b>"+esc(opt.dataset.fb||"");
+  if(!SCORES[act])SCORES[act]={right:0,total:0};
+  SCORES[act].right+=correct?1:0;SCORES[act].total+=1;
+  if(!isRestore)rec(act+"_"+card.dataset.q,modOf(opt),card.querySelector(".qt").textContent.replace(/^\d+/,"").trim().slice(0,140),opt.dataset.v,correct?1:0);
+  var body=card.closest(".actbody");
+  if($$(".qcard[data-done]",body).length===$$(".qcard",body).length){
+    var st=body.querySelector(".stamp[data-stamp]");
+    if(st){
+      var s=SCORES[act];
+      st.textContent=s.right+" out of "+s.total+(s.right===s.total?" 🌟 Perfect!":(s.right>=s.total*0.6?" 👍 Nice!":" 📖 Read the tips again"));
+      st.classList.add("on");
+      if(s.right<s.total*0.6)st.style.borderColor=st.style.color="#E23A2E";
+      if(!isRestore)rec(act+"_score","Activity score","Score on "+act,s.right+"/"+s.total,s.right);
+    }
+  }
+}
+function restoreActivitiesUI(){
+  $$(".act[data-act] .qcard[data-q]").forEach(function(card){
+    var act=card.closest(".act").dataset.act;
+    var ans=STATE.answers[act+"_"+card.dataset.q];
+    if(ans)applyActivityAnswer(card,ans.a,true);
+  });
+}
+document.addEventListener("click",function(e){
+  var opt=e.target.closest(".act .opts .opt");if(!opt)return;
+  var card=opt.closest(".qcard");if(!card)return;
+  if(card.dataset.done)return;
+  applyActivityAnswer(card,opt.dataset.v,false);
+});
+
+/* ============ ROTI BUILDER ============ */
+var R={r:$("#r_r"),o:$("#r_o"),t:$("#r_t"),i:$("#r_i")};
+var rOut=$("#r_out"),rMeter=$("#r_meter"),rLabel=$("#r_label"),rTip=$("#r_tip");
+var ROTI_EX={
+ science:{r:"You are a kind science teacher. I'm in Class 7 (CBSE) and I find the chapter on heat confusing.",
+  o:"Give me 5 quick quiz questions on heat and temperature, one at a time. Keep it under 100 words in total.",
+  t:"Don't give me the answers until I reply. Use simple English and examples from home, like cooking or a hot road in summer.",
+  i:"Here are my class notes: [paste them]. In my last test I mixed up heat and temperature."},
+ hindi:{r:"You are a Hindi teacher who helps students write better. I'm in Class 8.",
+  o:"Give me 4 ideas I could use in my essay 'मेरा प्रिय त्योहार' (My favourite festival), as short bullet points.",
+  t:"Don't write the essay for me. No full sentences. Just ideas and questions to make me think.",
+  i:"My festival is Diwali. I want to write about cleaning the house with my grandmother. My teacher said my last essay was too general."},
+ maths:{r:"You are a patient maths tutor. I'm in Class 6 and fractions confuse me.",
+  o:"Show me how to add 2/3 and 1/4 step by step. Then give me 3 similar questions to try.",
+  t:"Don't solve the 3 practice questions. Wait for my answers, then tell me where I went wrong.",
+  i:"Here's how I tried it: 2/3 + 1/4 = 3/7. I don't know why that's wrong."}
+};
+function grow(el){el.style.height="auto";el.style.height=Math.max(64,el.scrollHeight+2)+"px";}
+function rotiUpdate(){
+  var r=R.r.value.trim(),o=R.o.value.trim(),t=R.t.value.trim(),i=R.i.value.trim();
+  var parts=[r,o,t,i].filter(Boolean);
+  var text=parts.join("\n\n");
+  rOut.textContent=text||"Your question will appear here as you type.";
+  var btn=document.createElement("button");btn.className="copy";btn.setAttribute("data-copy","");btn.textContent="Copy";
+  rOut.appendChild(btn);
+  var filled=[r,o,t,i].filter(function(x){return x.length>12;}).length;
+  var words=text.split(/\s+/).filter(Boolean).length;
+  var score=filled*20;
+  if(words>30)score+=10;
+  if(/\b(class|grade|board|cbse|ncert|icse)\b/i.test(text))score+=5;
+  if(/(don't|do not|only|maximum|under \d|no more than|wait|one at a time)/i.test(text))score+=5;
+  score=Math.min(100,score);
+  rMeter.style.width=score+"%";
+  rMeter.style.background=score<40?"#E23A2E":(score<70?"#FFB703":"#0F7B6C");
+  rLabel.textContent=score===0?"Empty":(score<40?"😕 Thin":(score<70?"🙂 Getting there":(score<90?"😃 Strong":"🌟 Excellent")));
+  var tips=[];
+  if(!r||r.length<13)tips.push("R: say who the AI should be, and what class you're in");
+  if(!o||o.length<13)tips.push("O: say exactly what you want back, and how much");
+  if(!t||t.length<13)tips.push("T: add one thing it must NOT do");
+  if(!i||i.length<13)tips.push("I: add your own notes or what you tried. This layer helps the most!");
+  rTip.textContent=tips.length?("👉 Next, "+tips[0]+"."):"✅ All 4 layers done! Run it in a chatbot. Then change one word and run it again to see what that word was doing.";
+  if(text&&!RESTORING)rec("roti_prompt",modOf(R.r),"Question built in Activity 2 (ROTI)",text,score);
+}
+Object.keys(R).forEach(function(k){R[k].addEventListener("input",function(){grow(R[k]);rotiUpdate();});});
+$('[data-fill="roti"]').addEventListener("click",function(e){
+  var c=e.target.closest(".chip");if(!c)return;
+  var ex=c.dataset.ex;
+  if(ex==="clear"){R.r.value=R.o.value=R.t.value=R.i.value="";}
+  else{var d=ROTI_EX[ex];R.r.value=d.r;R.o.value=d.o;R.t.value=d.t;R.i.value=d.i;}
+  Object.keys(R).forEach(function(k){R[k].dispatchEvent(new Event("input",{bubbles:true}));});
+});
+rotiUpdate();
+
+/* ============ LADDER ============ */
+var ladTopic=$("#lad_topic"),ladOwn=$("#lad_own");
+ladTopic.addEventListener("change",function(){ladOwn.classList.toggle("hide",ladTopic.value!=="__own");});
+function topicText(){return ladTopic.value==="__own"?(ladOwn.value.trim()||"my topic"):(ladTopic.value||"my topic");}
+$("#lad_build").addEventListener("click",function(){
+  var T=topicText();
+  var steps=[
+    "List the main reasons behind this: "+T+" Just a list, maximum 6 items, no explaining.",
+    "Take number [pick one] from your list. Explain it in about 80 words for a Class 7 student. No hard words.",
+    "Give me one real example of this from India. Tell me how sure you are, and which facts I should check myself.",
+    "Ask me 3 questions to check if I understood. Don't give me the answers.",
+    "What is the most important thing about \""+T.replace(/\?$/,"")+"\" that we haven't talked about yet? Why does it matter?"
+  ];
+  steps.forEach(function(s,n){var el=$("#lad"+(n+1));el.value=s;el.dispatchEvent(new Event("input",{bubbles:true}));});
+  rec("ladder_topic",modOf(ladTopic),"Ladder topic chosen",T);
+});
+$("#lad_copy").addEventListener("click",function(e){
+  var out=[1,2,3,4,5].map(function(n){return "Step "+n+": "+$("#lad"+n).value;}).join("\n\n");
+  copyText(out,e.target);
+});
+
+/* ============ FAKE-FACT HUNT ============ */
+var huntDoc=$("#huntdoc"),huntFb=$("#hunt_fb");
+huntDoc.addEventListener("click",function(e){
+  var s=e.target.closest(".sus");if(!s||huntDoc.dataset.done)return;
+  s.classList.toggle("flag");
+});
+function huntEvaluate(isRestore){
+  if(huntDoc.dataset.done)return;
+  huntDoc.dataset.done="1";
+  var spans=$$(".sus",huntDoc),hits=0,bad=0,falseAlarm=0,html="",flagged=[];
+  spans.forEach(function(s,n){
+    var isBad=s.dataset.v==="bad",isFlag=s.classList.contains("flag");
+    if(isFlag)flagged.push(n);
+    s.classList.remove("flag");
+    if(isBad){bad++;if(isFlag){hits++;s.classList.add("hit");}else{s.classList.add("shown");}}
+    else if(isFlag){falseAlarm++;s.classList.add("miss");}
+    var verdict=isBad?(isFlag?"🎯 You caught it! ":"😮 Missed. "):(s.dataset.v==="soft"?(isFlag?"👍 Good instinct. ":"Worth flagging too. "):(isFlag?"This one was actually fine. ":"✅ Correctly left alone. "));
+    html+='<div class="'+(isBad?"bad":"fine")+'"><b>'+(n+1)+'. </b>'+verdict+esc(s.dataset.note)+'</div>';
+  });
+  huntFb.innerHTML=html;
+  var st=$('.stamp[data-stamp="hunt"]');
+  st.textContent=hits+" of "+bad+" fakes caught"+(falseAlarm?", "+falseAlarm+" false alarm"+(falseAlarm>1?"s":""):"")+(hits===bad?" 🌟":"");
+  st.classList.add("on");
+  if(hits<3){st.style.borderColor=st.style.color="#E23A2E";}
+  if(!isRestore){
+    rec("hunt_flags",modOf(huntDoc),"Sentences flagged in the fake-fact hunt",flagged);
+    rec("hunt_score",modOf(huntDoc),"Fakes caught in the fake-fact hunt",hits+"/"+bad+" (false alarms: "+falseAlarm+")",hits);
+  }
+}
+$("#hunt_check").addEventListener("click",function(){
+  if(!huntDoc.dataset.done&&!$$(".sus.flag",huntDoc).length){
+    huntFb.innerHTML='<div>👆 Tap the sentences you think are fake first. Then press the button.</div>';
+    return;
+  }
+  huntEvaluate(false);
+});
+function restoreHunt(){
+  var f=STATE.answers.hunt_flags;
+  if(!f||!Array.isArray(f.a))return;
+  var spans=$$(".sus",huntDoc);
+  f.a.forEach(function(n){if(spans[n])spans[n].classList.add("flag");});
+  huntEvaluate(true);
+}
+$("#hunt_reset").addEventListener("click",function(){
+  delete huntDoc.dataset.done;huntFb.innerHTML="";
+  var st=$('.stamp[data-stamp="hunt"]');st.classList.remove("on");st.style.borderColor=st.style.color="";
+  $$(".sus",huntDoc).forEach(function(s){s.className="sus";});
+  rec("hunt_flags",modOf(huntDoc),"Sentences flagged in the fake-fact hunt",null);
+});
+
+/* ============ TIMERS ============ */
+$$(".timer").forEach(function(t){
+  var total=parseInt(t.dataset.mins,10)*60,left=total,id=null;
+  var view=t.querySelector(".tv"),btn=t.querySelector("button");
+  function paint(){var m=Math.floor(left/60),s=left%60;view.textContent=m+":"+(s<10?"0":"")+s;}
+  btn.addEventListener("click",function(){
+    if(id){clearInterval(id);id=null;btn.textContent="Resume";return;}
+    btn.textContent="Pause";t.classList.remove("done");
+    id=setInterval(function(){
+      left--;paint();
+      if(left<=0){clearInterval(id);id=null;t.classList.add("done");view.textContent="Time!";btn.textContent="Reset";left=total;}
+    },1000);
+  });
+  paint();
+});
+
+/* ============ COPY ============ */
+function copyText(txt,btn){
+  function done(){
+    if(!btn)return;var old=btn.textContent;btn.textContent="Copied ✓";btn.classList.add("done");
+    setTimeout(function(){btn.textContent=old;btn.classList.remove("done");},1600);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done,function(){fallback(txt);done();});
+  }else{fallback(txt);done();}
+}
+function fallback(txt){
+  var ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(err){}document.body.removeChild(ta);
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-copy]");if(!b)return;
+  var box=b.parentNode.cloneNode(true);
+  var inner=box.querySelector("[data-copy]");if(inner)inner.remove();
+  copyText(box.textContent.trim(),b);
+});
+
+/* ============ RULES + DIARY ============ */
+$('[data-fill="charter"]').addEventListener("click",function(e){
+  var c=e.target.closest(".chip");if(!c)return;
+  var inputs=$$(".charter-in");
+  for(var i=0;i<inputs.length;i++){if(!inputs[i].value.trim()){inputs[i].value=c.textContent;inputs[i].dispatchEvent(new Event("input",{bubbles:true}));inputs[i].focus();return;}}
+});
+$("#charterCopy").addEventListener("click",function(e){
+  var out="My AI rules\n\n"+$$(".charter-in").map(function(x,n){return (n+1)+". "+x.value;}).filter(function(l){return l.length>4;}).join("\n");
+  copyText(out,e.target);
+});
+$("#diaryCopy").addEventListener("click",function(e){
+  copyText("MY SAWAAL DIARY  (week of ______)\n\nDay 1\n1. What did I use AI for?\n2. What did I learn that I could explain tomorrow?\n3. What did AI get wrong, or what did I check?\n\nDay 2\n1.\n2.\n3.",e.target);
+});
+
+/* ============ FREE TEXT STORE ============ */
+document.addEventListener("input",function(e){
+  var el=e.target;if(!el.dataset||!el.dataset.store)return;
+  var lab=el.id?document.querySelector('label[for="'+el.id+'"]'):null;
+  var q=lab?lab.textContent.trim().slice(0,140):(el.previousElementSibling&&el.previousElementSibling.tagName==="LABEL"?el.previousElementSibling.textContent.trim():el.dataset.store);
+  rec(el.dataset.store,modOf(el),q,el.value);
+});
+
+/* ============ EXPORT ============ */
+function rows(){
+  var out=[["participant_code","item_id","module","question","answer","correct","timestamp"]];
+  Object.keys(STATE.answers).forEach(function(k){
+    var a=STATE.answers[k];
+    out.push([STATE.pid||"(no code)",k,a.mod,a.q,String(a.a==null?"":a.a),String(a.correct),a.t]);
+  });
+  return out;
+}
+function csv(){
+  return rows().map(function(r){
+    return r.map(function(c){return '"'+String(c).replace(/"/g,'""').replace(/\r?\n/g," / ")+'"';}).join(",");
+  }).join("\n");
+}
+function updateExportSummary(){
+  var el=$("#exportSummary");if(!el)return;
+  var n=Object.keys(STATE.answers).length;
+  var online=Sawaal.mode==="online"||Sawaal.mode==="offline";
+  el.textContent=(STATE.pid?"Code name "+STATE.pid+". ":(online?"":"No code name yet. Go back to screen 2 if your teacher needs one. "))+n+" answers saved, including your check-ins, your roti, your ladder, your You vs AI answers and your activity scores."+(online?" They're already saved online. This download is your own copy.":"");
+}
+function download(name,text,type){
+  try{
+    var blob=new Blob([text],{type:type});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
+  }catch(err){showRaw();}
+}
+function showRaw(){var box=$("#rawBox");box.value=csv();box.classList.remove("hide");box.select();}
+$("#dlCsv").addEventListener("click",function(){download(COURSE_FILE+"-"+(STATE.pid||"anon")+".csv","﻿"+csv(),"text/csv;charset=utf-8");});
+$("#dlJson").addEventListener("click",function(){download(COURSE_FILE+"-"+(STATE.pid||"anon")+".json",JSON.stringify(STATE,null,2),"application/json");});
+$("#showRaw").addEventListener("click",showRaw);
+
+/* ============ RESUME: put saved answers back on screen ============ */
+function restoreMeqUI(){
+  $$(".meq").forEach(function(box){
+    var id=box.dataset.item,ans=STATE.answers[id];
+    if(!ans)return;
+    var buttons=$$("button[data-val]",box);
+    if(buttons.length){
+      buttons.forEach(function(b){
+        if(String(b.dataset.val)===String(ans.a))b.classList.add(b.parentNode.classList.contains("likert")?"on":"picked");
+      });
+    }else{
+      var ta=box.querySelector("textarea");
+      if(ta)ta.value=ans.a==null?"":ans.a;
+    }
+  });
+  $$(".me").forEach(function(host){
+    var saved=host.querySelector(".saved");
+    if(saved&&host.querySelector(".meq .on,.meq .picked"))saved.classList.add("on");
+  });
+}
+function restoreStoredFields(){
+  $$("[data-store]").forEach(function(el){
+    var ans=STATE.answers[el.dataset.store];
+    if(ans&&ans.a!=null)el.value=ans.a;
+  });
+  Object.keys(R).forEach(function(k){grow(R[k]);});
+  rotiUpdate();
+  ladOwn.classList.toggle("hide",ladTopic.value!=="__own");
+  if(STATE.answers.code_name&&!pid.value){pid.value=STATE.answers.code_name.a||"";STATE.pid=pid.value;}
+}
+
+/* ============ PLATFORM: open, restore, resume ============ */
+function applyMode(state){
+  var online=state.mode==="online"||state.mode==="offline";
+  if(online&&state.student){
+    STATE.pid=state.student.code;
+    pid.value=state.student.code;
+    pid.classList.add("hide");
+    var lab=pid.parentNode.querySelector('label[for="pid"]');if(lab)lab.classList.add("hide");
+    var hint=pid.parentNode.querySelector("p.small");if(hint)hint.classList.add("hide");
+    $("#pidTitle").textContent="Your secret key 🔑";
+    var ps=$("#pidSigned");ps.textContent=state.student.code;ps.classList.remove("hide");
+    $("#saveNote").textContent="Saved online as you go. You can stop and carry on later, on any phone or computer.";
+    $("#exportLead").textContent="Your answers are already saved online, so there's nothing to hand in. If you'd like your own copy, download it here.";
+    $("#exportNote").classList.add("hide");
+    $("#doneSaved").classList.remove("hide");
+    $("#doneBack").classList.remove("hide");
+  }
+  if(state.mode==="local"){
+    $("#saveNote").textContent="You're not signed in, so answers stay on this device only. Open the menu (☰) and choose Sign in to save.";
+  }
+}
+
+slides[0].classList.add("on");
+show(0);
+updateExportSummary();
+
+Sawaal.start().then(function(state){
+  RESTORING=true;
+  try{
+    Object.keys(state.answers).forEach(function(k){STATE.answers[k]=state.answers[k];});
+    applyMode(state);
+    restoreMeqUI();
+    restoreStoredFields();
+    restoreActivitiesUI();
+    restoreHunt();
+    updateExportSummary();
+  }finally{RESTORING=false;}
+  show(state.completed?0:(state.screen||0));  /* finished students start from the top to reread */
+  READY=true;
+});
+
+window.addEventListener("beforeunload",function(e){
+  if(Sawaal.mode==="local"&&Object.keys(STATE.answers).length>3){e.preventDefault();e.returnValue="";}
+});
+})();
+</script>
+</body>
+</html>
