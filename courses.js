@@ -108,6 +108,58 @@ window.SAWAAL_COURSES = [
       ]
     }
 },
+ {
+    id: "sawaal-ai-upto-14",
+    title: "Sawaal AI - upto 14 ages",
+    summary: "Use AI the smart way: ask better questions, check what it tells you, and stay safe. 7 short missions, 7 badges.",
+    minutes: 60,
+    ages: "11 to 14",
+    screens: 54,
+    insights: {
+      scored: [
+        { id: "drivers_score", label: "Spot the driver", max: 5 },
+        { id: "hunt_score", label: "Fake-fact hunt (fakes caught)", max: 4 },
+        { id: "lightA_score", label: "Green, amber, red (part 1)", max: 5 },
+        { id: "lightB_score", label: "Green, amber, red (part 2)", max: 5 },
+        { id: "rescue_score", label: "Rescue the chat", max: 3 },
+        { id: "roti_prompt", label: "ROTI question strength", max: 100, bucket: 20 }
+      ],
+      prePost: [
+        { pre: "b1", post: "p1", type: "likert", label: "asking AI questions that fit their class" },
+        { pre: "b2", post: "p2", type: "likert", label: "knowing what they want before opening a chatbot" },
+        { pre: "b3", post: "p3", type: "likert", label: "telling when an AI answer might be wrong" },
+        { pre: "b4", post: "p4", type: "choice", label: "what they do when an AI answer doesn't help", highlight: "Try a totally different way" }
+      ],
+      gapChecks: [
+        { confidence: "b3", high: 4, performance: "hunt_score", below: 3,
+          confidenceLabel: "telling when an AI answer might be wrong",
+          performanceLabel: "the fake-fact hunt (out of 4 fakes)" },
+        { confidence: "m2a", high: 4, performance: "roti_prompt", below: 60,
+          confidenceLabel: "turning a weak question into a strong one",
+          performanceLabel: "the question they actually built (out of 100)" }
+      ],
+      counts: [
+        { item: "p9", values: ["A bit hard", "Too hard"], label: "found the course a bit hard or too hard" },
+        { item: "p9", values: ["Just right"], label: "said the course was just right" },
+        { item: "m4b", values: ["Never"], label: "had never checked what AI told them before today" },
+        { item: "b5", values: ["Most days", "Every day"], label: "use AI for schoolwork most days or every day" },
+        { item: "m1b", values: ["Passenger"], label: "said they'd mostly been a passenger with AI" },
+        { item: "m7a", values: ["No, I peeked", "I skipped it"], label: "admitted they looked at the AI's answer before writing their own" }
+      ],
+      freeText: [
+        { id: "b6", label: "What they want to be able to do with AI" },
+        { id: "m1c", label: "One thing they'll do differently next time" },
+        { id: "roti_prompt", label: "The question they built with ROTI" },
+        { id: "m4d", label: "Something they used from AI without checking" },
+        { id: "m5d", label: "The safety situation that made them think most" },
+        { id: "capA_own", label: "You vs AI: their own summary, written first" },
+        { id: "capA_judgement", label: "You vs AI: which summary was better, and why" },
+        { id: "capB_final", label: "You vs AI: their sharpened project question" },
+        { id: "p7", label: "What was confusing or boring" },
+        { id: "p8", label: "One thing they'll stop doing with AI" }
+      ]
+    }
+ },
 
   // ----- Example of a new course (remove the // to use it) -----
   // {
