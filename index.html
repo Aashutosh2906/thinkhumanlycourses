@@ -66,13 +66,17 @@
 (function () {
   "use strict";
   var api = Sawaal.api;
-  var courses = (window.SAWAAL_COURSES || []).filter(function (c) { return c && c.id && !c.hidden; });
+  var allCourses = (window.SAWAAL_COURSES || []).filter(function (c) { return c && c.id && !c.hidden; });
+  // Courses switched off from the dashboard are left out. Until that list arrives we show nothing,
+  // so a switched-off course never flashes up. If it can't be fetched, every course shows.
+  var courses = [], switchLoaded = false;
   var me = document.getElementById("me"), signin = document.getElementById("signin"), list = document.getElementById("list");
   var progress = {};
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
   function renderList() {
+    if (!switchLoaded) { list.innerHTML = '<div class="empty">Loading courses…</div>'; return; }
     if (!courses.length) { list.innerHTML = '<div class="empty">No courses yet.</div>'; return; }
     list.innerHTML = courses.map(function (c) {
       var p = progress[c.id], label = "Start", cls = "go", extra = "";
@@ -118,6 +122,17 @@
       }
       renderList();
     }
+  }
+  function applyHidden(hidden) {
+    hidden = Array.isArray(hidden) ? hidden : [];
+    courses = allCourses.filter(function (c) { return hidden.indexOf(c.id) < 0; });
+    switchLoaded = true;
+    renderList();
+  }
+  if (api.configured()) {
+    api.rpc("sawaal_hidden_courses", {}, { timeout: 6000 }).then(applyHidden, function () { applyHidden([]); });
+  } else {
+    applyHidden([]);
   }
   render();
 })();
