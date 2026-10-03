@@ -76,8 +76,6 @@
     bad_session: "You've been signed out. Please sign in again.",
     too_many_rows: "Something went wrong saving. Your answers are safe on this device.",
     payload_too_large: "One of your answers is too long to save. Try shortening it.",
-    wrong_password: "That password isn't right.",
-    password_not_set: "The dashboard password hasn't been set yet. Set it in Supabase's SQL Editor (README, setup step 1).",
     "Invalid API key": "The key in config.js isn't right. Copy it again from Supabase.",
     "Could not find the function": "The database isn't set up yet. Run setup.sql in Supabase (see the README)."
   };
@@ -230,31 +228,58 @@
     var a = document.getElementById("sawaal-status"); if (a) { a.textContent = t; a.setAttribute("data-state", s); }
     var b = document.getElementById("sw-status-line"); if (b) b.textContent = t;
   }
-  function schedule(ms) { clearTimeout(rt.timer); rt.timer = setTimeout(flush, ms == null ? 1200 : ms); }
-  function hasWork() { var d = rt.data; return !!(d && (Object.keys(d.pending).length || d.screenPending || d.completePending)); }
+  // Wait a moment after each answer so a burst of taps goes in one request,
+  // but never sit on unsent work for more than a few seconds.
+  function schedule(ms) {
+    var now = Date.now();
+    if (!rt.workSince) rt.workSince = now;
+    var wait = ms == null ? 1200 : ms;
+    if (now - rt.workSince > 4000) wait = 0;
+    clearTimeout(rt.timer); rt.timer = setTimeout(flush, wait);
+  }
+  function retryLater(ms) { clearTimeout(rt.timer); rt.timer = setTimeout(flush, ms); }
+  function dataHasWork(d) { return !!(d && (Object.keys(d.pending || {}).length || d.screenPending || d.completePending)); }
+  function hasWork() { return dataHasWork(rt.data); }
+  function byteLen(str) { try { return unescape(encodeURIComponent(str)).length; } catch (e) { return str.length * 3; } }
+
+  // Builds one save request from a course's saved data. maxBytes keeps it small enough
+  // for a request sent while the page is closing (browsers cap those at 64 KB).
+  function buildSave(course, d, token, maxBytes) {
+    var ids = Object.keys(d.pending).sort(function (a, b) { return d.pending[a] < d.pending[b] ? 1 : -1; }); // newest first
+    var rows = [], sent = {}, size = 400;
+    for (var i = 0; i < ids.length && rows.length < 250; i++) {
+      var id = ids[i], a = d.answers[id] || {};
+      var row = { item: id, section: a.mod || "", question: a.q || "", answer: a.a === undefined ? null : a.a,
+                  correct: a.correct == null ? "" : String(a.correct), answered_at: a.t };
+      var len = byteLen(JSON.stringify(row)) + 1;
+      if (maxBytes && size + len > maxBytes) continue;
+      size += len; rows.push(row); sent[id] = d.pending[id];
+    }
+    return {
+      sent: sent, screen: d.screenPending, screenAt: d.screenAt, complete: d.completePending,
+      args: { p_token: token, p_course: course, p_rows: rows,
+              p_screen: d.screenPending ? d.screen : null, p_screen_at: d.screenPending ? d.screenAt : null,
+              p_complete: !!d.completePending }
+    };
+  }
+  // After the server says yes: clear only what was sent and hasn't changed since.
+  function markSent(d, b) {
+    Object.keys(b.sent).forEach(function (id) { if (d.pending[id] === b.sent[id]) delete d.pending[id]; });
+    if (b.screen && d.screenAt === b.screenAt) d.screenPending = false;
+    if (b.complete) { d.completePending = false; d.completed = true; }
+  }
 
   function flush(opts) {
     if (!rt.data || rt.mode === "local") return Promise.resolve();
+    if (opts && opts.keepalive) return flushOnExit();
     if (rt.flushing) return rt.flushing.then(function () { return hasWork() ? flush(opts) : null; });
-    if (!hasWork()) return Promise.resolve();
+    if (!hasWork()) { rt.workSince = 0; return Promise.resolve(); }
     var s = getSession(); if (!s || !s.token) return Promise.resolve();
-    var d = rt.data;
-    var ids = Object.keys(d.pending).slice(0, 250), sent = {};
-    ids.forEach(function (id) { sent[id] = d.pending[id]; });
-    var rows = ids.map(function (id) {
-      var a = d.answers[id] || {};
-      return { item: id, section: a.mod || "", question: a.q || "", answer: a.a === undefined ? null : a.a,
-               correct: a.correct == null ? "" : String(a.correct), answered_at: a.t };
-    });
-    var sentScreen = d.screenPending, sentAt = d.screenAt, sentComplete = d.completePending;
+    var d = rt.data, b = buildSave(COURSE, d, s.token);
+    rt.workSince = 0;
     setStatus("saving");
-    rt.flushing = rpc("sawaal_save", {
-      p_token: s.token, p_course: COURSE, p_rows: rows,
-      p_screen: sentScreen ? d.screen : null, p_screen_at: sentScreen ? d.screenAt : null, p_complete: !!sentComplete
-    }, { keepalive: !!(opts && opts.keepalive) }).then(function () {
-      ids.forEach(function (id) { if (d.pending[id] === sent[id]) delete d.pending[id]; });
-      if (sentScreen && d.screenAt === sentAt) d.screenPending = false;
-      if (sentComplete) { d.completePending = false; d.completed = true; }
+    rt.flushing = rpc("sawaal_save", b.args).then(function () {
+      markSent(d, b);
       persist();
       rt.failures = 0;
       if (rt.mode === "offline") { rt.mode = "online"; renderAccount(); }
@@ -265,15 +290,56 @@
       var wait = Math.min(60000, 4000 * Math.pow(2, Math.min(rt.failures, 4)));
       if (err.offline) {
         if (rt.mode === "online") { rt.mode = "offline"; renderAccount(); }
-        setStatus("offline"); schedule(wait);
+        setStatus("offline"); retryLater(wait);
       } else if (/bad_session/.test(err.code)) {
         clearSession(); setStatus("offline");
         overlay(function (host) {
           signInForm(host, { title: "Please sign in again", lead: "Your answers are safe on this device. Sign in and they'll upload.", onDone: function () { location.reload(); } });
         });
-      } else { setStatus("error"); schedule(wait); }
+      } else { setStatus("error"); retryLater(wait); }
     }).then(function () { rt.flushing = null; });
     return rt.flushing;
+  }
+
+  // The page is being closed or hidden. Send whatever is unsent RIGHT NOW in a request
+  // the browser finishes even after the tab is gone. This runs even if a normal save is
+  // still on its way, because that one gets cut off when the tab closes. Sending the
+  // same answers twice is harmless: the database keeps the newest copy.
+  function flushOnExit() {
+    if (!rt.data || rt.mode === "local" || !hasWork()) return Promise.resolve();
+    if (rt.lastExit && Date.now() - rt.lastExit < 800) return Promise.resolve();
+    rt.lastExit = Date.now();
+    var s = getSession(); if (!s || !s.token) return Promise.resolve();
+    var d = rt.data, b = buildSave(COURSE, d, s.token, 60000);
+    return rpc("sawaal_save", b.args, { keepalive: true }).then(function () {
+      markSent(d, b); persist(); setStatus(hasWork() ? "saving" : "saved");
+      if (hasWork()) schedule(200);
+    }, function () { /* still safe on this device; normal saving retries later */ });
+  }
+
+  // Answers from OTHER courses that never made it to the internet (for example the tab was
+  // closed while offline) are still on this device. Send them now, from whichever page is open.
+  function flushOtherCourses() {
+    var s = getSession(); if (!s || !s.token || !s.student || !configured()) return Promise.resolve();
+    var suffix = "." + s.student.id, keys = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf("sawaal.c.") === 0 && k.slice(-suffix.length) === suffix && k !== rt.key) keys.push(k);
+      }
+    } catch (e) { return Promise.resolve(); }
+    return keys.reduce(function (chain, key) {
+      return chain.then(function () {
+        var course = key.slice("sawaal.c.".length, -suffix.length);
+        var d = readJSON(key);
+        if (!/^[a-z0-9-]{1,60}$/.test(course) || !dataHasWork(d)) return;
+        var b = buildSave(course, d, s.token);
+        return rpc("sawaal_save", b.args, { timeout: 20000 }).then(function () {
+          var latest = readJSON(key) || d;      // the course might have been opened in another tab meanwhile
+          markSent(latest, b); writeJSON(key, latest);
+        }, function () {});
+      });
+    }, Promise.resolve());
   }
 
   function record(id, mod, q, a, correct) {
@@ -337,7 +403,7 @@
   function start() {
     if (startPromise) return startPromise;
     startPromise = new Promise(function (resolve) {
-      var ready = function () { renderAccount(); if (hasWork()) schedule(500); resolve(snapshot()); };
+      var ready = function () { renderAccount(); if (hasWork()) schedule(500); setTimeout(flushOtherCourses, 1500); resolve(snapshot()); };
       var goLocal = function () {
         rt.mode = "local"; rt.student = null;
         rt.key = "sawaal.c." + COURSE + ".local";
@@ -419,8 +485,8 @@
 
   /* ---------------- save when the page is hidden or the internet comes back ---------------- */
   window.addEventListener("online", function () { if (rt.data) flush(); });
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && hasWork()) flush({ keepalive: true }); });
-  window.addEventListener("pagehide", function () { if (hasWork()) flush({ keepalive: true }); });
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flushOnExit(); });
+  window.addEventListener("pagehide", function () { flushOnExit(); });
 
   window.Sawaal = {
     start: start, record: record, setScreen: setScreen, complete: complete, flush: flush, switchStudent: switchStudent,
@@ -428,6 +494,6 @@
     get student() { return rt.student; },
     course: COURSE,
     // used by the home page and the dashboard
-    api: { rpc: rpc, configured: configured, friendly: friendly, getSession: getSession, clearSession: clearSession, signInForm: signInForm, root: ROOT, config: CFG }
+    api: { rpc: rpc, configured: configured, friendly: friendly, getSession: getSession, clearSession: clearSession, signInForm: signInForm, flushOtherCourses: flushOtherCourses, root: ROOT, config: CFG }
   };
 })();
