@@ -80,9 +80,9 @@
     if (!courses.length) { list.innerHTML = '<div class="empty">No courses yet.</div>'; return; }
     list.innerHTML = courses.map(function (c) {
       var p = progress[c.id], label = "Start", cls = "go", extra = "";
-      if (p && p.completed_at) { label = "Read again"; cls = "go again"; extra = '<div class="prog"><span class="done">Finished</span></div>'; }
+      if (p && (p.completed_at || (c.screens && Math.max(p.max_screen || 0, p.screen || 0) >= c.screens - 1))) { label = "Read again"; cls = "go again"; extra = '<div class="prog"><span class="done">Finished</span></div>'; }
       else if (p) {
-        var at = Math.min((p.screen || 0) + 1, c.screens || 1), pct = c.screens ? Math.round(at / c.screens * 100) : 0;
+        var at = Math.min(Math.max(p.max_screen || 0, p.screen || 0) + 1, c.screens || 1), pct = c.screens ? Math.round(at / c.screens * 100) : 0;
         label = "Carry on";
         extra = '<div class="prog"><div class="t"><i style="width:' + pct + '%"></i></div><span>' + (c.screens ? "Screen " + at + " of " + c.screens : "Started") + "</span></div>";
       }
@@ -104,7 +104,9 @@
       me.querySelector(".muted").textContent = s.student.school;
       me.querySelector("button").onclick = function () { api.clearSession(); progress = {}; render(); };
       renderList();
-      api.rpc("sawaal_my_courses", { p_token: s.token }).then(function (rows) {
+      api.flushOtherCourses().then(function () {   // send anything left unsent on this device first
+        return api.rpc("sawaal_my_courses", { p_token: s.token });
+      }).then(function (rows) {
         progress = {};
         (rows || []).forEach(function (r) { progress[r.course] = r; });
         renderList();
