@@ -149,10 +149,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
         '</div><div class="v">' + (i.value || 0) + (pair ? "<br>" + (i.value2 || 0) : "") + "</div>";
     }).join("") + "</div>";
   }
+  // Furthest screen reached (older databases only have the current screen).
+  function reached(p) { return p ? Math.max(p.max_screen || 0, p.screen || 0) : 0; }
+  // Finished = the course said so, or the student got to the very last screen.
+  function isDone(p, screens) { return !!(p && (p.completed_at || (screens && reached(p) >= screens - 1))); }
+  function screensOf(cid) { var c = COURSES.find(function (x) { return x.id === cid; }); return c ? c.screens : 0; }
   function progressBar(p, screens) {
     if (!p) return '<span class="pill">Not started</span>';
-    if (p.completed_at) return '<span class="pill ok">Finished</span>';
-    var at = Math.min((p.screen || 0) + 1, screens || 1), w = screens ? Math.round(at / screens * 100) : 0;
+    if (isDone(p, screens)) return '<span class="pill ok">Finished</span>';
+    var at = Math.min(reached(p) + 1, screens || 1), w = screens ? Math.round(at / screens * 100) : 0;
     return '<div class="prog"><div class="t"><i style="width:' + w + '%"></i></div><span>' + (screens ? at + "/" + screens : "started") + "</span></div>";
   }
   function csvDownload(name, rows) {
@@ -300,7 +305,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
     var c = course(), ins = c.insights || {}, prog = S.data.prog[S.course] || {};
     var started = 0, finished = 0, last = null;
     students.forEach(function (s) {
-      var p = prog[s.id]; if (p) { started++; if (p.completed_at) finished++; }
+      var p = prog[s.id]; if (p) { started++; if (isDone(p, c.screens)) finished++; }
       if (!last || s.last_seen > last) last = s.last_seen;
     });
     var scores = (ins.scored || []).map(function (sc) {
@@ -515,7 +520,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
     var rows = S.data.answers.filter(function (r) { return r.student_id === s.id; }).sort(function (a, b) { return a.answered_at < b.answered_at ? -1 : 1; });
     var others = Object.keys(S.data.prog).filter(function (cid) { return cid !== S.course && S.data.prog[cid][s.id]; });
     var html = '<div style="padding:6px 2px"><b>' + (s.name ? esc(s.name) + " · " : "") + esc(s._school) + " · Class " + esc(s.class) + ' · <span class="code">' + esc(s.code) + "</span></b>";
-    if (others.length) html += '<div class="small muted">Also opened: ' + others.map(function (cid) { var c = COURSES.find(function (x) { return x.id === cid; }); return esc(c ? c.title : cid) + (S.data.prog[cid][s.id].completed_at ? " (finished)" : ""); }).join(", ") + "</div>";
+    if (others.length) html += '<div class="small muted">Also opened: ' + others.map(function (cid) { var c = COURSES.find(function (x) { return x.id === cid; }); return esc(c ? c.title : cid) + (isDone(S.data.prog[cid][s.id], screensOf(cid)) ? " (finished)" : ""); }).join(", ") + "</div>";
     if (!rows.length) return html + '<p class="muted small">No answers in this course yet.</p></div>';
     html += '<div class="tablewrap" style="margin:10px 0 0"><table><thead><tr><th>Section</th><th>Question</th><th>Answer</th><th></th></tr></thead><tbody>';
     rows.forEach(function (r) {
@@ -539,7 +544,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
     $("dlP").onclick = function () {
       var prog = S.data.prog[S.course] || {};
       var rows = [["school", "class", "name", "secret_key", "status", "screen_reached", "total_screens", "started_at", "finished_at", "last_active"]];
-      scopeStudents().forEach(function (s) { var p = prog[s.id]; rows.push([s._school, s.class, s.name || "", s.code, !p ? "not started" : p.completed_at ? "finished" : "in progress", p ? p.screen + 1 : "", c.screens || "", p ? p.started_at : "", p && p.completed_at ? p.completed_at : "", s.last_seen]); });
+      scopeStudents().forEach(function (s) { var p = prog[s.id]; rows.push([s._school, s.class, s.name || "", s.code, !p ? "not started" : isDone(p, c.screens) ? "finished" : "in progress", p ? reached(p) + 1 : "", c.screens || "", p ? p.started_at : "", p && p.completed_at ? p.completed_at : "", s.last_seen]); });
       csvDownload("sawaal-" + S.course + "-progress-" + tag + "-" + stamp + ".csv", rows);
     };
   }
