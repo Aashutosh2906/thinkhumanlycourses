@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Foundations: Think, Ask, Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@700&family=Noto+Sans+Devanagari:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1D1A16;
+  --slate:#1B2430;
+  --page:#FFF8EC;
+  --card:#FFFFFF;
+  --rule:#EADFCB;
+  --muted:#6B6357;
+  --marigold:#FFB703;
+  --marigold-deep:#E08A00;
+  --chilli:#E23A2E;
+  --peacock:#0F7B6C;
+  --ultramarine:#2743C4;
+  --violet:#6D28D9;
+  --lilac:#F1ECFF;
+  --mint:#E3F6EF;
+  --blush:#FDE9E7;
+  --amberbg:#FFF1D2;
+  --sky:#E6F3FF;
+  --m1:#C2410C;--m2:#A16207;--m3:#047857;--m4:#6D28D9;--m5:#B91C1C;--m6:#0369A1;--m7:#1B2430;
+  --disp:"Baloo 2","Trebuchet MS",sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pad:clamp(16px,4.5vw,48px);
+  --r:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--slate);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+@media (max-width:600px){body{font-size:16.5px}}
+
+/* ---------- shell ---------- */
+#rail{position:fixed;top:0;left:0;height:5px;width:0;background:var(--marigold);z-index:60;transition:width .35s cubic-bezier(.4,0,.2,1)}
+#stage{height:100dvh;display:flex;flex-direction:column}
+#deck{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.slide{display:none;min-height:100%;padding:calc(var(--pad) + 8px) var(--pad) 48px;background:var(--page);
+  background-image:radial-gradient(#EADFCB 1.2px,transparent 1.6px);background-size:24px 24px}
+.slide.on{display:block;animation:in .3s ease-out}
+.slide.cover.on,.slide.divider.on{display:flex;align-items:center}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.wrap{max-width:760px;margin:0 auto}
+.wide .wrap{max-width:940px}
+
+/* ---------- nav bar ---------- */
+#bar{display:flex;align-items:center;gap:10px;background:var(--slate);color:#fff;padding:9px max(10px,env(safe-area-inset-left)) calc(9px + env(safe-area-inset-bottom)) 10px;z-index:50}
+#sawaal-status{font-size:11px;line-height:1.3;color:#9FB0C6;max-width:26%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sawaal-status[data-state="saved"]{color:#7FD8C5}#sawaal-status[data-state="offline"],#sawaal-status[data-state="error"]{color:var(--marigold)}
+#sawaal-account{background:#1F2B3B;border-radius:12px;padding:14px 16px;margin:0 0 22px;color:#fff}
+@media (max-width:600px){#sawaal-status{display:none}}
+#bar button{font-family:var(--body);font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 16px;cursor:pointer}
+#prev{background:#33415A;color:#fff}
+#next{background:var(--marigold);color:#231B08;flex:1;max-width:260px;margin-left:auto}
+#next:disabled{opacity:.4;cursor:not-allowed}
+#next.warn{background:var(--chilli);color:#fff}
+#menuBtn{background:#33415A;color:#fff;padding:12px 14px}
+#pos{font-size:13px;color:#9FB0C6;font-variant-numeric:tabular-nums;min-width:54px;text-align:center}
+#modLabel{font-size:13px;color:#9FB0C6;max-width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:520px){#modLabel{display:none}}
+
+
+/* ThinkHumanly logo */
+.th-logo{display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;padding:3px 7px;height:44px;flex:none}
+.th-logo img{height:36px;width:auto;display:block}
+.th-by{display:inline-flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:8px 14px 8px 12px;margin-top:22px;color:#1D1A16;font-size:13px;font-weight:600;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.th-by img{height:52px;width:auto;display:block}
+@media (max-width:420px){#bar{gap:6px}#pos{min-width:38px;font-size:12px}#bar button{padding:12px 12px}#next{min-width:96px;white-space:nowrap}.th-logo{padding:3px 5px}.th-logo img{height:32px}}
+
+/* ---------- contents overlay ---------- */
+#toc{position:fixed;inset:0;background:rgba(12,17,24,.97);color:#fff;z-index:70;display:none;overflow-y:auto;padding:24px}
+#toc.on{display:block}
+#toc h2{font-family:var(--disp);font-size:28px;margin:0 0 4px;color:#fff}
+#toc p{color:#9FB0C6;margin:0 0 20px;font-size:14px}
+.tocItem{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #33415A;color:#fff;padding:12px 2px;font-size:16px;font-family:var(--body);cursor:pointer}
+.tocItem span{color:#8FA3BC;font-size:13px;display:block}
+.tocItem:hover{color:var(--marigold)}
+#tocClose{margin-top:22px;background:var(--marigold);color:#231B08;border:0;border-radius:12px;padding:12px 18px;font-weight:700;font-family:var(--body);font-size:15px;cursor:pointer}
+
+/* ---------- typography ---------- */
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(36px,7vw,58px);line-height:1.02;letter-spacing:-.01em;margin:0 0 12px}
+h2{font-family:var(--disp);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0 0 12px}
+h3{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1.2;margin:22px 0 8px}
+p{margin:0 0 14px;max-width:62ch}
+.lead{font-size:clamp(18px,2.4vw,21px);color:#3C352C;max-width:56ch}
+.tag{display:inline-block;background:var(--amberbg);border:1.5px solid #F2D48A;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:700;color:#7A5200;margin-bottom:12px}
+.mins{color:var(--muted);font-size:13px;font-weight:500}
+strong{font-weight:700}
+.small{font-size:15px;color:var(--muted)}
+ul,ol{margin:0 0 16px;padding-left:22px;max-width:62ch}
+li{margin-bottom:8px}
+a{color:var(--ultramarine)}
+
+/* ---------- mascot ---------- */
+.mascot{width:72px;height:72px;flex:none}
+.say{display:flex;gap:12px;align-items:flex-start;margin:0 0 18px}
+.say .bubble{position:relative;background:#fff;border:2px solid var(--ink);border-radius:16px;padding:12px 15px;font-size:16.5px;line-height:1.5;flex:1;box-shadow:3px 3px 0 var(--ink)}
+.say .bubble::before{content:"";position:absolute;left:-11px;top:22px;border:10px solid transparent;border-right-color:var(--ink);border-left:0}
+.say .bubble::after{content:"";position:absolute;left:-8px;top:24px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.say .who{display:block;font-family:var(--disp);font-weight:800;font-size:14px;color:var(--marigold-deep);margin-bottom:2px;letter-spacing:.02em}
+
+/* ---------- cover ---------- */
+.cover{background:var(--slate);background-image:radial-gradient(circle at 12% 18%,rgba(255,183,3,.22),transparent 42%),radial-gradient(circle at 88% 80%,rgba(39,67,196,.3),transparent 46%);color:#fff}
+.coverwrap{display:grid;gap:24px;align-items:center;width:100%}
+@media (min-width:760px){.coverwrap{grid-template-columns:1.3fr 1fr}}
+.cover h1{font-size:clamp(52px,12vw,96px);color:#fff;margin-bottom:6px}
+.cover .tagline{color:#D6E0EC;font-size:clamp(19px,2.6vw,23px);max-width:30ch;line-height:1.45}
+.scripts{font-size:clamp(26px,6vw,40px);color:var(--marigold);margin-bottom:10px;line-height:1.9}
+.scripts .ur{font-family:"Noto Nastaliq Urdu",serif}
+.scripts .dv{font-family:"Noto Sans Devanagari",serif}
+.cover .meta{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+.cover .meta span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:6px 13px;font-size:14px;color:#E6EDF5}
+.covart{position:relative;display:flex;justify-content:center;align-items:center;min-height:220px}
+.covart .mascot-xl{width:min(240px,60vw);height:auto;filter:drop-shadow(0 12px 22px rgba(0,0,0,.35));animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.float{position:absolute;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:#fff;color:var(--slate);font-family:var(--disp);font-weight:800;font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.f1{top:8%;left:12%;background:var(--marigold)}.f2{bottom:10%;right:10%;background:#7FD8C5}.f3{top:16%;right:14%}
+
+/* ---------- dividers (mission openers) ---------- */
+.divider{color:#fff;background-image:radial-gradient(rgba(255,255,255,.12) 1.4px,transparent 1.8px);background-size:26px 26px}
+.divider.m1{background-color:var(--m1)}.divider.m2{background-color:var(--m2)}.divider.m3{background-color:var(--m3)}.divider.m4{background-color:var(--m4)}
+.divider.m5{background-color:var(--m5)}.divider.m6{background-color:var(--m6)}.divider.m7,.divider.done{background-color:var(--m7)}
+.divider .wrap{width:100%}
+.divgrid{display:grid;gap:22px;align-items:center}
+@media (min-width:760px){.divgrid{grid-template-columns:1.2fr 1fr}}
+.divider h1{color:#fff}
+.divider .num{display:inline-grid;place-items:center;width:78px;height:78px;border-radius:50%;background:#fff;color:var(--ink);font-family:var(--disp);font-weight:800;font-size:44px;line-height:1;margin-bottom:10px;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+.divider .mtag{display:block;font-family:var(--disp);font-weight:700;font-size:18px;color:rgba(255,255,255,.85);margin-bottom:2px}
+.divider p{color:rgba(255,255,255,.92);font-size:19px;max-width:44ch}
+.divider .kit{margin-top:18px;display:inline-block;background:rgba(0,0,0,.2);border-radius:99px;padding:7px 15px;color:#fff;font-size:14.5px;font-weight:600}
+.art{background:#fff;border-radius:24px;padding:14px;box-shadow:0 8px 0 rgba(0,0,0,.18)}
+.art svg{display:block;width:100%;height:auto;max-height:280px}
+
+/* ---------- cards & panels ---------- */
+.panel{background:var(--card);border:2px solid var(--rule);border-radius:var(--r);padding:20px;margin:0 0 18px}
+.panel.tight{padding:15px}
+.grid{display:grid;gap:12px;margin-bottom:18px}
+@media (min-width:680px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+.mini{background:var(--card);border:2px solid var(--rule);border-radius:var(--r);padding:16px}
+.mini h4{margin:4px 0 4px;font-family:var(--disp);font-size:20px;font-weight:800;line-height:1.2}
+.mini p{font-size:15.5px;margin:0;color:#4A4238}
+.mini .strip{margin-top:10px;font-weight:700;font-size:15px}
+.ico{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--amberbg);font-size:28px;line-height:1}
+.ico.lg{width:64px;height:64px;font-size:34px}
+.ico.r{background:var(--blush)}.ico.g{background:var(--mint)}.ico.b{background:var(--sky)}.ico.v{background:var(--lilac)}
+.mini.top-r{border-top:6px solid var(--chilli)}.mini.top-a{border-top:6px solid var(--marigold-deep)}.mini.top-g{border-top:6px solid var(--peacock)}.mini.top-b{border-top:6px solid var(--ultramarine)}
+.row2{display:flex;gap:12px;align-items:flex-start}
+.row2 .ico{flex:none}
+
+/* numbered steps */
+.steps{display:grid;gap:10px;margin-bottom:18px}
+.step{display:flex;gap:12px;align-items:center;background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:12px 14px}
+.step .n{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--m3);color:#fff;font-family:var(--disp);font-weight:800;font-size:22px}
+.step b{display:block;font-family:var(--disp);font-size:19px;line-height:1.2}
+.step span{font-size:15px;color:#4A4238}
+
+/* chat bubbles */
+.chat{background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.chat .who-tag{display:inline-block;font-size:13px;font-weight:700;border-radius:99px;padding:2px 10px;margin-bottom:8px}
+.who-tag.p{background:var(--blush);color:#9B1C14}.who-tag.c{background:var(--amberbg);color:#7A5200}.who-tag.d{background:var(--mint);color:#0B5E52}
+.bub{border-radius:14px;padding:10px 13px;margin-bottom:8px;font-size:15.5px;line-height:1.45;max-width:90%}
+.bub:last-child{margin-bottom:0}
+.you{background:var(--lilac);border:1px solid #DCD4FA}
+.ai{background:#F4F2EE;border:1px solid var(--rule);margin-left:auto}
+.bub b{display:block;font-size:11.5px;letter-spacing:.04em;color:var(--muted);margin-bottom:2px;font-weight:700;text-transform:uppercase}
+
+/* prompt boxes */
+.plabel{font-weight:700;font-size:14px;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.prompt{background:var(--slate);color:#EAF0F7;border-radius:14px;padding:15px 16px;padding-right:72px;font-size:15.5px;line-height:1.55;white-space:pre-wrap;position:relative;margin-bottom:14px}
+.prompt.weak{background:#F4EEEA;color:#5A483E;border:2px dashed #D9C6BA}
+.copy{position:absolute;top:9px;right:9px;background:#3B4A60;color:#fff;border:0;border-radius:8px;font-size:12.5px;font-weight:700;padding:7px 10px;cursor:pointer;font-family:var(--body)}
+.prompt.weak .copy{background:#C9B6A8;color:#3A2E26}
+.copy.done{background:var(--peacock);color:#fff}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 16px}
+.pill{font-size:13.5px;font-weight:600;border-radius:99px;padding:4px 11px;color:#231B08}
+.pill.R{background:#FFD66B}.pill.O{background:#FFB703}.pill.T{background:#F4A259}.pill.I{background:#EE8F66}
+
+/* boxes (like the textbook's) */
+.box{border-radius:var(--r);padding:14px 16px;margin-bottom:18px;font-size:16px;border:2px solid transparent}
+.box .lbl{display:block;font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:3px}
+.box p:last-child{margin-bottom:0}
+.box.think{background:var(--lilac);border-color:#D6CCF7}.box.think .lbl{color:var(--violet)}
+.box.snap{background:var(--mint);border-color:#B9E3D5}.box.snap .lbl{color:var(--peacock)}
+.box.try{background:var(--sky);border-color:#BFDDF7}.box.try .lbl{color:var(--ultramarine)}
+.box.warn{background:var(--blush);border-color:#F5C2BC}.box.warn .lbl{color:#B91C1C}
+.box.gold{background:var(--amberbg);border-color:#F2D48A}.box.gold .lbl{color:#8A5A00}
+
+/* guess bars (how AI writes) */
+.guess{background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.guess .gq{font-family:var(--disp);font-weight:800;font-size:22px;margin-bottom:10px}
+.gb{display:grid;grid-template-columns:88px 1fr 46px;gap:10px;align-items:center;font-size:15px;margin-bottom:7px}
+.gb .t{height:16px;background:#F3EFE6;border-radius:99px;overflow:hidden}
+.gb .t i{display:block;height:100%;width:var(--w);background:var(--ultramarine);border-radius:99px}
+.gb.low .t i{background:var(--chilli)}
+.gb b{text-align:right;font-variant-numeric:tabular-nums}
+
+/* two columns ok / not ok */
+.vs2{display:grid;gap:10px;margin-bottom:18px}
+@media (min-width:640px){.vs2{grid-template-columns:1fr 1fr}}
+.vs2 .col{border-radius:var(--r);padding:14px 16px}
+.vs2 .col h4{margin:0 0 8px;font-family:var(--disp);font-size:20px}
+.vs2 .col.ok{background:var(--mint);border:2px solid #B9E3D5}
+.vs2 .col.no{background:var(--blush);border:2px solid #F5C2BC}
+.vs2 ul{margin:0;padding-left:20px;font-size:15.5px}
+.vs2 li{margin-bottom:7px}
+
+/* 3-step flow */
+.flow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-bottom:18px}
+.flow .f{flex:1;min-width:150px;background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:14px;text-align:center}
+.flow .f .ico{margin-bottom:6px}
+.flow .f b{display:block;font-family:var(--disp);font-size:19px}
+.flow .arrow{align-self:center;font-size:24px;color:var(--muted)}
+@media (max-width:560px){.flow .arrow{display:none}}
+
+/* ---------- activity ---------- */
+.act{border:3px solid var(--ink);border-radius:20px;background:#fff;padding:0;margin:0 0 20px;overflow:hidden;box-shadow:5px 5px 0 var(--ink)}
+.act>header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.act>header h3{margin:0;color:#fff;font-size:20px;flex:1}
+.act>header .mins{color:var(--marigold);font-weight:700}
+.actbody{padding:18px 16px}
+.qcard{border-bottom:2px dashed var(--rule);padding-bottom:18px;margin-bottom:18px}
+.qcard:last-of-type{border-bottom:0;margin-bottom:6px;padding-bottom:0}
+.qcard .qt{font-weight:600;margin-bottom:10px;display:block;font-size:17px}
+.qcard .qt .qn{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--marigold);color:#231B08;font-family:var(--disp);font-weight:800;font-size:16px;margin-right:6px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts.row{flex-direction:row;flex-wrap:wrap}
+.opt{text-align:left;font-family:var(--body);font-size:16px;background:#fff;border:2px solid var(--rule);border-radius:12px;padding:12px 14px;min-height:48px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;color:var(--ink)}
+.opts.row .opt{flex:1;min-width:100px;text-align:center;font-weight:700}
+.opt:hover{border-color:var(--ink)}
+.opt:active{transform:scale(.98)}
+.opt:focus-visible{outline:3px solid var(--ultramarine);outline-offset:2px}
+.opt.picked{border-width:2px;background:var(--slate);border-color:var(--slate);color:#fff}
+.opt.right{background:var(--mint);border-color:var(--peacock);color:var(--ink)}
+.opt.wrong{background:var(--blush);border-color:var(--chilli);color:var(--ink)}
+@media (max-width:480px){.opts.row .opt{padding:10px 6px;font-size:15px;min-width:0}}
+.opt.picked.right::after{content:"  ✓";font-weight:800;color:var(--peacock)}
+.opt.picked.wrong::after{content:"  ✗";font-weight:800;color:var(--chilli)}
+.opt[disabled]{cursor:default}
+.opt.dim{opacity:.45}
+.fb{margin-top:10px;font-size:15.5px;line-height:1.5;padding:12px 14px;border-radius:12px;display:none}
+.fb.on{display:block;animation:in .25s ease-out}
+.fb.ok{background:var(--mint);border-left:5px solid var(--peacock)}
+.fb.no{background:var(--blush);border-left:5px solid var(--chilli)}
+.fb b{display:block;margin-bottom:3px}
+
+/* traffic pills */
+.opt.green{border-color:#9CCFC4}.opt.green.picked{background:var(--mint);color:var(--ink)}
+.opt.amber{border-color:#E8C97A}.opt.amber.picked{background:var(--amberbg);color:var(--ink)}
+.opt.red{border-color:#EFA9A3}.opt.red.picked{background:var(--blush);color:var(--ink)}
+.legend3{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.legend3 span{border-radius:99px;padding:5px 12px;font-size:14.5px;font-weight:600}
+.legend3 .g{background:var(--mint)}.legend3 .a{background:var(--amberbg)}.legend3 .r{background:var(--blush)}
+
+/* ---------- ROTI builder ---------- */
+.roti{display:grid;gap:9px;margin-bottom:16px}
+.layer{display:grid;grid-template-columns:52px 1fr;align-items:stretch;border-radius:16px;overflow:hidden;border:2px solid var(--rule)}
+.layer .lk{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:24px;line-height:1;color:#231B08}
+.layer .lk small{font-family:var(--body);font-size:9.5px;font-weight:700;margin-top:3px;letter-spacing:.02em}
+.layer textarea{border:0;border-radius:0;padding:12px 13px;font-family:var(--body);font-size:16px;resize:vertical;min-height:64px;background:#fff;color:var(--ink);line-height:1.45}
+.layer textarea:focus{outline:2px solid var(--ultramarine);outline-offset:-2px}
+.layer:nth-child(1) .lk{background:#FFD66B}
+.layer:nth-child(2) .lk{background:#FFB703}
+.layer:nth-child(3) .lk{background:#F4A259}
+.layer:nth-child(4) .lk{background:#EE8F66}
+.meter{height:12px;background:var(--rule);border-radius:99px;overflow:hidden;margin:6px 0 6px}
+.meter i{display:block;height:100%;width:0;background:var(--chilli);transition:width .3s,background .3s}
+.mrow{display:flex;justify-content:space-between;align-items:center;font-size:14.5px;color:var(--muted);margin-bottom:12px}
+.mrow b{color:var(--ink)}
+
+/* fake-fact hunt */
+.doc{background:#fff;border:2px solid var(--rule);border-radius:var(--r);padding:8px;margin-bottom:14px;counter-reset:sus}
+.sus{display:block;cursor:pointer;padding:11px 12px 11px 12px;margin:6px 0;border-radius:12px;border:2px solid var(--rule);font-size:16px;line-height:1.5;transition:background .15s,border-color .15s}
+.sus::before{counter-increment:sus;content:counter(sus);display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:800;color:#5A5044;background:#F0EBE0;margin-right:8px;vertical-align:1px}
+.sus:hover{background:#FFF7E0}
+.sus.flag{border-color:var(--marigold-deep)}
+.sus.flag::after{content:" 🚩";}
+.sus.hit{background:#FFD9D5;border-color:var(--chilli)}.sus.hit::before{background:var(--chilli);color:#fff}
+.sus.miss{background:#E6EFEA;border-color:var(--peacock)}.sus.miss::before{background:var(--peacock);color:#fff}
+.sus.shown{background:#FFE9A8;border-color:var(--marigold-deep)}.sus.shown::before{background:var(--marigold-deep);color:#fff}
+.sus.hit::after,.sus.miss::after,.sus.shown::after{content:""}
+.huntfb{font-size:15.5px}
+.huntfb div{padding:10px 13px;border-radius:12px;margin-bottom:8px;background:#F7F4EE;border-left:5px solid var(--rule)}
+.huntfb div.bad{background:var(--blush);border-color:var(--chilli)}
+.huntfb div.fine{background:var(--mint);border-color:var(--peacock)}
+.hunthint{font-size:14.5px;color:var(--muted);margin:-4px 0 12px}
+
+/* inputs */
+input[type=text],textarea,select{font-family:var(--body);font-size:16px;width:100%;border:2px solid var(--rule);border-radius:12px;padding:11px 13px;background:#fff;color:var(--ink)}
+input[type=text]:focus,textarea:focus,select:focus{outline:2px solid var(--ultramarine);outline-offset:-1px;border-color:var(--ultramarine)}
+textarea{resize:vertical;line-height:1.5}
+label.fl{display:block;font-weight:700;font-size:16px;margin:16px 0 6px}
+label.fl span{font-weight:400;color:var(--muted)}
+.btn{font-family:var(--body);font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;background:var(--ink);color:#fff}
+.btn.alt{background:var(--marigold);color:#231B08}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--ink)}
+.btn:focus-visible{outline:3px solid var(--ultramarine);outline-offset:2px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{background:#F3EFE6;border:2px solid var(--rule);border-radius:99px;padding:8px 13px;font-size:14.5px;font-weight:600;cursor:pointer;font-family:var(--body);color:#4A4238;text-align:left}
+.chip:hover{background:var(--amberbg);border-color:var(--marigold)}
+
+/* check-ins */
+.me{border:3px dashed #B8AD99;border-radius:20px;background:#FFFDF8;padding:18px;margin:10px 0 6px}
+.meq.needs-answer,.qcard.needs-answer,.actbody.needs-answer{outline:3px solid var(--chilli);outline-offset:5px;border-radius:12px;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.me>h3{margin:0 0 3px;font-size:22px}
+.me .sub{font-size:14.5px;color:var(--muted);margin-bottom:14px}
+.likert{display:flex;gap:6px;margin-top:8px}
+.likert button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:var(--body);font-weight:700;font-size:13px;border:2px solid var(--rule);background:#fff;border-radius:12px;padding:8px 0 6px;cursor:pointer;color:var(--muted)}
+.likert button .face{font-size:26px;line-height:1.1;filter:grayscale(.6);opacity:.75;transition:filter .15s,opacity .15s,transform .15s}
+.likert button:hover .face{filter:none;opacity:1}
+.likert button.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+.likert button.on .face{filter:none;opacity:1;transform:scale(1.15)}
+.lends{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:4px}
+.meq{margin-bottom:20px}
+.meq>span.qt{display:block;font-weight:700;font-size:16.5px;margin-bottom:2px}
+.meq .optl{font-weight:400;color:var(--muted);font-size:14px}
+.saved{font-size:14px;color:var(--peacock);font-weight:700;display:none}
+.saved.on{display:block}
+
+/* badges */
+.badge{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#FFF6DA,#FFE39A);border:2px solid #E8B437;border-radius:20px;padding:14px 16px;margin-bottom:16px}
+.medal{flex:none;display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:#fff;font-size:36px;line-height:1;box-shadow:0 0 0 5px var(--marigold),0 5px 0 5px #C98A00}
+.badge b{display:block;font-family:var(--disp);font-size:21px;line-height:1.2}
+.badge span{font-size:15px;color:#5A4A20}
+.wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:16px;margin:22px 0}
+.wall div{text-align:center;color:#fff;font-weight:700;font-size:14px}
+.wall .medal{margin:0 auto 10px;font-size:36px}
+
+/* timer */
+.timer{display:inline-flex;align-items:center;gap:9px;background:var(--slate);color:#fff;border-radius:99px;padding:6px 8px 6px 15px;font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;margin-bottom:14px}
+.timer button{background:var(--marigold);color:#231B08;border:0;border-radius:99px;font-family:var(--body);font-weight:700;font-size:13px;padding:8px 13px;cursor:pointer}
+.timer.done{background:var(--chilli)}
+
+/* score stamp */
+.stamp{display:none;border:4px solid var(--peacock);color:var(--peacock);background:#fff;font-family:var(--disp);font-weight:800;font-size:22px;padding:6px 16px;border-radius:12px;transform:rotate(-3deg);margin:14px 0 4px}
+.stamp.on{display:inline-block;animation:pop .35s ease-out}
+@keyframes pop{from{transform:rotate(-3deg) scale(.7);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}
+
+/* passage */
+.passage{background:#FFFDF6;border:2px solid var(--rule);border-left:6px solid var(--marigold);border-radius:var(--r);padding:16px 18px;font-size:16.5px;line-height:1.65;margin-bottom:10px}
+
+table{width:100%;border-collapse:collapse;font-size:15px;margin-bottom:16px;background:#fff}
+th,td{border:1px solid var(--rule);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:#F3EFE6;font-weight:700}
+
+.hide{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* ===== AI Foundations additions ===== */
+.mascot.sm{width:56px;height:56px}
+.say.mini .bubble{font-size:15.5px}
+.lead.tight{margin-bottom:10px}
+/* tap-to-build ROTI */
+.rotiwrap{display:grid;gap:14px;margin-bottom:12px}
+@media (min-width:760px){.rotiwrap{grid-template-columns:1fr 250px;align-items:start}}
+.lpick{border:2px solid var(--rule);border-radius:16px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.lpick h4{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-family:var(--disp);font-size:18px}
+.lpick h4 .lk{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;font-weight:800;color:#231B08}
+.lpick[data-l="r"] .lk{background:#FFD66B}.lpick[data-l="o"] .lk{background:#FFB703}.lpick[data-l="t"] .lk{background:#F4A259}.lpick[data-l="i"] .lk{background:#EE8F66}
+.lpick h4 small{font-family:var(--body);font-weight:500;font-size:13.5px;color:var(--muted)}
+.pk{display:block;width:100%;text-align:left;font:inherit;font-size:15px;background:#FBF8F2;border:2px solid var(--rule);border-radius:10px;padding:9px 12px;margin-bottom:6px;cursor:pointer;color:var(--ink)}
+.pk:hover{border-color:var(--ink)}
+.pk.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+.lpick.needs-answer{outline:3px solid var(--chilli);outline-offset:4px;animation:shake .3s}
+.stack{background:#fff;border:2px solid var(--rule);border-radius:16px;padding:10px;text-align:center;position:sticky;top:10px}
+.stack svg{width:100%;max-width:240px;height:auto}
+.stack .rl{transform:translateY(-140px);opacity:0;transition:transform .55s cubic-bezier(.3,1.5,.5,1),opacity .3s}
+.stack .rl.on{transform:none;opacity:1}
+.stack .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+/* guided ladder */
+.climbwrap{display:grid;gap:14px}
+@media (min-width:760px){.climbwrap{grid-template-columns:150px 1fr}}
+.climb{background:#fff;border:2px solid var(--rule);border-radius:16px;padding:8px;align-self:start;position:sticky;top:10px}
+.climb svg{display:block;width:100%;max-width:150px;margin:0 auto;height:auto}
+.climb #climber{transition:transform .7s cubic-bezier(.3,1.4,.5,1)}
+@media (max-width:759px){.climb{display:none}}
+.topics{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.topics .pk{width:auto;display:inline-block;margin:0}
+.lstep{border:2px solid var(--rule);border-radius:16px;padding:12px 14px;margin-bottom:10px;background:#fff;transition:opacity .3s}
+.lstep.locked{opacity:.45;pointer-events:none}
+.lstep h4{margin:0 0 6px;font-family:var(--disp);font-size:19px;display:flex;gap:8px;align-items:center}
+.lstep h4 .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--m3);color:#fff;font-size:16px}
+.lstep.done h4 .n{background:var(--peacock)}
+.lstep .you{background:var(--lilac);border:1px solid #DCD4FA;border-radius:12px;padding:9px 12px;font-size:15px;margin-bottom:8px}
+.lstep .you b{display:block;font-size:11.5px;color:var(--muted);letter-spacing:.04em}
+.picks3{display:flex;flex-direction:column;gap:6px;margin:6px 0}
+.climb-done{display:none;font-weight:700;color:var(--peacock);margin-top:6px}
+.climb-done.on{display:block;animation:fxRise .35s ease-out}
+/* traffic light per question */
+.tl{display:inline-flex;gap:4px;background:var(--slate);border-radius:99px;padding:4px 6px;vertical-align:middle;margin-left:6px}
+.tl i{width:12px;height:12px;border-radius:50%;background:#3A4A5E;transition:background .25s,box-shadow .25s}
+.qcard[data-lit="Red"] .tl .r{background:#E23A2E;box-shadow:0 0 10px #E23A2E}
+.qcard[data-lit="Amber"] .tl .a{background:#FFB703;box-shadow:0 0 10px #FFB703}
+.qcard[data-lit="Green"] .tl .g{background:#2BA84A;box-shadow:0 0 10px #2BA84A}
+/* gating highlight for the new interactive pieces */
+.needs-answer{outline:3px solid var(--chilli)!important;outline-offset:4px;border-radius:12px;animation:shake .3s}
+/* mission divider art comes alive when the screen opens */
+.slide.on .art svg{animation:artPop .6s cubic-bezier(.2,1.3,.4,1) both}
+.slide.on .art.drive-in svg{animation:driveIn 1.1s cubic-bezier(.2,.9,.3,1.05) both}
+@keyframes driveIn{0%{transform:translateX(-120%) rotate(-2deg)}70%{transform:translateX(4%) rotate(1deg)}85%{transform:translateX(-1%)}100%{transform:none}}
+.slide.on .art.roti-drop svg{animation:none}
+.slide.on .art.roti-drop svg>g:first-of-type ellipse{animation:rotiDrop .55s cubic-bezier(.3,1.5,.5,1) both}
+.slide.on .art.roti-drop svg>g:first-of-type ellipse:nth-child(2){animation-delay:.18s}
+.slide.on .art.roti-drop svg>g:first-of-type ellipse:nth-child(3){animation-delay:.36s}
+.slide.on .art.roti-drop svg>g:first-of-type ellipse:nth-child(4){animation-delay:.54s}
+.slide.on .art.roti-drop svg>g:nth-of-type(2){animation:artFade .4s .8s both}
+@keyframes rotiDrop{0%{transform:translateY(-160px);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+.slide.on .art.climb-up svg>use{animation:climbUp 1.6s cubic-bezier(.4,1.2,.5,1) both}
+@keyframes climbUp{0%{transform:translateY(90px)}30%{transform:translateY(60px)}55%{transform:translateY(30px)}80%,100%{transform:none}}
+.slide.on .art.stamp-in svg>g:last-of-type{animation:artFade .35s .7s both}
+.slide.on .art.tl-blink svg circle{animation:tlBlink 2.4s ease-in-out both}
+.slide.on .art.tl-blink svg circle:nth-of-type(2){animation-delay:.4s}
+.slide.on .art.tl-blink svg circle:nth-of-type(3){animation-delay:.8s}
+@keyframes tlBlink{0%{opacity:.25}15%{opacity:1}35%{opacity:.35}55%,100%{opacity:1}}
+.slide.on .art.ring-spin svg{animation:ringSpin 1.1s cubic-bezier(.2,1,.3,1) both}
+@keyframes ringSpin{0%{transform:rotate(-200deg) scale(.4);opacity:0}100%{transform:none;opacity:1}}
+@keyframes artPop{0%{transform:scale(.8);opacity:0}100%{transform:none;opacity:1}}
+@keyframes artFade{from{opacity:0}to{opacity:1}}
+/* swap trick */
+.swapmsg{background:#fff;border:2px dashed #D9C6BA;border-radius:14px;padding:12px 14px;font-size:16px;margin-bottom:10px}
+.swapmsg .nm{transition:all .4s;border-radius:4px}
+.swapmsg.swapped .nm{text-decoration:line-through;color:var(--chilli);background:var(--blush)}
+/* me first */
+.mefirst textarea{font-size:17px}
+.charcount{font-size:13px;color:var(--muted);margin:4px 0 10px}
+/* quiz inside ladder */
+.qmini .opt{font-size:15px}
+
+</style>
+<script src="../config.js"></script>
+<script src="../sawaal.js"></script>
+<link rel="stylesheet" href="../fx.css">
+<script src="../fx.js"></script>
+</head>
+<body>
+<!-- Sawaali the mascot, drawn once and reused everywhere -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="sawaali" viewBox="0 0 100 100">
+      <line x1="50" y1="20" x2="50" y2="10" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="50" cy="8" r="5.5" fill="#E23A2E" stroke="#1B2430" stroke-width="2"/>
+      <path d="M18 20h64a12 12 0 0 1 12 12v34a12 12 0 0 1-12 12H48l-15 14V78H18A12 12 0 0 1 6 66V32a12 12 0 0 1 12-12z" fill="#FFB703" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="36" cy="44" r="7" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="37.5" cy="45" r="3.2" fill="#1B2430"/>
+      <circle cx="64" cy="44" r="7" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="65.5" cy="45" r="3.2" fill="#1B2430"/>
+      <path d="M39 59q11 9 22 0" fill="none" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="25" cy="56" r="4.5" fill="#F08C2E" opacity=".55"/><circle cx="75" cy="56" r="4.5" fill="#F08C2E" opacity=".55"/>
+    </symbol>
+    <symbol id="sawaali-think" viewBox="0 0 100 100">
+      <line x1="50" y1="20" x2="50" y2="10" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="50" cy="8" r="5.5" fill="#E23A2E" stroke="#1B2430" stroke-width="2"/>
+      <path d="M18 20h64a12 12 0 0 1 12 12v34a12 12 0 0 1-12 12H48l-15 14V78H18A12 12 0 0 1 6 66V32a12 12 0 0 1 12-12z" fill="#FFB703" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="36" cy="44" r="7" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="38" cy="41" r="3.2" fill="#1B2430"/>
+      <circle cx="64" cy="44" r="7" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="66" cy="41" r="3.2" fill="#1B2430"/>
+      <path d="M40 62q5-4 10 0t10 0" fill="none" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="sawaali-wow" viewBox="0 0 100 100">
+      <line x1="50" y1="20" x2="50" y2="10" stroke="#1B2430" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="50" cy="8" r="5.5" fill="#E23A2E" stroke="#1B2430" stroke-width="2"/>
+      <path d="M18 20h64a12 12 0 0 1 12 12v34a12 12 0 0 1-12 12H48l-15 14V78H18A12 12 0 0 1 6 66V32a12 12 0 0 1 12-12z" fill="#FFB703" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="36" cy="43" r="8" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="36" cy="43" r="3.4" fill="#1B2430"/>
+      <circle cx="64" cy="43" r="8" fill="#fff" stroke="#1B2430" stroke-width="2.5"/><circle cx="64" cy="43" r="3.4" fill="#1B2430"/>
+      <ellipse cx="50" cy="62" rx="6" ry="7" fill="#1B2430"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="rail"></div>
+<div id="stage">
+  <main id="deck"></main>
+  <nav id="bar">
+    <button id="menuBtn" aria-label="Open contents">☰</button>
+    <span class="th-logo"><img src="../images/logo.png" alt="ThinkHumanly" onerror="this.parentNode.style.display='none'"></span>
+    <button id="prev">Back</button>
+    <span id="pos">1/1</span>
+    <span id="sawaal-status" aria-live="polite"></span>
+    <span id="modLabel"></span>
+    <button id="next">Start</button>
+  </nav>
+</div>
+<div id="toc" role="dialog" aria-label="Course contents">
+  <div id="sawaal-account"></div>
+  <h2>Course contents</h2>
+  <p>Jump to any part. Your answers are kept as you go.</p>
+  <div id="tocList"></div>
+  <button id="tocClose">Close contents</button>
+</div>
+<template id="slides">
+
+<!-- 1 COVER -->
+<section class="slide cover">
+  <div class="wrap coverwrap">
+    <div>
+      <div class="scripts" style="font-size:clamp(18px,4vw,26px);color:#FFD66B;font-family:var(--disp);font-weight:700;letter-spacing:.04em">THINK · ASK · CHECK</div>
+      <h1>AI Foundations</h1>
+      <p class="tagline">Your first steps in using AI the smart way: think for yourself, ask better questions, and check what AI tells you.</p>
+      <div class="meta">
+        <span>⏱️ About 45 minutes</span>
+        <span>🎒 Ages 11 to 14</span>
+        <span>🏅 6 missions, 6 badges</span>
+        <span>📱 No chatbot account needed</span>
+      </div>
+      <div class="th-by"><img src="../images/logo.png" alt="ThinkHumanly" onerror="this.parentNode.style.display='none'"><span>A ThinkHumanly<br>course</span></div>
+    </div>
+    <div class="covart" aria-hidden="true">
+      <svg viewBox="0 0 100 100" class="mascot-xl"><use href="#sawaali"/></svg>
+      <span class="float f1">?</span><span class="float f2">✓</span><span class="float f3">💡</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2 MEET SAWAALI -->
+<section class="slide" data-mod="Getting started">
+  <div class="wrap">
+    <span class="tag">Before we start</span>
+    <h2>Hi! I'm Sawaali 👋</h2>
+    <div class="say">
+      <svg viewBox="0 0 100 100" class="mascot" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI</span>"Sawaal" means <b>question</b>. Today you'll learn to ask AI better questions, and to question AI back. I'll pop up with tips along the way.</div>
+    </div>
+    <div class="grid g2">
+      <div class="mini"><span class="ico">👆</span><h4>Tap, don't type</h4><p>Most screens need just a tap. There are only a couple of places to write.</p></div>
+      <div class="mini"><span class="ico b">🤖</span><h4>The AI is built in</h4><p>When you see the blue button, tap it and watch the AI answer. No account needed.</p></div>
+      <div class="mini"><span class="ico v">🎯</span><h4>Mistakes are fine</h4><p>Some questions are tricky on purpose. Getting one wrong helps you remember it.</p></div>
+      <div class="mini"><span class="ico g">💾</span><h4>Your answers are saved</h4><p id="saveNote">They stay on this device.</p></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0" id="pidTitle">Make a code name</h3>
+      <p class="small">Not your real name. Try: first 2 letters of a food you like + your lucky number + first 2 letters of your town.</p>
+      <label class="fl" for="pid">Your code name</label>
+      <input type="text" id="pid" maxlength="16" autocomplete="off">
+      <p id="pidSigned" class="hide" style="font-size:26px;font-weight:800;font-family:var(--disp);margin:6px 0 0"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 BASELINE -->
+<section class="slide" data-mod="Getting started">
+  <div class="wrap">
+    <span class="tag">Warm-up</span>
+    <h2>Where are you starting from?</h2>
+    <p class="lead">Just tap. We'll ask again at the end to see what changed.</p>
+    <div class="me" data-me="base"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 1 ===================== -->
+<section class="slide divider m1" data-mod="Mission 1">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">1</div>
+      <span class="mtag">Mission 1</span>
+      <h1>Who's driving?</h1>
+      <p>Same chatbot, very different results. The difference isn't the tool. It's the person using it.</p>
+      <div class="kit">🏅 Badge: Driver &nbsp;·&nbsp; ⏱️ 6 min</div>
+    </div>
+    <div class="art drive-in"><svg viewBox="0 0 320 200" role="img" aria-label="An auto rickshaw. The driver is at the front, and a passenger is asleep in the back.">
+        <ellipse cx="160" cy="182" rx="140" ry="8" fill="#000" opacity=".1"/>
+        <path d="M56 118 V92 Q56 46 106 42 H252 Q268 42 268 58 V118 Z" fill="#FFD23F" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M46 118 H270 V152 Q270 160 262 160 H54 Q46 160 46 152 Z" fill="#2BA84A" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M70 118 V94 Q70 62 104 58 H124 V118 Z" fill="#CFE8FF" stroke="#1B2430" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="140" y="58" width="112" height="60" rx="10" fill="#FFF3C4" stroke="#1B2430" stroke-width="3"/>
+        <path d="M91 118 Q92 98 106 96 Q120 98 121 118 Z" fill="#FF7A3D" stroke="#1B2430" stroke-width="2.5"/>
+        <circle cx="106" cy="83" r="11" fill="#8D5A3B" stroke="#1B2430" stroke-width="2.5"/>
+        <path d="M95 80 Q106 64 117 80 Z" fill="#1B2430"/>
+        <circle cx="101" cy="85" r="1.8" fill="#1B2430"/>
+        <path d="M74 104 L96 106" stroke="#1B2430" stroke-width="4" stroke-linecap="round"/>
+        <path d="M181 118 Q183 99 198 98 Q213 99 215 118 Z" fill="#7B5CFA" stroke="#1B2430" stroke-width="2.5"/>
+        <circle cx="198" cy="85" r="11" fill="#C98B5E" stroke="#1B2430" stroke-width="2.5"/>
+        <path d="M192 86 q3 2.5 6 0 M200 86 q3 2.5 6 0" stroke="#1B2430" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <text x="216" y="76" font-family="Baloo 2,sans-serif" font-weight="800" font-size="14" fill="#2743C4">z</text>
+        <text x="226" y="68" font-family="Baloo 2,sans-serif" font-weight="800" font-size="19" fill="#2743C4">Z</text>
+        <circle cx="48" cy="130" r="7" fill="#FFF7B0" stroke="#1B2430" stroke-width="2.5"/>
+        <circle cx="86" cy="162" r="19" fill="#1B2430"/><circle cx="86" cy="162" r="7" fill="#D9D2C5"/>
+        <circle cx="236" cy="162" r="19" fill="#1B2430"/><circle cx="236" cy="162" r="7" fill="#D9D2C5"/>
+        <text x="106" y="34" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="15" fill="#0F7B6C">DRIVER</text>
+        <text x="198" y="34" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="15" fill="#E23A2E">PASSENGER</text>
+      </svg></div>
+  </div>
+</section>
+
+<!-- 5 THREE WAYS -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <span class="tag">The big idea</span>
+    <h2>Three ways to ride in an auto</h2>
+    <p class="lead">Same auto. Same road. What changes is who decides where you go.</p>
+    <div class="grid g3">
+      <div class="mini top-r"><span class="ico r">😴</span><h4>Passenger</h4><p>You say "school" and fall asleep. You get somewhere, but you couldn't find the way again alone.</p><p class="strip" style="color:var(--chilli)">Copy, paste, forget.</p></div>
+      <div class="mini top-a"><span class="ico">👀</span><h4>Co-pilot</h4><p>You're awake. You point out a shortcut or a blocked road.</p><p class="strip" style="color:var(--marigold-deep)">Ask, check, adjust.</p></div>
+      <div class="mini top-g"><span class="ico g">🧑‍✈️</span><h4>Driver</h4><p>You chose where to go before you started, and you'd notice a wrong turn.</p><p class="strip" style="color:var(--peacock)">Plan, steer, check, learn.</p></div>
+    </div>
+    <div class="box think"><span class="lbl">🤔 Pause and think</span><p>Passengers finish homework faster. But in the exam, the chatbot isn't sitting next to you. So who did the learning?</p></div>
+  </div>
+</section>
+
+<!-- 6 THREE CHATS (play out one message at a time) -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <span class="tag">Watch closely</span>
+    <h2>Same homework, three chats</h2>
+    <p>Three students had to write about plastic waste in their city.</p>
+    <div class="chat" data-replay data-gap="700">
+      <span class="who-tag p">😴 Passenger</span>
+      <div class="bub you"><b>Student A</b>Write an essay on plastic waste, 300 words</div>
+      <div class="bub ai"><b>AI</b>Plastic waste is a big problem in cities today...</div>
+      <div class="bub you"><b>Student A</b>thanks</div>
+    </div>
+    <div class="chat" data-replay data-gap="900">
+      <span class="who-tag d">🧑‍✈️ Driver</span>
+      <div class="bub you"><b>Student C</b>I'm writing my own essay. My idea: the real problem is that waste isn't collected properly. Don't write it for me. Give me the 3 best arguments AGAINST my idea.</div>
+      <div class="bub ai"><b>AI</b>1) Even with good collection, most plastic can't be recycled...</div>
+      <div class="bub you"><b>Student C</b>I can't answer number 1. Ask me 3 questions to help me think about it.</div>
+    </div>
+    <p class="small">Student C took longer. But now the idea in her essay is really hers.</p>
+  </div>
+</section>
+
+<!-- 7 ACTIVITY 1 -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <div class="act" data-act="drivers">
+      <header><h3>🕵️ Activity 1: Spot the driver</h3><span class="mins">4 min</span></header>
+      <div class="actbody">
+        <p class="small" style="margin-bottom:16px">Read what each student typed. Who's driving?</p>
+
+        <div class="qcard" data-q="d1">
+          <span class="qt"><span class="qn">1</span>"summarise chapter 4 of my science book"</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-correct="1" data-fb="Right. No book, no class, no reason. The AI will just make up a general 'chapter 4'.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Not quite. There's nothing here to work with: no book, no goal, no follow-up.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-fb="A driver would paste the chapter, say their class, and say what the summary is for.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d2">
+          <span class="qt"><span class="qn">2</span>"I don't understand the word 'evaporation' in your answer. Explain it with something I see at home, then ask me a question to check I got it."</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-fb="The opposite! This student noticed what they didn't know and did something about it.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Close. But asking to be tested is a real driver move.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-correct="1" data-fb="Yes! Three driver moves: noticed a gap, asked for a home example, and asked to be tested.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d3">
+          <span class="qt"><span class="qn">3</span>"Give me 10 project topics on social media". Then they pick number 4 and hand it in without changing a word.</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-correct="1" data-fb="Right. The AI chose the topic, not the student. A driver would pick one they can really research, then write it in their own words.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Getting ideas is fine. Taking one without thinking about it is not.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-fb="Picking from a list you didn't shape isn't driving. Whose project is it now?">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+
+        <div class="qcard" data-q="d4">
+          <span class="qt"><span class="qn">4</span>"Here's my summary of the story, and here's yours. I think yours missed the main point. Am I right?"</span>
+          <div class="opts row">
+            <button class="opt" data-v="Passenger" data-fb="Look again. This student is checking the AI's work, not the other way round.">😴 Passenger</button>
+            <button class="opt" data-v="Co-pilot" data-fb="Good guess. But she did the work first and made up her own mind. That's driving.">👀 Co-pilot</button>
+            <button class="opt" data-v="Driver" data-correct="1" data-fb="Yes! She did it herself first, then used AI to check. That order matters more than anything else today.">🧑‍✈️ Driver</button>
+          </div>
+          <div class="fb"></div>
+        </div>
+        <div class="stamp" data-stamp="drivers"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 MISSION 1 DONE -->
+<section class="slide" data-mod="Mission 1: Who's driving?">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🚗</div><div><b>Mission 1 done!</b><span>You earned the <strong>Driver</strong> badge.</span></div></div>
+    <h3 style="margin-top:6px">📌 What drivers do</h3>
+    <div class="grid g2">
+      <div class="mini"><div class="row2"><span class="ico">🎯</span><div><h4>Know what you want</h4><p>Decide your goal before you open the chat.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico b">📓</span><div><h4>Bring your own stuff</h4><p>Your notes, your class, your city.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico v">❓</span><div><h4>Make it quiz you</h4><p>Ask for questions, not just answers.</p></div></div></div>
+      <div class="mini"><div class="row2"><span class="ico g">🔍</span><div><h4>Check before you trust</h4><p>Especially numbers and facts.</p></div></div></div>
+    </div>
+    <div class="me" data-me="m1"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 2 ===================== -->
+<section class="slide divider m2" data-mod="Mission 2">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">2</div>
+      <span class="mtag">Mission 2</span>
+      <h1>Make a better roti</h1>
+      <p>Four layers that turn a lazy question into a great one.</p>
+      <div class="kit">🏅 Badge: Roti Chef &nbsp;·&nbsp; ⏱️ 8 min</div>
+    </div>
+    <div class="art roti-drop"><svg viewBox="0 0 320 230" role="img" aria-label="A stack of four rotis on a plate, labelled R, O, T and I. I is at the bottom.">
+        <ellipse cx="130" cy="204" rx="118" ry="20" fill="#D9D2C5"/>
+        <ellipse cx="130" cy="200" rx="114" ry="17" fill="#F4F0E8" stroke="#1B2430" stroke-width="2.5"/>
+        <g stroke="#1B2430" stroke-width="2.5">
+          <ellipse cx="130" cy="180" rx="96" ry="22" fill="#E7A94A"/>
+          <ellipse cx="130" cy="148" rx="96" ry="22" fill="#EDB75A"/>
+          <ellipse cx="130" cy="116" rx="96" ry="22" fill="#F1C36A"/>
+          <ellipse cx="130" cy="84" rx="96" ry="22" fill="#F5CF7C"/>
+        </g>
+        <g fill="#A8651E" opacity=".55">
+          <ellipse cx="96" cy="80" rx="8" ry="3"/><ellipse cx="150" cy="90" rx="6" ry="2.5"/><ellipse cx="168" cy="76" rx="5" ry="2"/><ellipse cx="118" cy="92" rx="4" ry="1.8"/>
+        </g>
+        <g font-family="Baloo 2,sans-serif" font-weight="800" font-size="22" text-anchor="middle" fill="#231B08">
+          <line x1="226" y1="84" x2="256" y2="84" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="84" r="18" fill="#FFD66B" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="92">R</text>
+          <line x1="226" y1="116" x2="256" y2="116" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="116" r="18" fill="#FFB703" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="124">O</text>
+          <line x1="226" y1="148" x2="256" y2="148" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="148" r="18" fill="#F4A259" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="156">T</text>
+          <line x1="226" y1="180" x2="256" y2="180" stroke="#1B2430" stroke-width="2"/><circle cx="276" cy="180" r="18" fill="#EE8F66" stroke="#1B2430" stroke-width="2.5"/><text x="276" y="188">I</text>
+        </g>
+      </svg></div>
+  </div>
+</section>
+
+<!-- 10 WEAK QUESTION (live demo) -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">Try it</span>
+    <h2>What happens when you ask lazily?</h2>
+    <p class="lead tight">Here's a question lots of students type:</p>
+    <div class="prompt weak">explain photosynthesis</div>
+    <button class="ask-btn" data-ask="weak"><span class="spark">✨</span> Ask the AI</button>
+    <div data-reply="weak" hidden></div>
+    <script type="text/plain" data-text="weak">Photosynthesis is the process by which green plants, algae and some bacteria convert light energy into chemical energy. Using chlorophyll, they absorb sunlight and combine carbon dioxide and water to produce glucose, releasing oxygen as a by-product. It occurs in the chloroplasts and has two main stages: the light-dependent reactions and the Calvin cycle...</script>
+    <div class="after-ask" data-after="weak" hidden>
+      <div class="say mini">
+        <svg viewBox="0 0 100 100" class="mascot sm" aria-hidden="true"><use href="#sawaali-think"/></svg>
+        <div class="bubble"><span class="who">SAWAALI SAYS</span>It's correct. But is it for <b>you</b>? Hard words like "Calvin cycle", no example, and it didn't check if you understood. The AI had to guess who you are, so it gave an <b>average</b> answer.</div>
+      </div>
+      <p><b>The fix has 4 layers. It's called ROTI.</b> ➜</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ROTI -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">The tool</span>
+    <h2>R.O.T.I. has four layers</h2>
+    <p class="lead">Like a stack of rotis. The bottom one, I, holds everything up.</p>
+    <div class="grid g2">
+      <div class="mini" style="border-left:8px solid #FFD66B"><h4>R = Role</h4><p>Who should the AI be? Who are you?</p><p class="strip" style="font-weight:500;color:var(--muted)">"You're a friendly science teacher. I'm in Class 7."</p></div>
+      <div class="mini" style="border-left:8px solid #FFB703"><h4>O = Output</h4><p>What do you want back? How much?</p><p class="strip" style="font-weight:500;color:var(--muted)">"5 quiz questions, under 100 words."</p></div>
+      <div class="mini" style="border-left:8px solid #F4A259"><h4>T = Tight rules</h4><p>What must it NOT do?</p><p class="strip" style="font-weight:500;color:var(--muted)">"Don't tell me the answers yet."</p></div>
+      <div class="mini" style="border-left:8px solid #EE8F66"><h4>I = Input</h4><p>Your own notes, homework, city.</p><p class="strip" style="font-weight:500;color:var(--muted)">"Here are my class notes: ..."</p></div>
+    </div>
+    <div class="box snap"><span class="lbl">📌 Remember</span><p>Most students skip <b>I</b>. But a question with your own notes in it beats a clever question with nothing in it.</p></div>
+  </div>
+</section>
+
+<!-- 12 REBUILD 1: before / after with live replies -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">Before and after</span>
+    <h2>📗 The same question, with ROTI</h2>
+    <div class="prompt">You are a patient science teacher. I'm in Class 7 (CBSE) and my test is on Friday.
+
+Explain photosynthesis in under 80 words. Use the neem tree near my school as the example.
+
+Then ask me 3 short questions. Don't tell me the answers.
+
+Here are my class notes: [my notes]</div>
+    <div class="pills"><span class="pill R">R: patient teacher, Class 7</span><span class="pill O">O: 80 words + 3 questions</span><span class="pill T">T: don't tell me answers</span><span class="pill I">I: my notes</span></div>
+    <button class="ask-btn" data-ask="rb1"><span class="spark">✨</span> Ask the AI</button>
+    <div data-reply="rb1" hidden></div>
+    <script type="text/plain" data-text="rb1">Let's use your neem tree! 🌳
+Its leaves are like tiny kitchens. They take in sunlight, water from the roots, and carbon dioxide from the air. The green colour in the leaves (chlorophyll) helps turn these into food (glucose). The tree gives out oxygen, the same oxygen you breathe near it.
+
+Your turn:
+1. What 3 things does a neem leaf need to make food?
+2. Which gas does the tree give out?
+3. Why are leaves green?
+Reply with your answers and I'll tell you how you did.</script>
+    <div class="after-ask" data-after="rb1" hidden>
+      <div class="box think"><span class="lbl">🤔 Spot the difference</span><p>Same topic. But this answer uses <b>your</b> tree, <b>your</b> level, and makes <b>you</b> think. The first one just let you read and feel busy.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 TUTOR FLIP -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <span class="tag">The Tutor Flip</span>
+    <h2>✍️ Homework help, not homework done</h2>
+    <p class="plabel">❌ The passenger way</p>
+    <div class="prompt weak">write an essay on plastic pollution 300 words</div>
+    <button class="ask-btn" data-ask="tf1"><span class="spark">✨</span> Ask the AI</button>
+    <div data-reply="tf1" hidden></div>
+    <script type="text/plain" data-text="tf1">Plastic pollution is one of the most serious environmental problems facing the world today. Every year, millions of tonnes of plastic waste end up in our oceans, rivers and landfills, harming wildlife and human health. Plastic takes hundreds of years to break down...
+(and 260 more words that you didn't think about)</script>
+    <p class="plabel" style="margin-top:14px">✅ The driver way</p>
+    <div class="prompt">I'm writing my own essay on plastic pollution in my area. Don't write any of it for me. Ask me 3 questions that help me think of my own ideas.</div>
+    <button class="ask-btn" data-ask="tf2"><span class="spark">✨</span> Ask the AI</button>
+    <div data-reply="tf2" hidden></div>
+    <script type="text/plain" data-text="tf2">I won't write your essay. Here are 3 questions to get you thinking:
+1. Where does most of the plastic near your home come from: shops, homes or the market?
+2. What happens to a plastic bag after someone throws it near your school?
+3. What is one change your school could make this month?
+Answer any one, and I'll ask you a harder question about it.</script>
+    <div class="after-ask" data-after="tf2" hidden>
+      <div class="box gold"><span class="lbl">🔄 The Tutor Flip</span><p>Add one line to almost any question: <b>"Don't answer it. Ask me questions that help me answer it myself."</b> It turns AI from an answer machine into a thinking partner.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ACTIVITY 2: tap-to-build ROTI -->
+<section class="slide wide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <div class="act" data-act="roti">
+      <header><h3>🫓 Activity 2: Build your roti</h3><span class="mins">4 min</span></header>
+      <div class="actbody">
+        <p><b>Your situation:</b> you have a science test on <b>heat and temperature</b> next week. Pick one line for each layer. Choose the ones you think will get the best help.</p>
+        <div class="rotiwrap">
+          <div id="rotiPicks">
+            <div class="lpick" data-l="r"><h4><span class="lk">R</span> Role <small>who is the AI, who are you?</small></h4>
+              <button class="pk" data-s="0">Hi.</button>
+              <button class="pk" data-s="1">You are a teacher.</button>
+              <button class="pk" data-s="2">You are a kind science teacher. I'm in Class 7 and I find heat confusing.</button>
+            </div>
+            <div class="lpick" data-l="o"><h4><span class="lk">O</span> Output <small>what do you want back?</small></h4>
+              <button class="pk" data-s="2">Give me 5 quick quiz questions, one at a time.</button>
+              <button class="pk" data-s="0">Tell me about heat.</button>
+              <button class="pk" data-s="1">Explain heat in 100 words.</button>
+            </div>
+            <div class="lpick" data-l="t"><h4><span class="lk">T</span> Tight rules <small>what must it NOT do?</small></h4>
+              <button class="pk" data-s="1">Use simple words.</button>
+              <button class="pk" data-s="0">(No rules)</button>
+              <button class="pk" data-s="2">Don't tell me the answers until I reply. Use examples from home.</button>
+            </div>
+            <div class="lpick" data-l="i"><h4><span class="lk">I</span> Input <small>your own stuff</small></h4>
+              <button class="pk" data-s="0">(Nothing)</button>
+              <button class="pk" data-s="2">My notes say heat flows from hot to cold. In my last test I mixed up heat and temperature.</button>
+              <button class="pk" data-s="1">It's for school.</button>
+            </div>
+          </div>
+          <div class="stack" aria-hidden="true">
+            <svg viewBox="0 0 240 200">
+              <ellipse cx="120" cy="180" rx="104" ry="16" fill="#D9D2C5"/>
+              <ellipse cx="120" cy="176" rx="100" ry="14" fill="#F4F0E8" stroke="#1B2430" stroke-width="2"/>
+              <g class="rl" data-rl="i"><ellipse cx="120" cy="160" rx="84" ry="19" fill="#E7A94A" stroke="#1B2430" stroke-width="2"/><text x="120" y="166" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="16" fill="#231B08">I</text></g>
+              <g class="rl" data-rl="t"><ellipse cx="120" cy="132" rx="84" ry="19" fill="#EDB75A" stroke="#1B2430" stroke-width="2"/><text x="120" y="138" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="16" fill="#231B08">T</text></g>
+              <g class="rl" data-rl="o"><ellipse cx="120" cy="104" rx="84" ry="19" fill="#F1C36A" stroke="#1B2430" stroke-width="2"/><text x="120" y="110" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="16" fill="#231B08">O</text></g>
+              <g class="rl" data-rl="r"><ellipse cx="120" cy="76" rx="84" ry="19" fill="#F5CF7C" stroke="#1B2430" stroke-width="2"/><text x="120" y="82" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="16" fill="#231B08">R</text></g>
+            </svg>
+            <div class="mrow" style="margin:6px 0 0"><span>Strength</span><b id="r_label">Empty</b></div>
+            <div class="meter"><i id="r_meter"></i></div>
+          </div>
+        </div>
+        <div class="prompt" id="r_out">Pick a line for each layer, and your question will build here.</div>
+        <button class="ask-btn" id="r_ask" disabled><span class="spark">✨</span> Ask the AI</button>
+        <div id="r_reply" hidden></div>
+        <p class="small" id="r_tip" style="margin-top:8px"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 MISSION 2 DONE -->
+<section class="slide" data-mod="Mission 2: Better questions">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🫓</div><div><b>Mission 2 done!</b><span>You earned the <strong>Roti Chef</strong> badge.</span></div></div>
+    <div class="say mini">
+      <svg viewBox="0 0 100 100" class="mascot sm" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI SAYS</span>The layer most people skip is <b>T</b>: telling the AI what NOT to do. "Don't give me the answer yet" is the most useful rule you'll ever add.</div>
+    </div>
+    <div class="me" data-me="m2"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 3 ===================== -->
+<section class="slide divider m3" data-mod="Mission 3">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">3</div>
+      <span class="mtag">Mission 3</span>
+      <h1>Climb, don't jump</h1>
+      <p>One huge question gets a shallow answer. Five small ones take you much further.</p>
+      <div class="kit">🏅 Badge: Ladder Climber &nbsp;·&nbsp; ⏱️ 5 min</div>
+    </div>
+    <div class="art climb-up"><svg viewBox="0 0 330 240" role="img" aria-label="A ladder with five steps: Map, Pick, Example, Quiz me, What's missing. Sawaali is climbing it.">
+        <g stroke="#8B5E34" stroke-linecap="round">
+          <line x1="62" y1="16" x2="62" y2="228" stroke-width="9"/>
+          <line x1="128" y1="16" x2="128" y2="228" stroke-width="9"/>
+          <line x1="62" y1="204" x2="128" y2="204" stroke-width="7"/>
+          <line x1="62" y1="164" x2="128" y2="164" stroke-width="7"/>
+          <line x1="62" y1="124" x2="128" y2="124" stroke-width="7"/>
+          <line x1="62" y1="84" x2="128" y2="84" stroke-width="7"/>
+          <line x1="62" y1="44" x2="128" y2="44" stroke-width="7"/>
+        </g>
+        <use href="#sawaali" x="66" y="112" width="58" height="58"/>
+        <g font-family="Baloo 2,sans-serif" font-weight="800" font-size="17" fill="#1B2430">
+          <circle cx="160" cy="204" r="13" fill="#047857"/><text x="160" y="210" text-anchor="middle" fill="#fff" font-size="15">1</text><text x="180" y="210">Map</text>
+          <circle cx="160" cy="164" r="13" fill="#047857"/><text x="160" y="170" text-anchor="middle" fill="#fff" font-size="15">2</text><text x="180" y="170">Pick</text>
+          <circle cx="160" cy="124" r="13" fill="#047857"/><text x="160" y="130" text-anchor="middle" fill="#fff" font-size="15">3</text><text x="180" y="130">Example</text>
+          <circle cx="160" cy="84" r="13" fill="#047857"/><text x="160" y="90" text-anchor="middle" fill="#fff" font-size="15">4</text><text x="180" y="90">Quiz me</text>
+          <circle cx="160" cy="44" r="13" fill="#047857"/><text x="160" y="50" text-anchor="middle" fill="#fff" font-size="15">5</text><text x="180" y="50">What's missing</text>
+        </g>
+      </svg></div>
+  </div>
+</section>
+
+<!-- 17 GUIDED LADDER -->
+<section class="slide wide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <div class="act" data-act="ladder">
+      <header><h3>🪜 Activity 3: Climb the ladder</h3><span class="mins">5 min</span></header>
+      <div class="actbody">
+        <p><b>Pick a topic.</b> Then climb one step at a time. Each step is a small question to the AI.</p>
+        <div class="topics" id="ladTopics">
+          <button class="pk" data-topic="mosq">🦟 Why are there more mosquitoes in the monsoon?</button>
+          <button class="pk" data-topic="phone">📱 How does using a phone at night affect sleep?</button>
+          <button class="pk" data-topic="plastic">🧴 Why is plastic so hard to get rid of?</button>
+        </div>
+        <div class="climbwrap">
+          <div class="climb" aria-hidden="true">
+            <svg viewBox="0 0 150 300">
+              <g stroke="#8B5E34" stroke-linecap="round">
+                <line x1="40" y1="14" x2="40" y2="292" stroke-width="8"/><line x1="110" y1="14" x2="110" y2="292" stroke-width="8"/>
+                <line x1="40" y1="262" x2="110" y2="262" stroke-width="6"/><line x1="40" y1="212" x2="110" y2="212" stroke-width="6"/>
+                <line x1="40" y1="162" x2="110" y2="162" stroke-width="6"/><line x1="40" y1="112" x2="110" y2="112" stroke-width="6"/>
+                <line x1="40" y1="62" x2="110" y2="62" stroke-width="6"/>
+              </g>
+              <text x="75" y="14" text-anchor="middle" font-size="18">⭐</text>
+              <g id="climber" style="transform:translateY(0px)"><use href="#sawaali" x="45" y="240" width="60" height="60"/></g>
+            </svg>
+          </div>
+          <div id="ladSteps" class="hide">
+            <div class="lstep" data-step="1"><h4><span class="n">1</span>🗺️ Map</h4>
+              <div class="you"><b>YOU ASK</b><span class="q"></span></div>
+              <button class="ask-btn" data-lad="1"><span class="spark">✨</span> Ask</button><div class="lr" hidden></div></div>
+            <div class="lstep locked" data-step="2"><h4><span class="n">2</span>👉 Pick one</h4>
+              <p class="small" style="margin:0 0 4px">Which one do you want to understand better? Tap it.</p>
+              <div class="picks3"></div>
+              <div class="lr" hidden></div></div>
+            <div class="lstep locked" data-step="3"><h4><span class="n">3</span>📍 Real example</h4>
+              <div class="you"><b>YOU ASK</b>Give me one real example from India. Which facts should I check myself?</div>
+              <button class="ask-btn" data-lad="3"><span class="spark">✨</span> Ask</button><div class="lr" hidden></div></div>
+            <div class="lstep locked" data-step="4"><h4><span class="n">4</span>❓ Quiz me</h4>
+              <div class="you"><b>YOU ASK</b>Ask me 1 question to check I understood. Don't tell me the answer.</div>
+              <button class="ask-btn" data-lad="4"><span class="spark">✨</span> Ask</button><div class="lr" hidden></div>
+              <div class="opts qmini hide" style="margin-top:8px"></div><div class="fb"></div></div>
+            <div class="lstep locked" data-step="5"><h4><span class="n">5</span>🧩 What's missing?</h4>
+              <div class="you"><b>YOU ASK</b>What important thing about this haven't we talked about yet?</div>
+              <button class="ask-btn" data-lad="5"><span class="spark">✨</span> Ask</button><div class="lr" hidden></div></div>
+            <p class="climb-done" id="ladDone">⭐ You reached the top! 5 small questions took you much further than 1 big one.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 MISSION 3 DONE -->
+<section class="slide" data-mod="Mission 3: The ladder">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🪜</div><div><b>Mission 3 done!</b><span>You earned the <strong>Ladder Climber</strong> badge.</span></div></div>
+    <h3 style="margin-top:6px">✨ 3 magic lines to keep</h3>
+    <div class="prompt">Don't answer it. Ask me the questions I need to answer it myself.<button class="copy" data-copy>Copy</button></div>
+    <div class="prompt">Which parts of your answer should I check, and where?<button class="copy" data-copy>Copy</button></div>
+    <div class="prompt">Explain it again as if I'm the teacher and you're the student.<button class="copy" data-copy>Copy</button></div>
+    <div class="me" data-me="m3"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 4 ===================== -->
+<section class="slide divider m4" data-mod="Mission 4">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">4</div>
+      <span class="mtag">Mission 4</span>
+      <h1>AI can make things up</h1>
+      <p>The tricky AI answer isn't the one that's clearly wrong. It's the one that's mostly right, very confident, with one made-up fact hiding inside.</p>
+      <div class="kit">🏅 Badge: Fact Detective &nbsp;·&nbsp; ⏱️ 7 min</div>
+    </div>
+    <div class="art stamp-in"><svg viewBox="0 0 300 220" role="img" aria-label="A magnifying glass over a page, finding a line stamped FAKE.">
+        <rect x="30" y="16" width="170" height="192" rx="12" fill="#fff" stroke="#1B2430" stroke-width="3"/>
+        <g fill="#E4DED2">
+          <rect x="50" y="40" width="130" height="9" rx="4"/><rect x="50" y="60" width="110" height="9" rx="4"/>
+          <rect x="50" y="80" width="124" height="9" rx="4"/><rect x="50" y="140" width="118" height="9" rx="4"/>
+          <rect x="50" y="160" width="96" height="9" rx="4"/><rect x="50" y="180" width="126" height="9" rx="4"/>
+        </g>
+        <rect x="50" y="104" width="124" height="14" rx="5" fill="#FFD9D5"/>
+        <circle cx="178" cy="112" r="50" fill="#E6F3FF" fill-opacity=".85" stroke="#1B2430" stroke-width="8"/>
+        <line x1="214" y1="148" x2="266" y2="200" stroke="#6D28D9" stroke-width="16" stroke-linecap="round"/>
+        <line x1="214" y1="148" x2="266" y2="200" stroke="#1B2430" stroke-width="3" stroke-linecap="round" opacity=".3"/>
+        <g transform="rotate(-12 178 112)">
+          <rect x="140" y="96" width="76" height="32" rx="6" fill="none" stroke="#E23A2E" stroke-width="4"/>
+          <text x="178" y="121" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="24" fill="#E23A2E">FAKE</text>
+        </g>
+      </svg></div>
+  </div>
+</section>
+
+<!-- 20 HOW AI WRITES (animated guesser) -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <span class="tag">How it works</span>
+    <h2>AI is a very good guesser</h2>
+    <p class="lead tight">A chatbot doesn't look things up like you do. It guesses the next word, again and again, very fast. Watch:</p>
+    <div class="guesser" id="guesser">
+      <script type="application/json">[
+        {"prompt":"Chai tastes best with","options":[["biscuits",48],["friends",22],["rain",15],["samosa",13],["ketchup",2]],"pick":0,"wrong":false,
+         "note":"The AI picked the most likely word. Sounds right! Now try another one."},
+        {"prompt":"The capital of Australia is","options":[["Sydney",55],["Canberra",35],["Melbourne",10]],"pick":0,"wrong":true,
+         "note":"<b>Wrong!</b> The capital is <b>Canberra</b>. Sydney is the most famous city, so it <i>sounds</i> likely. In this example the AI picked the popular answer, not the true one, and sounded just as sure. <span class='small'>(Pretend numbers, to show the idea.)</span>"}
+      ]</script>
+    </div>
+    <div class="say mini">
+      <svg viewBox="0 0 100 100" class="mascot sm" aria-hidden="true"><use href="#sawaali-wow"/></svg>
+      <div class="bubble"><span class="who">SAWAALI SAYS</span><b>Likely is not the same as true.</b> AI is like a classmate who never says "I don't know" and always writes <i>something</i> in the exam.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 21 SNEAKY HABITS (flip cards) -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <span class="tag">Know its tricks</span>
+    <h2>4 sneaky AI habits</h2>
+    <p class="lead tight">Tap each card to flip it.</p>
+    <div class="flipgrid">
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico v">🙊</span><b>It rarely says "I don't know"</b><small>TAP TO FLIP</small></div><div class="face back">A teacher says "let me check". AI usually writes a confident answer anyway, even when it's unsure.</div></div></button>
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico v">📄</span><b>It can invent sources</b><small>TAP TO FLIP</small></div><div class="face back">Ask for a source and it may make one up: a real-sounding name, book or website that doesn't exist.</div></div></button>
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico v">🔢</span><b>It slips on numbers</b><small>TAP TO FLIP</small></div><div class="face back">Maths, money, and especially lakh and crore. A very exact number like 68.4% isn't more true, just more convincing.</div></div></button>
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico v">🗺️</span><b>It knows less about us</b><small>TAP TO FLIP</small></div><div class="face back">It has read far more about London than about Lucknow. Your town, your syllabus and recent news are its weak spots.</div></div></button>
+    </div>
+    <div class="box snap"><span class="lbl">📌 Good news</span><p>You know things AI doesn't: your street, your school, your language, this week. That's how you catch it out.</p></div>
+  </div>
+</section>
+
+<!-- 22 FAKE-FACT HUNT -->
+<section class="slide wide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <div class="act" data-act="hunt">
+      <header><h3>🔍 Activity 4: Fake-fact hunt</h3><span class="mins">5 min</span></header>
+      <div class="actbody">
+        <p>A Class 7 student asked a chatbot for help with a project on tigers 🐅. <b>Tap every sentence you would NOT use without checking.</b> 4 of the 6 are fake or wrong.</p>
+        <p class="hunthint">Tap once to flag 🚩. Tap again to unflag. Then press the yellow button.</p>
+        <div class="doc" id="huntdoc">
+          <span class="sus" data-v="fine" data-note="Well known, and easy to check. Big, simple facts like this are usually safe. You'd still name a real source in your project.">Tigers are India's national animal, and they are protected by law.</span>
+          <span class="sus" data-v="soft" data-note="Probably close, but it's a number, and tiger counts change with every survey. Check the latest official count before you use it.">India's last big tiger count found about 3,700 tigers in the wild.</span>
+          <span class="sus" data-v="bad" data-note="Maths mistake! 3,700 is just 3.7 thousand. 37 lakh would be 37,00,000, a thousand times more. AI mixes up lakh and crore a lot.">That means India has about 37 lakh tigers.</span>
+          <span class="sus" data-v="bad" data-note="Made up. There is no 'Wild Animals Act 2019' with this rule. AI can write things that look like laws. Only trust a law you've seen on an official government website.">Under Section 12 of the Wild Animals Act 2019, nobody is allowed to live within 10 km of a tiger reserve.</span>
+          <span class="sus" data-v="bad" data-note="A fake study: a real-sounding doctor, a real-sounding journal, and a very exact number (68.4%). Search for the journal first. If it doesn't exist, nothing else matters.">A 2021 study by Dr. Ravi Menon in the Indian Journal of Big Cats found that exactly 68.4% of tigers hunt only on moonless nights.</span>
+          <span class="sus" data-v="bad" data-note="A made-up website. AI can build web addresses that look real. Never use a link you haven't opened yourself.">For more facts, see the official report at www.tigerfacts-india.gov/report-2024.</span>
+        </div>
+        <div class="btnrow">
+          <button class="btn alt" id="hunt_check">🔍 Check my answers</button>
+          <button class="btn ghost" id="hunt_reset">Start over</button>
+        </div>
+        <div class="stamp" data-stamp="hunt"></div>
+        <div class="huntfb" id="hunt_fb"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 23 MISSION 4 DONE -->
+<section class="slide" data-mod="Mission 4: Checking AI">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🔍</div><div><b>Mission 4 done!</b><span>You earned the <strong>Fact Detective</strong> badge.</span></div></div>
+    <h3 style="margin-top:6px">📌 Check its D.N.A.</h3>
+    <div class="grid g3">
+      <div class="mini top-r"><span class="ico r">📅</span><h4>D = Dates</h4><p>"Recently", "last year". AI mixes up time.</p></div>
+      <div class="mini top-r"><span class="ico r">🔢</span><h4>N = Names &amp; Numbers</h4><p>People, places, amounts.</p></div>
+      <div class="mini top-r"><span class="ico r">📎</span><h4>A = "According to"</h4><p>Studies, laws, links. Open the source yourself.</p></div>
+    </div>
+    <div class="me" data-me="m4"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 5 ===================== -->
+<section class="slide divider m5" data-mod="Mission 5">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">5</div>
+      <span class="mtag">Mission 5</span>
+      <h1>Green, amber, red</h1>
+      <p>What's safe to share, what's a "maybe", and what you can never take back once you've typed it.</p>
+      <div class="kit">🏅 Badge: Safety Shield &nbsp;·&nbsp; ⏱️ 7 min</div>
+    </div>
+    <div class="art tl-blink" style="max-width:260px;justify-self:center"><svg viewBox="0 0 140 300" role="img" aria-label="A traffic light: red means stop, amber means careful, green means go.">
+        <rect x="62" y="236" width="16" height="60" rx="3" fill="#3A4A5E"/>
+        <rect x="18" y="8" width="104" height="234" rx="26" fill="#1B2430"/>
+        <circle cx="70" cy="56" r="31" fill="#E23A2E"/><text x="70" y="67" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="32" fill="#fff">✕</text>
+        <circle cx="70" cy="126" r="31" fill="#FFB703"/><text x="70" y="138" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="34" fill="#1B2430">!</text>
+        <circle cx="70" cy="196" r="31" fill="#2BA84A"/><text x="70" y="207" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="32" fill="#fff">✓</text>
+      </svg></div>
+  </div>
+</section>
+
+<!-- 25 PRIVACY + SWAP TRICK -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <span class="tag">🔒 Privacy</span>
+    <h2>What never goes in the chat box</h2>
+    <p class="lead tight">Think of a chatbot like a stranger who never forgets anything.</p>
+    <div class="grid g2">
+      <div class="mini top-r"><div class="row2"><span class="ico r">🪪</span><div><h4>ID and money details</h4><p>Aadhaar, passwords, bank or UPI details.</p></div></div></div>
+      <div class="mini top-r"><div class="row2"><span class="ico r">🏠</span><div><h4>Where to find you</h4><p>Your address, school + class + timings.</p></div></div></div>
+      <div class="mini top-r"><div class="row2"><span class="ico r">👫</span><div><h4>Other people's stuff</h4><p>A friend's messages or photos.</p></div></div></div>
+      <div class="mini top-r"><div class="row2"><span class="ico r">🤐</span><div><h4>Your secrets</h4><p>A real person might read it one day.</p></div></div></div>
+    </div>
+    <h3>🔄 The swap trick: remove the names, keep the problem</h3>
+    <div class="swapmsg" id="swapmsg">"My friend <span class="nm">Riya</span> from <span class="nm">7-B</span> sent me this: <span class="nm">[screenshot of her message]</span>. What did she mean?"</div>
+    <button class="ask-btn" id="swapBtn" style="background:var(--peacock);box-shadow:0 4px 0 #0A5A4F"><span class="spark">🔄</span> Use the swap trick</button>
+    <div class="swapmsg hide" id="swapOut" style="border-style:solid;border-color:#B9E3D5;background:var(--mint)"></div>
+  </div>
+</section>
+
+<!-- 26 FAIR AND SAFE -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <span class="tag">⚖️ Fair and safe</span>
+    <h2>Is it your thinking?</h2>
+    <p class="lead tight">One simple test: <b>did the thinking happen in your head?</b></p>
+    <div class="vs2">
+      <div class="col ok"><h4>✅ Helps you learn</h4><ul>
+        <li>Asking for 3 different explanations until one clicks</li>
+        <li>Asking what's weak in your own draft</li>
+        <li>Asking for practice questions, then answering them</li></ul></div>
+      <div class="col no"><h4>❌ Does it for you</h4><ul>
+        <li>Asking it to write the answer you hand in</li>
+        <li>Pasting the question and handing in what comes back</li>
+        <li>Asking it to give you an idea</li></ul></div>
+    </div>
+    <div class="grid g2">
+      <div class="mini"><span class="ico r">📞</span><h4>Fakes and scams</h4><p>AI can copy a voice or a face. A message saying "hurry, don't tell your parents" is exactly the one to tell your parents about.</p></div>
+      <div class="mini"><span class="ico">💛</span><h4>When AI feels like a friend</h4><p>It's always there, but it can't check on you tomorrow. If something heavy is going on, tell a real person too.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 27 ACTIVITY 5 -->
+<section class="slide wide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <div class="act" data-act="light">
+      <header><h3>🚦 Activity 5: Green, amber or red?</h3><span class="mins">5 min</span></header>
+      <div class="actbody">
+        <div class="legend3"><span class="g">🟢 Green: go ahead</span><span class="a">🟡 Amber: be careful, check first</span><span class="r">🔴 Red: don't</span></div>
+
+        <div class="qcard" data-q="t1"><span class="qt"><span class="qn">1</span>You didn't understand today's maths lesson, so you ask a chatbot to explain it 3 different ways. <span class="tl"><i class="r"></i><i class="a"></i><i class="g"></i></span></span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-correct="1" data-fb="Yes! This is one of the best uses of AI: a tutor who never gets tired of you asking again.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="No need to worry. Asking for an explanation is exactly what it's good for. This one is Green.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Not at all. Understanding something is the opposite of cheating. This one is Green.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t2"><span class="qt"><span class="qn">2</span>You take a photo of your Aadhaar card and upload it, asking the AI to check the details are correct. <span class="tl"><i class="r"></i><i class="a"></i><i class="g"></i></span></span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="No. That number belongs to you for life, and it would go somewhere you can't control.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="This one isn't a 'maybe'. ID documents never go into a chat box.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. You can't un-upload it, and you can't change your Aadhaar number if it leaks. Ask a family member instead.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t3"><span class="qt"><span class="qn">3</span>You paste your own finished essay and ask: "What are the 3 weakest parts?" <span class="tl"><i class="r"></i><i class="a"></i><i class="g"></i></span></span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-correct="1" data-fb="Yes. You wrote it, and now you're getting feedback, like a teacher would give if they had time for everyone.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Feedback on your own work is safe. It only becomes amber if you ask it to rewrite it for you.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Getting feedback on your own work isn't cheating. This one is Green.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t4"><span class="qt"><span class="qn">4</span>Your English homework is due in an hour. You ask a chatbot to write it, change a few words, and hand it in. <span class="tl"><i class="r"></i><i class="a"></i><i class="g"></i></span></span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Changing a few words doesn't change whose thinking it is.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-fb="Being in a hurry doesn't change the rule. This is handing in someone else's work.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-correct="1" data-fb="Correct. A better move: ask it for 3 questions to get you started, then write a short answer of your own.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t8"><span class="qt"><span class="qn">5</span>A friend sent you a confusing message. You paste the whole screenshot into a chatbot and ask what she meant. <span class="tl"><i class="r"></i><i class="a"></i><i class="g"></i></span></span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Kind idea, but you're sharing her words and her name without asking her.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-correct="1" data-fb="Right. Use the swap trick: describe it without names or screenshots and you get the same help. Or just ask her!">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Strict, and fair. But you can get help safely with the swap trick, so it's Amber.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="t10"><span class="qt"><span class="qn">6</span>Something hard is happening at home. For 3 weeks, you've told only the chatbot about it, every night, and nobody else. <span class="tl"><i class="r"></i><i class="a"></i><i class="g"></i></span></span>
+          <div class="opts row">
+            <button class="opt green" data-v="Green" data-fb="Talking it out helps, and there's no shame in it. But 3 weeks with no real person is worth stopping to think about.">🟢 Green</button>
+            <button class="opt amber" data-v="Amber" data-correct="1" data-fb="Right. It's not wrong to talk to it. It just can't do anything. Pick one real person this week: a parent, cousin, teacher or counsellor.">🟡 Amber</button>
+            <button class="opt red" data-v="Red" data-fb="Too harsh. Putting feelings into words is useful. The problem is that a chatbot can't check on you tomorrow.">🔴 Red</button>
+          </div><div class="fb"></div></div>
+        <div class="stamp" data-stamp="light"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 28 MISSION 5 DONE -->
+<section class="slide" data-mod="Mission 5: Safe and fair">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🛡️</div><div><b>Mission 5 done!</b><span>You earned the <strong>Safety Shield</strong> badge.</span></div></div>
+    <div class="say mini">
+      <svg viewBox="0 0 100 100" class="mascot sm" aria-hidden="true"><use href="#sawaali"/></svg>
+      <div class="bubble"><span class="who">SAWAALI SAYS</span>Being careful is great. But don't forget the <b>green</b> ones: asking AI to explain things, or to give feedback on your own work, is a smart way to learn.</div>
+    </div>
+    <div class="me" data-me="m5"></div>
+  </div>
+</section>
+
+<!-- ===================== MISSION 6 ===================== -->
+<section class="slide divider m6" data-mod="Mission 6">
+  <div class="wrap divgrid">
+    <div>
+      <div class="num">6</div>
+      <span class="mtag">Mission 6</span>
+      <h1>Stuck? Think first</h1>
+      <p>Four moves to rescue a stuck chat, and the one habit that matters most: <b>you go first</b>.</p>
+      <div class="kit">🏅 Badge: Rescue Hero &nbsp;·&nbsp; ⏱️ 5 min</div>
+    </div>
+    <div class="art ring-spin" style="max-width:320px;justify-self:center"><svg viewBox="0 0 240 240" role="img" aria-label="A rescue ring split into four moves: Narrow, Ground, Challenge and Restart.">
+        <g transform="rotate(-45 120 120)" fill="none" stroke-width="40">
+          <circle cx="120" cy="120" r="70" stroke="#0F7B6C" stroke-dasharray="109.96 329.87" stroke-dashoffset="0"/>
+          <circle cx="120" cy="120" r="70" stroke="#E08A00" stroke-dasharray="109.96 329.87" stroke-dashoffset="-109.96"/>
+          <circle cx="120" cy="120" r="70" stroke="#E23A2E" stroke-dasharray="109.96 329.87" stroke-dashoffset="-219.91"/>
+          <circle cx="120" cy="120" r="70" stroke="#2743C4" stroke-dasharray="109.96 329.87" stroke-dashoffset="-329.87"/>
+        </g>
+        <circle cx="120" cy="120" r="90" fill="none" stroke="#1B2430" stroke-width="3"/>
+        <circle cx="120" cy="120" r="50" fill="#fff" stroke="#1B2430" stroke-width="3"/>
+        <g font-family="Baloo 2,sans-serif" font-weight="800" font-size="14" fill="#fff" text-anchor="middle">
+          <text x="120" y="56">NARROW</text>
+          <text x="190" y="125" transform="rotate(90 190 120)">GROUND</text>
+          <text x="120" y="194">CHALLENGE</text>
+          <text x="50" y="125" transform="rotate(-90 50 120)">RESTART</text>
+        </g>
+        <use href="#sawaali" x="84" y="84" width="72" height="72"/>
+      </svg></div>
+  </div>
+</section>
+
+<!-- 30 RESCUE MOVES + CHHOTA TEST -->
+<section class="slide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <span class="tag">The tool</span>
+    <h2>4 rescue moves</h2>
+    <p class="lead tight">Typing "simpler" for the 8th time is not a plan! Tap a card to see the move.</p>
+    <div class="flipgrid">
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico b">✂️</span><b>Narrow</b><small>TAP TO FLIP</small></div><div class="face back">Make the question smaller. Not "Explain the Mughal Empire", but "How did Akbar get so many different people to support him?"</div></div></button>
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico g">📓</span><b>Ground</b><small>TAP TO FLIP</small></div><div class="face back">Give it something of yours. "Here's how my textbook explains it. What's different from what you said?"</div></div></button>
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico">🎯</span><b>Challenge</b><small>TAP TO FLIP</small></div><div class="face back">Say exactly what's wrong: "You used the word 'catalyst' and never explained it. Use a kitchen example."</div></div></button>
+      <button class="flip" type="button" aria-pressed="false"><div class="in"><div class="face front"><span class="ico r">🔄</span><b>Restart</b><small>TAP TO FLIP</small></div><div class="face back">After 3 bad answers, open a new chat with a better roti. It's faster than fixing a messy one.</div></div></button>
+    </div>
+    <div class="box snap"><span class="lbl">📌 The chhota test</span><p>After AI explains something, close the screen and explain it to a younger kid in 30 seconds. If you can't, you read it but didn't learn it yet.</p></div>
+  </div>
+</section>
+
+<!-- 31 ACTIVITY 6 -->
+<section class="slide wide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <div class="act" data-act="rescue">
+      <header><h3>🛟 Activity 6: Rescue the chat</h3><span class="mins">3 min</span></header>
+      <div class="actbody">
+        <div class="qcard" data-q="r1"><span class="qt"><span class="qn">1</span>You asked "explain magnetism" and got a correct answer full of words you don't know. You read it twice. Nothing made sense.</span>
+          <div class="opts">
+            <button class="opt" data-v="Narrow" data-fb="That can help later. But the real problem is the hard words, and you don't know which part to narrow to yet.">✂️ Narrow: ask about a smaller piece</button>
+            <button class="opt" data-v="Ground" data-correct="1" data-fb="Yes! Paste your textbook's explanation and ask it to connect its words to the ones you already know.">📓 Ground: paste my textbook's explanation</button>
+            <button class="opt" data-v="Restart" data-fb="Too early. The answer wasn't wrong, it was too hard. Give it something to match first.">🔄 Restart: open a new chat</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="r2"><span class="qt"><span class="qn">2</span>You're 20 messages into a history project. The AI keeps repeating itself, and now it says the opposite of what it said earlier.</span>
+          <div class="opts">
+            <button class="opt" data-v="Narrow" data-fb="A smaller question inside a messy chat still drags all the old confusion along.">✂️ Narrow: ask about one event only</button>
+            <button class="opt" data-v="Challenge" data-fb="Worth trying once. But if it's already going in circles, it's usually not worth fixing.">🎯 Challenge: point out the mistake</button>
+            <button class="opt" data-v="Restart" data-correct="1" data-fb="Yes! Copy the 2 or 3 useful bits, open a new chat, and start with a good ROTI.">🔄 Restart: new chat, carry over the good bits</button>
+          </div><div class="fb"></div></div>
+
+        <div class="qcard" data-q="r3"><span class="qt"><span class="qn">3</span>You asked for help planning a survey for a school project. The answer was so general it could fit any project in the world.</span>
+          <div class="opts">
+            <button class="opt" data-v="Narrow" data-correct="1" data-fb="Yes! Give your real situation: 'I can ask about 40 students from Classes 6 to 8 at lunch. What can my survey find out?'">✂️ Narrow: give my real situation</button>
+            <button class="opt" data-v="Challenge" data-fb="Saying 'too general' often just gets a longer general answer. Give it something specific instead.">🎯 Challenge: say it was too general</button>
+            <button class="opt" data-v="Restart" data-fb="Nothing is broken. The question was just too big.">🔄 Restart: start again</button>
+          </div><div class="fb"></div></div>
+        <div class="stamp" data-stamp="rescue"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 32 ME FIRST -->
+<section class="slide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <div class="act mefirst" data-act="mefirst">
+      <header><h3>✍️ Activity 7: Me first!</h3><span class="mins">2 min</span></header>
+      <div class="actbody">
+        <div class="say mini" style="margin-bottom:12px">
+          <svg viewBox="0 0 100 100" class="mascot sm" aria-hidden="true"><use href="#sawaali"/></svg>
+          <div class="bubble"><span class="who">SAWAALI SAYS</span>Drivers think <b>before</b> they ask. Write your own answer first. Then see what the AI says.</div>
+        </div>
+        <label class="fl" for="mf_own" style="margin-top:0">Why might using a phone late at night make it harder to sleep? <span>(one or two lines, your own words)</span></label>
+        <textarea id="mf_own" rows="2" data-store="mefirst_own" placeholder="I think..."></textarea>
+        <p class="charcount" id="mf_count">Write at least a few words to unlock the AI.</p>
+        <button class="ask-btn" id="mf_ask" disabled><span class="spark">✨</span> Now show me what AI said</button>
+        <div id="mf_reply" hidden></div>
+        <div class="qcard hide" data-q="compare" id="mf_cmp"><span class="qt">Whose answer was better?</span>
+          <div class="opts">
+            <button class="opt" data-v="Mine" data-correct="1" data-fb="Great! You thought it through yourself. That's what a driver does.">Mine</button>
+            <button class="opt" data-v="The AI's" data-correct="1" data-fb="That's fine. The point is you thought first, so now you can see exactly what you missed. That's how you learn.">The AI's</button>
+            <button class="opt" data-v="Both had something the other missed" data-correct="1" data-fb="The best answer! Your idea plus the AI's is better than either alone, and the thinking started with you.">Both had something the other missed</button>
+          </div><div class="fb"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 33 MISSION 6 DONE -->
+<section class="slide" data-mod="Mission 6: Getting unstuck">
+  <div class="wrap">
+    <div class="badge"><div class="medal">🛟</div><div><b>Mission 6 done!</b><span>You earned the <strong>Rescue Hero</strong> badge.</span></div></div>
+    <div class="me" data-me="m6"></div>
+  </div>
+</section>
+
+<!-- ===================== WRAP UP ===================== -->
+<!-- 34 MY RULES -->
+<section class="slide wide" data-mod="Take it home">
+  <div class="wrap">
+    <div class="act" data-act="charter">
+      <header><h3>📜 My 3 AI rules</h3><span class="mins">2 min</span></header>
+      <div class="actbody">
+        <p class="small">Tap three rules you will really keep. You can change the words to sound like you.</p>
+        <div class="chips" data-fill="charter">
+          <button class="chip">I try it myself first, then ask AI.</button>
+          <button class="chip">My name, address and ID numbers never go in the chat box.</button>
+          <button class="chip">I check numbers and sources before I use them.</button>
+          <button class="chip">I ask AI to quiz me, not just tell me.</button>
+          <button class="chip">3 bad answers means a new chat.</button>
+          <button class="chip">I ask my teacher what AI use is allowed.</button>
+          <button class="chip">Big worries go to a real person, not just a chatbot.</button>
+        </div>
+        <label class="fl">Rule 1</label><input type="text" class="charter-in" data-store="charter1">
+        <label class="fl">Rule 2</label><input type="text" class="charter-in" data-store="charter2">
+        <label class="fl">Rule 3</label><input type="text" class="charter-in" data-store="charter3">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 35 POST -->
+<section class="slide" data-mod="Take it home">
+  <div class="wrap">
+    <span class="tag">Last questions</span>
+    <h2>Where did you land?</h2>
+    <p class="lead">Some of these are the same as the start. Answer as honestly as you did then.</p>
+    <div class="me" data-me="post"></div>
+  </div>
+</section>
+
+<!-- 36 DONE -->
+<section class="slide divider done" data-mod="Done">
+  <div class="wrap">
+    <span class="mtag">All 6 missions done 🎉</span>
+    <h1>You've got the foundations</h1>
+    <div class="wall" id="wall">
+      <div><div class="medal">🚗</div>Driver</div>
+      <div><div class="medal">🫓</div>Roti Chef</div>
+      <div><div class="medal">🪜</div>Ladder Climber</div>
+      <div><div class="medal">🔍</div>Fact Detective</div>
+      <div><div class="medal">🛡️</div>Safety Shield</div>
+      <div><div class="medal">🛟</div>Rescue Hero</div>
+    </div>
+    <div class="kit" style="border-radius:16px;padding:14px 18px;display:block;max-width:560px">
+      <p style="margin:0 0 4px;color:#B9C6D6;font-size:15px">Three words to remember:</p>
+      <p style="color:#fff;font-size:26px;font-family:var(--disp);font-weight:800;margin:0;line-height:1.25">Think. Ask. Check.</p>
+    </div>
+    <p id="doneSaved" class="hide" style="color:#B9C6D6;margin-top:20px">Your answers are saved.</p>
+    <div><div class="th-by"><img src="../images/logo.png" alt="ThinkHumanly" onerror="this.parentNode.style.display='none'"><span>Made with care by<br>ThinkHumanly</span></div></div>
+    <a id="doneBack" class="hide" href="../index.html" style="display:inline-block;margin-top:14px;background:var(--marigold);color:#231B08;border-radius:12px;padding:12px 18px;font-weight:700;text-decoration:none">See all courses</a>
+  </div>
+</section>
+</template>
+<script>
+(function(){
+"use strict";
+
+/* ============ STATE ============ */
+var COURSE_FILE="ai-foundations";
+var STATE={pid:"",started:new Date().toISOString(),answers:{}};
+var SCORES={};
+var READY=false;      /* true once saved progress has been restored */
+var RESTORING=false;  /* while true, re-applying old answers must not re-save them */
+function rec(id,mod,q,a,correct){
+  STATE.answers[id]={mod:mod||"",q:q||"",a:a,correct:(correct===undefined?"":correct),t:new Date().toISOString()};
+  if(!RESTORING)Sawaal.record(id,mod,q,a,correct);
+}
+function modOf(el){var s=el.closest(".slide");return s&&s.dataset.mod?s.dataset.mod:"";}
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");}
+function say(box,text,instant){if(instant){FX.show(box,text);return Promise.resolve();}return FX.reply(box,text);}
+
+/* ============ CHECK-IN QUESTIONS ============ */
+var FACES=["😟","🙁","😐","🙂","😄"];
+var L5=["Not at all","Totally"];
+var DEBUG_OPTS=["Ask the same thing again","Add more details and ask again","Give up and look somewhere else","Try a totally different way","I don't really use AI"];
+var BANKS={
+ base:{title:"5 quick questions",sub:"Tap a face. There are no wrong answers.",items:[
+  {id:"b1",type:"likert",construct:"declarative",q:"I know how to ask AI a question so the answer fits my class."},
+  {id:"b2",type:"likert",construct:"planning",q:"Before I open a chatbot, I know what I want from it."},
+  {id:"b3",type:"likert",construct:"monitoring",q:"I can tell when an AI answer might be wrong."},
+  {id:"b4",type:"choice",construct:"debugging",q:"When an AI answer doesn't help, what do you usually do?",opts:DEBUG_OPTS},
+  {id:"b5",type:"choice",construct:"usage",q:"In a normal week, how often do you use AI for schoolwork?",opts:["Never","Once or twice","Most days","Every day"]}
+ ]},
+ m1:{title:"Quick check-in",sub:"One tap. Be honest!",items:[
+  {id:"m1a",type:"likert",construct:"conditional",q:"I can tell when I'm the driver and when AI is."}]},
+ m2:{title:"Quick check-in",sub:"One tap. Be honest!",items:[
+  {id:"m2a",type:"likert",construct:"procedural",q:"I can turn a weak question into a strong one."}]},
+ m3:{title:"Quick check-in",sub:"One tap. Be honest!",items:[
+  {id:"m3a",type:"likert",construct:"planning",q:"I can break a big question into small steps."}]},
+ m4:{title:"Quick check-in",sub:"One tap. Be honest!",items:[
+  {id:"m4a",type:"likert",construct:"monitoring",q:"I can spot which parts of an AI answer I should check."}]},
+ m5:{title:"Quick check-in",sub:"One tap. Be honest!",items:[
+  {id:"m5a",type:"likert",construct:"declarative",q:"I know what I should never type into a chatbot."}]},
+ m6:{title:"Quick check-in",sub:"One tap. Be honest!",items:[
+  {id:"m6a",type:"likert",construct:"debugging",q:"When a chat is going nowhere, I know what to try next."}]},
+ post:{title:"Last questions",sub:"The first four are the same as at the start.",items:[
+  {id:"p1",type:"likert",construct:"declarative",q:"I know how to ask AI a question so the answer fits my class."},
+  {id:"p2",type:"likert",construct:"planning",q:"Before I open a chatbot, I know what I want from it."},
+  {id:"p3",type:"likert",construct:"monitoring",q:"I can tell when an AI answer might be wrong."},
+  {id:"p4",type:"choice",construct:"debugging",q:"When an AI answer doesn't help, what will you do now?",opts:DEBUG_OPTS},
+  {id:"p5",type:"likert",construct:"intention",q:"I will use at least one of these tricks next week."},
+  {id:"p9",type:"choice",construct:"course-feedback",q:"How easy was this course to follow?",opts:["Too easy","Just right","A bit hard","Too hard"]},
+  {id:"p6",type:"choice",construct:"course-feedback",q:"Which mission did you like most?",opts:["1 Who's driving","2 Make a better roti","3 Climb the ladder","4 Fake-fact hunt","5 Green, amber, red","6 Stuck? Think first"]},
+  {id:"p7",type:"text",construct:"course-feedback",q:"What was confusing or boring?"}
+ ]}
+};
+
+/* ============ BUILD DECK ============ */
+var deck=document.getElementById("deck");
+var tpl=document.getElementById("slides");
+deck.appendChild(tpl.content.cloneNode(true));
+tpl.remove();
+var slides=$$(".slide",deck);
+var cur=0;
+
+/* render check-in blocks */
+slides.forEach(function(sl){
+  var host=sl.querySelector(".me");
+  if(!host)return;
+  var bank=BANKS[host.dataset.me];if(!bank)return;
+  var mod=sl.dataset.mod||"";
+  var html='<h3>'+bank.title+'</h3><p class="sub">'+bank.sub+'</p>';
+  bank.items.forEach(function(it){
+    html+='<div class="meq" data-item="'+it.id+'"><span class="qt">'+esc(it.q)+(it.type==="text"?'<span class="optl"> (optional)</span>':'')+'</span>';
+    if(it.type==="likert"){
+      html+='<div class="likert">';
+      for(var n=1;n<=5;n++)html+='<button type="button" data-val="'+n+'" aria-label="'+n+' out of 5"><span class="face" aria-hidden="true">'+FACES[n-1]+'</span><span>'+n+'</span></button>';
+      html+='</div><div class="lends"><span>'+L5[0]+'</span><span>'+L5[1]+'</span></div>';
+    }else if(it.type==="choice"){
+      html+='<div class="opts" style="margin-top:8px">';
+      it.opts.forEach(function(o){html+='<button type="button" class="opt" data-val="'+esc(o)+'">'+esc(o)+'</button>';});
+      html+='</div>';
+    }else{
+      html+='<textarea rows="2" style="margin-top:8px"></textarea>';
+    }
+    html+='</div>';
+  });
+  html+='<p class="saved">✅ Saved.</p>';
+  host.innerHTML=html;
+
+  host.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-val]");if(!b)return;
+    var box=b.closest(".meq"),id=box.dataset.item;
+    var item=bank.items.filter(function(x){return x.id===id;})[0];
+    $$("button[data-val]",box).forEach(function(o){o.classList.remove("on");o.classList.remove("picked");});
+    b.classList.add(b.parentNode.classList.contains("likert")?"on":"picked");
+    rec(id,mod,item.q,b.dataset.val);
+    host.querySelector(".saved").classList.add("on");
+  });
+  host.addEventListener("input",function(e){
+    if(e.target.tagName!=="TEXTAREA")return;
+    var box=e.target.closest(".meq"),id=box.dataset.item;
+    var item=bank.items.filter(function(x){return x.id===id;})[0];
+    rec(id,mod,item.q,e.target.value);
+  });
+});
+
+/* ============ NAV ============ */
+var rail=$("#rail"),pos=$("#pos"),modLabel=$("#modLabel"),nextBtn=$("#next"),prevBtn=$("#prev");
+var guesserEl=$("#guesser");
+function show(i){
+  i=Math.max(0,Math.min(slides.length-1,i));
+  slides[cur].classList.remove("on");
+  cur=i;slides[cur].classList.add("on");
+  deck.scrollTop=0;
+  rail.style.width=((cur+1)/slides.length*100)+"%";
+  pos.textContent=(cur+1)+"/"+slides.length;
+  modLabel.textContent=slides[cur].dataset.mod||"";
+  prevBtn.style.visibility=cur===0?"hidden":"visible";
+  nextBtn.textContent=cur===0?"Let's go!":(cur===slides.length-1?"Done":"Next");
+  nextBtn.disabled=cur===slides.length-1;
+  try{
+    FX.played(slides[cur]);
+    if(guesserEl&&slides[cur].contains(guesserEl)&&!guesserEl.dataset.init){guesserEl.dataset.init="1";FX.guesser(guesserEl);}
+    if(cur===slides.length-1)celebrate();
+  }catch(err){}
+  if(READY){Sawaal.setScreen(cur);if(cur===slides.length-1)Sawaal.complete();}
+}
+var celebrated=false;
+function celebrate(){
+  if(celebrated||FX.instant||FX.reduce)return;
+  celebrated=true;
+  $$("#wall .medal").forEach(function(m,k){
+    m.style.animation="fxMedal .8s cubic-bezier(.2,1.6,.4,1) "+(k*0.18)+"s both";
+  });
+  setTimeout(function(){FX.confetti({count:140});},700);
+  setTimeout(function(){FX.confetti({x:innerWidth*0.2,count:70});FX.confetti({x:innerWidth*0.8,count:70});},1500);
+}
+function findIncomplete(slide){
+  var missing=[];
+  $$(".meq",slide).forEach(function(box){
+    if(box.querySelector("button[data-val]")){ /* taps are required, writing is optional */
+      var ans=STATE.answers[box.dataset.item];
+      if(!ans||ans.a===undefined||ans.a===null||ans.a==="")missing.push(box);
+    }
+  });
+  /* "Ask the AI" demo buttons: watch the answer before moving on */
+  $$("[data-ask]",slide).forEach(function(b){if(!b.dataset.asked)missing.push(b);});
+  /* ROTI builder */
+  if(slide.querySelector("#rotiPicks")){
+    $$(".lpick",slide).forEach(function(lp){if(!lp.querySelector(".pk.on"))missing.push(lp);});
+    if(!missing.length&&!STATE.answers.roti_prompt)missing.push($("#r_ask"));
+  }
+  /* ladder */
+  if(slide.querySelector("#ladSteps")&&!STATE.answers.ladder_done){
+    if(!LAD.topic)missing.push($("#ladTopics"));
+    else{var nx=$("#ladSteps .lstep:not(.done)");if(nx)missing.push(nx);}
+  }
+  /* guesser */
+  if(guesserEl&&slide.contains(guesserEl)&&!guesserEl.dataset.done&&!STATE.answers.guesser_seen)missing.push(guesserEl);
+  /* me first */
+  if(slide.querySelector("#mf_own")&&!STATE.answers.asked_mefirst){
+    missing.push($("#mf_own").value.trim().length<10?$("#mf_own"):$("#mf_ask"));
+  }
+  $$(".act .qcard[data-q]",slide).forEach(function(card){if(!card.dataset.done&&!card.classList.contains("hide"))missing.push(card);});
+  var hd=slide.querySelector("#huntdoc");
+  if(hd&&!hd.dataset.done)missing.push(hd.closest(".actbody")||hd);
+  return missing;
+}
+function goNext(){
+  var missing=findIncomplete(slides[cur]);
+  if(missing.length){
+    missing.forEach(function(el){
+      el.classList.add("needs-answer");
+      setTimeout(function(){el.classList.remove("needs-answer");},1600);
+    });
+    missing[0].scrollIntoView({behavior:"smooth",block:"center"});
+    var old=nextBtn.textContent;
+    nextBtn.textContent="Finish above first 👆";
+    nextBtn.classList.add("warn");
+    setTimeout(function(){nextBtn.textContent=old;nextBtn.classList.remove("warn");},1600);
+    return;
+  }
+  show(cur+1);
+}
+nextBtn.addEventListener("click",goNext);
+prevBtn.addEventListener("click",function(){show(cur-1);});
+document.addEventListener("keydown",function(e){
+  var t=e.target.tagName;
+  if(t==="TEXTAREA"||t==="INPUT"||t==="SELECT")return;
+  if(e.key==="ArrowRight")goNext();
+  if(e.key==="ArrowLeft")show(cur-1);
+});
+var tx=0,ty=0;
+deck.addEventListener("touchstart",function(e){tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;},{passive:true});
+deck.addEventListener("touchend",function(e){
+  var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8){if(dx<0)goNext();else show(cur-1);}
+},{passive:true});
+
+/* contents */
+var toc=$("#toc"),tocList=$("#tocList");
+slides.forEach(function(sl,i){
+  var h=sl.querySelector("h1,h2");
+  var a=sl.querySelector(".act>header h3");
+  var bd=sl.querySelector(".badge b");
+  var t=a?a.textContent:(bd?bd.textContent:(h?h.textContent:"Screen "+(i+1)));
+  var b=document.createElement("button");
+  b.className="tocItem";
+  b.textContent=(i+1)+". "+t;
+  var sp=document.createElement("span");sp.textContent=sl.dataset.mod||"";b.appendChild(sp);
+  b.addEventListener("click",function(){toc.classList.remove("on");show(i);});
+  tocList.appendChild(b);
+});
+$("#menuBtn").addEventListener("click",function(){toc.classList.add("on");});
+$("#tocClose").addEventListener("click",function(){toc.classList.remove("on");});
+
+/* ============ CODE NAME ============ */
+var pid=$("#pid");
+pid.addEventListener("input",function(){
+  STATE.pid=pid.value.trim();
+  if(Sawaal.mode==="local")rec("code_name","Getting started","Code name",STATE.pid);
+});
+
+/* ============ "ASK THE AI" BUTTONS (pre-written answers that type themselves) ============ */
+function askDemo(id,instant){
+  var btn=$('[data-ask="'+id+'"]'),box=$('[data-reply="'+id+'"]'),src=$('[data-text="'+id+'"]');
+  if(!btn||!box||!src||btn.dataset.asked)return;
+  btn.dataset.asked="1";btn.disabled=true;
+  btn.innerHTML="✓ Asked";
+  say(box,src.textContent.trim(),instant).then(function(){
+    var after=$('[data-after="'+id+'"]');
+    if(after){after.hidden=false;if(!instant)after.classList.add("fx-bounce");}
+  });
+}
+$$("[data-ask]").forEach(function(b){
+  b.addEventListener("click",function(){
+    if(b.dataset.asked)return;
+    rec("asked_"+b.dataset.ask,modOf(b),"Tapped Ask the AI ("+b.dataset.ask+")","yes");
+    askDemo(b.dataset.ask,false);
+  });
+});
+
+/* ============ CHOICE ACTIVITIES ============ */
+function applyActivityAnswer(card,val,isRestore){
+  var act=card.closest(".act").dataset.act;
+  var opts=$$(".opt",card),opt=null;
+  opts.forEach(function(o){if(o.dataset.v===val)opt=o;});
+  if(!opt||card.dataset.done)return;
+  card.dataset.done="1";
+  if(card.querySelector(".tl"))card.dataset.lit=val;   /* light up the traffic light */
+  var correct=opt.hasAttribute("data-correct");
+  opts.forEach(function(o){
+    o.disabled=true;
+    if(o===opt)o.classList.add("picked",correct?"right":"wrong");
+    else if(o.hasAttribute("data-correct"))o.classList.add("right");
+    else o.classList.add("dim");
+  });
+  var fb=card.querySelector(".fb");
+  fb.className="fb on "+(correct?"ok":"no");
+  fb.innerHTML="<b>"+(correct?"🎉 Yes!":"🤔 Not quite.")+"</b>"+esc(opt.dataset.fb||"");
+  if(!isRestore&&!correct)card.classList.add("fx-shake");
+  if(!SCORES[act])SCORES[act]={right:0,total:0};
+  SCORES[act].right+=correct?1:0;SCORES[act].total+=1;
+  if(!isRestore)rec(act+"_"+card.dataset.q,modOf(opt),card.querySelector(".qt").textContent.replace(/^\d+/,"").trim().slice(0,140),opt.dataset.v,correct?1:0);
+  var body=card.closest(".actbody");
+  if($$(".qcard[data-done]",body).length===$$(".qcard",body).length){
+    var st=body.querySelector(".stamp[data-stamp]");
+    if(st){
+      var s=SCORES[act];
+      st.textContent=s.right+" out of "+s.total+(s.right===s.total?" 🌟 Perfect!":(s.right>=s.total*0.6?" 👍 Nice!":" 📖 Read the tips again"));
+      st.classList.add("on");
+      if(s.right<s.total*0.6)st.style.borderColor=st.style.color="#E23A2E";
+      if(!isRestore){
+        rec(act+"_score","Activity score","Score on "+act,s.right+"/"+s.total,s.right);
+        if(s.right===s.total){var r=st.getBoundingClientRect();FX.confetti({x:r.left+r.width/2,y:r.top,count:70});}
+      }
+    }
+  }
+}
+function restoreActivitiesUI(){
+  $$(".act[data-act] .qcard[data-q]").forEach(function(card){
+    var act=card.closest(".act").dataset.act;
+    var ans=STATE.answers[act+"_"+card.dataset.q];
+    if(ans)applyActivityAnswer(card,ans.a,true);
+  });
+}
+document.addEventListener("click",function(e){
+  var opt=e.target.closest(".act .opts .opt");if(!opt)return;
+  var card=opt.closest(".qcard");if(!card)return;
+  if(card.dataset.done)return;
+  applyActivityAnswer(card,opt.dataset.v,false);
+});
+
+/* ============ ACTIVITY 2: TAP-TO-BUILD ROTI ============ */
+var rOut=$("#r_out"),rMeter=$("#r_meter"),rLabel=$("#r_label"),rTip=$("#r_tip"),rAsk=$("#r_ask"),rReply=$("#r_reply");
+var LAYER_NAME={r:"R: Role",o:"O: Output",t:"T: Tight rules",i:"I: Input"};
+var ROTI_REPLY={
+ weak:"Heat is a form of energy that is transferred between systems or objects with different temperatures. It flows from the hotter object to the colder one until thermal equilibrium is reached. Temperature, by contrast, is a measure of the average kinetic energy of the particles in a substance. Heat transfer takes place through conduction, convection and radiation, as described by the laws of thermodynamics...",
+ mid:"Heat is energy that moves from something hot to something cold. Temperature tells you how hot or cold something is.\n\nFor example, when you leave a cup of chai on the table, heat moves from the chai into the air, so the chai cools down.\n\nHeat can move in three ways: conduction, convection and radiation.",
+ strong:"Let's go! Question 1 of 5 🔥\n\nYou hold a steel spoon in a hot cup of chai. After a minute, the handle feels hot too, even though it isn't in the chai. Why?\n\nTake your time. Reply with your answer and I'll tell you if you're right before we move on to question 2."
+};
+var ROTI_AFTER={
+ weak:"😕 Lots of hard words, and nothing about you. It's just reading out a textbook. Pick stronger lines and ask again!",
+ mid:"🙂 Better! It's simpler. But it still just tells you things. Which layer would make it test you instead? Try changing it and ask again.",
+ strong:"🌟 Look at that: it's at your level, it uses something from home, and it makes you think instead of giving the answer. That's a strong roti!"
+};
+function rotiState(){
+  var picked={},sum=0,count=0;
+  $$("#rotiPicks .lpick").forEach(function(lp){
+    var on=lp.querySelector(".pk.on");
+    if(on){picked[lp.dataset.l]=on;sum+=+on.dataset.s;count++;}
+  });
+  return {picked:picked,sum:sum,count:count,score:Math.round(sum/8*100)};
+}
+function rotiLevel(st){return st.sum>=7?"strong":(st.sum>=4?"mid":"weak");}
+function rotiText(st){
+  return ["r","o","t","i"].map(function(l){
+    var b=st.picked[l];if(!b)return "";
+    var t=b.textContent.trim();return /^\(/.test(t)?"":t;
+  }).filter(Boolean).join("\n");
+}
+function rotiUpdate(){
+  var st=rotiState();
+  ["r","o","t","i"].forEach(function(l){var g=$('.rl[data-rl="'+l+'"]');if(g)g.classList.toggle("on",!!st.picked[l]);});
+  var text=rotiText(st);
+  rOut.textContent=st.count?(text||"(Nothing yet. Every line you picked was empty!)"):"Pick a line for each layer, and your question will build here.";
+  rMeter.style.width=(st.count?Math.max(4,st.score):0)+"%";
+  rMeter.style.background=st.score<40?"#E23A2E":(st.score<75?"#FFB703":"#0F7B6C");
+  rLabel.textContent=!st.count?"Empty":(st.score<40?"😕 Thin":(st.score<75?"🙂 Getting there":(st.score<100?"😃 Strong":"🌟 Excellent")));
+  rAsk.disabled=st.count<4;
+  if(st.count<4)rTip.textContent="👉 Pick one line for each of the 4 layers ("+st.count+" of 4 done).";
+  else if(!rAsk.dataset.asked)rTip.textContent="✅ All 4 layers picked. Now tap Ask the AI and see what you get.";
+  return st;
+}
+$("#rotiPicks").addEventListener("click",function(e){
+  var b=e.target.closest(".pk");if(!b)return;
+  var lp=b.closest(".lpick");
+  $$(".pk",lp).forEach(function(x){x.classList.remove("on");});
+  b.classList.add("on");
+  rec("roti_"+lp.dataset.l,modOf(lp),"ROTI layer "+LAYER_NAME[lp.dataset.l],b.textContent.trim(),+b.dataset.s);
+  if(rAsk.dataset.asked){delete rAsk.dataset.asked;rAsk.innerHTML='<span class="spark">✨</span> Ask again';}
+  rotiUpdate();
+});
+function rotiAsk(instant){
+  var st=rotiUpdate();if(st.count<4)return;
+  var lvl=rotiLevel(st);
+  rAsk.dataset.asked="1";rAsk.disabled=true;rAsk.innerHTML="✓ Asked";
+  rTip.textContent="";
+  say(rReply,ROTI_REPLY[lvl],instant).then(function(){rTip.textContent=ROTI_AFTER[lvl];});
+  return st;
+}
+rAsk.addEventListener("click",function(){
+  var st=rotiAsk(false);if(!st)return;
+  rec("roti_prompt",modOf(rAsk),"Question built in Activity 2 (ROTI)",rotiText(st),st.score);
+});
+function restoreRoti(){
+  ["r","o","t","i"].forEach(function(l){
+    var ans=STATE.answers["roti_"+l];if(!ans)return;
+    $$('.lpick[data-l="'+l+'"] .pk').forEach(function(b){if(b.textContent.trim()===String(ans.a))b.classList.add("on");});
+  });
+  rotiUpdate();
+  if(STATE.answers.roti_prompt&&rotiState().count===4)rotiAsk(true);
+}
+
+/* ============ ACTIVITY 3: GUIDED LADDER ============ */
+var LADDER={
+ mosq:{q:"Why are there more mosquitoes in the monsoon?",
+  map:"Main reasons:\n1. Lots of standing water for eggs\n2. Warm, humid weather\n3. Water sitting in coolers, pots and tyres\n4. Blocked drains\n5. Windows left open on hot, sticky nights",
+  picks:[
+   ["Standing water","Mosquitoes lay their eggs on still water. In the monsoon, rain fills puddles, potholes, old tyres and flower pots. One small puddle can hold hundreds of eggs, and in about a week they become new mosquitoes. More rain means more puddles, and more puddles mean more mosquitoes."],
+   ["Warm, humid weather","Mosquitoes love warm, damp air. In the monsoon it's both warm and humid, so mosquitoes live longer and their eggs grow faster. In cold, dry weather many of them die or slow down. That's why you see fewer mosquitoes in winter."],
+   ["Water in coolers and pots","Coolers, flower pots and buckets hold still water for days. Some mosquitoes, like the one that spreads dengue, prefer clean, still water like this, right inside our homes. Emptying and drying them once a week breaks the cycle, because the eggs never get time to grow."]],
+  example:"Real example: every monsoon, many Indian cities run campaigns asking people to empty coolers and pots once a week. Some cities, like Delhi, have fined homes where mosquito breeding was found.\n\n⚠️ Check this yourself: fines and rules change from city to city and year to year. Look at your city's municipal website or a recent news report.",
+  quiz:"Quick check: your neighbour empties her water cooler once a month. Is that often enough to stop mosquitoes breeding in it?",
+  opts:[["Yes, once a month is fine",0],["No, eggs can become mosquitoes in about a week",1],["Only if she adds salt to the water",0]],
+  right:"Right! Eggs can grow into mosquitoes in about a week, so once a week is the rule.",
+  wrong:"Not quite. Eggs can become mosquitoes in about a week, so a month is far too long.",
+  missing:"Something we haven't talked about: mosquitoes don't just bite, they can spread illnesses like dengue and malaria, and cases often go up in the monsoon. Small children and older people can get very sick. So protecting your family (covered water, nets, full sleeves) matters as much as knowing why mosquitoes multiply."},
+ phone:{q:"How does using a phone at night affect sleep?",
+  map:"Main reasons:\n1. Bright screen light\n2. Exciting videos and games\n3. \"Just one more video\"\n4. Notifications waking you up\n5. Worrying about messages",
+  picks:[
+   ["Bright screen light","Your brain uses light to tell day from night. When it gets dark, your body makes a sleep chemical called melatonin. A bright screen close to your face can make your brain think it's still daytime, so less melatonin is made and it takes longer to fall asleep."],
+   ["Exciting videos","Fun videos, games and chats wake your brain up. Your heart beats a little faster and your mind keeps replaying what you saw. A sleepy brain needs to slow down, so something exciting just before bed makes it harder to switch off."],
+   ["\"One more video\"","Video apps start the next video by themselves, and each one is short. So you keep saying \"just one more\", and 10 minutes becomes an hour. The problem isn't one video. It's that there's no natural place to stop."]],
+  example:"Real example: studies in many countries, including India, have found that teenagers who use phones late at night tend to sleep less.\n\n⚠️ Be careful: most of these studies show a link, not proof that phones cause bad sleep. Other things, like stress or homework, matter too. Check a trusted health website or ask your teacher.",
+  quiz:"Quick check: why does your body make melatonin when it gets dark?",
+  opts:[["It makes your eyes see better in the dark",0],["It helps your brain get ready for sleep",1],["It stores energy for the next day",0]],
+  right:"Yes! Melatonin is your body's \"time to sleep\" signal. Bright screens can delay it.",
+  wrong:"Not quite. Melatonin is your body's \"time to sleep\" signal. Bright screens can delay it.",
+  missing:"Something we haven't talked about: many apps are designed to keep you watching as long as possible. Autoplay, endless scrolling and notifications are built that way on purpose. So it isn't only about willpower. Simple fixes, like charging your phone outside your room, work better than just trying harder to stop."},
+ plastic:{q:"Why is plastic so hard to get rid of?",
+  map:"Main reasons:\n1. It takes hundreds of years to break down\n2. Most of it is never recycled\n3. It breaks into tiny pieces, not into nothing\n4. It blocks drains and rivers\n5. Burning it makes poisonous smoke",
+  picks:[
+   ["Takes hundreds of years","Food peels rot because tiny living things eat them. Almost nothing in nature can eat plastic. So a plastic bottle can stay around for hundreds of years. Even when it seems to disappear, it has only broken into very small pieces called microplastics."],
+   ["Most is never recycled","We put plastic in the recycling bin and think the job is done. But most plastic is never actually recycled. Some kinds are too cheap or too mixed to be worth it, and lots never reaches a recycling centre at all. It ends up in landfills, in rivers, or burned."],
+   ["Blocks drains","Plastic bags and wrappers don't rot, so they pile up in drains. In the monsoon, blocked drains make water flood the streets. That still water then becomes a home for mosquitoes. So one plastic bag can cause trouble long after someone throws it away."]],
+  example:"Real example: in 2022, India banned many single-use plastic items, like plastic straws, plastic cutlery and thin carry bags.\n\n⚠️ Check this yourself: the exact list of banned items, and how strictly the ban is followed, can be different in each state. Look at your state pollution control board's website or a recent news report.",
+  quiz:"Quick check: why can't we solve plastic waste just by putting it in recycling bins?",
+  opts:[["Because recycling bins are too small",0],["Because plastic melts in the sun",0],["Because most plastic is never actually recycled",1]],
+  right:"Right! Most plastic is never recycled, so using less matters more than recycling more.",
+  wrong:"Not quite. The big problem is that most plastic is never actually recycled.",
+  missing:"Something we haven't talked about: in India, much of the plastic that does get recycled is collected by waste pickers, often by hand and for very little money. They do important work that most people never notice. Who cleans up after us is part of the plastic story too."}
+};
+var LAD={topic:null,step:0};
+var ladSteps=$("#ladSteps"),climber=$("#climber");
+function ladStep(n){return $('.lstep[data-step="'+n+'"]',ladSteps);}
+function ladClimb(n){if(climber)climber.style.transform="translateY("+(-50*n)+"px)";}
+function ladFinish(n,instant){
+  var s=ladStep(n);s.classList.add("done");
+  LAD.step=Math.max(LAD.step,n);ladClimb(LAD.step);
+  var nx=ladStep(n+1);
+  if(nx){nx.classList.remove("locked");if(!instant)setTimeout(function(){var r=nx.getBoundingClientRect();if(r.bottom>innerHeight-80)nx.scrollIntoView({behavior:"smooth",block:"center"});},250);}
+  else{
+    $("#ladDone").classList.add("on");
+    if(!instant){var r=$("#ladDone").getBoundingClientRect();FX.confetti({x:r.left+60,y:r.top,count:90});}
+  }
+  if(!instant){
+    rec("ladder_step",modOf(s),"Ladder steps climbed",LAD.step,LAD.step);
+    if(n===5)rec("ladder_done",modOf(s),"Finished the ladder","yes",1);
+  }
+}
+function ladSetTopic(key,instant){
+  if(LAD.topic)return;
+  var T=LADDER[key];if(!T)return;
+  LAD.topic=key;
+  $$("#ladTopics .pk").forEach(function(b){b.classList.toggle("on",b.dataset.topic===key);b.disabled=true;});
+  ladSteps.classList.remove("hide");
+  $(".q",ladStep(1)).textContent="List the main reasons: "+T.q+" Just a list, no explaining.";
+  var p=$(".picks3",ladStep(2));
+  p.innerHTML=T.picks.map(function(x,k){return '<button type="button" class="pk" data-pick="'+k+'">'+esc(x[0])+'</button>';}).join("");
+  var o=$(".qmini",ladStep(4));
+  o.innerHTML=T.opts.map(function(x,k){return '<button type="button" class="opt" data-k="'+k+'">'+esc(x[0])+'</button>';}).join("");
+  if(!instant){
+    rec("ladder_topic",modOf(ladSteps),"Ladder topic chosen",T.q);
+    setTimeout(function(){ladStep(1).scrollIntoView({behavior:"smooth",block:"center"});},150);
+  }
+}
+$("#ladTopics").addEventListener("click",function(e){var b=e.target.closest(".pk");if(b)ladSetTopic(b.dataset.topic,false);});
+function ladAsk(n,instant){
+  var T=LADDER[LAD.topic],s=ladStep(n);if(!T||!s||s.classList.contains("done"))return Promise.resolve();
+  var btn=$("[data-lad]",s);if(btn){if(btn.dataset.asked)return Promise.resolve();btn.dataset.asked="1";btn.disabled=true;btn.innerHTML="✓ Asked";}
+  var text=n===1?T.map:n===3?T.example:n===4?T.quiz:T.missing;
+  return say($(".lr",s),text,instant).then(function(){
+    if(n===4)$(".qmini",s).classList.remove("hide");
+    else ladFinish(n,instant);
+  });
+}
+function ladPick(k,instant){
+  var T=LADDER[LAD.topic],s=ladStep(2);if(!T||s.classList.contains("done")||s.dataset.picked)return;
+  s.dataset.picked="1";
+  $$(".picks3 .pk",s).forEach(function(b){b.classList.toggle("on",+b.dataset.pick===k);b.disabled=true;});
+  if(!instant)rec("ladder_pick",modOf(s),"Ladder step 2: which reason they picked",T.picks[k][0]);
+  say($(".lr",s),"Tell me more about \""+T.picks[k][0]+"\".\n\n"+T.picks[k][1],instant).then(function(){ladFinish(2,instant);});
+}
+function ladQuiz(k,instant){
+  var T=LADDER[LAD.topic],s=ladStep(4);if(!T||s.classList.contains("done"))return;
+  var right=T.opts[k][1]===1;
+  $$(".qmini .opt",s).forEach(function(b,j){
+    b.disabled=true;
+    if(j===k)b.classList.add("picked",right?"right":"wrong");
+    else if(T.opts[j][1]===1)b.classList.add("right");
+    else b.classList.add("dim");
+  });
+  var fb=$(".fb",s);fb.className="fb on "+(right?"ok":"no");
+  fb.innerHTML="<b>"+(right?"🎉 ":"🤔 ")+"</b>"+esc(right?T.right:T.wrong);
+  if(!instant)rec("ladder_quiz",modOf(s),"Ladder quiz: "+T.quiz,T.opts[k][0],right?1:0);
+  ladFinish(4,instant);
+}
+ladSteps.addEventListener("click",function(e){
+  var a=e.target.closest("[data-lad]");if(a){ladAsk(+a.dataset.lad,false);return;}
+  var p=e.target.closest(".picks3 .pk");if(p){ladPick(+p.dataset.pick,false);return;}
+  var q=e.target.closest(".qmini .opt");if(q){ladQuiz(+q.dataset.k,false);return;}
+});
+function restoreLadder(){
+  var t=STATE.answers.ladder_topic;if(!t)return;
+  var key=null;Object.keys(LADDER).forEach(function(k){if(LADDER[k].q===t.a)key=k;});
+  if(!key)return;
+  ladSetTopic(key,true);
+  var done=+(STATE.answers.ladder_step&&STATE.answers.ladder_step.a)||0;
+  if(STATE.answers.ladder_done)done=5;
+  if(done>=1)ladAsk(1,true);
+  if(done>=2){
+    var pk=STATE.answers.ladder_pick,k=0;
+    if(pk)LADDER[key].picks.forEach(function(x,j){if(x[0]===pk.a)k=j;});
+    ladPick(k,true);
+  }
+  if(done>=3)ladAsk(3,true);
+  if(done>=4){
+    ladAsk(4,true);
+    var qz=STATE.answers.ladder_quiz,qk=0;
+    if(qz)LADDER[key].opts.forEach(function(x,j){if(x[0]===qz.a)qk=j;});
+    ladQuiz(qk,true);
+  }
+  if(done>=5)ladAsk(5,true);
+}
+
+/* ============ GUESS THE NEXT WORD ============ */
+if(guesserEl)guesserEl.addEventListener("fx:guessed",function(e){
+  rec("guesser_seen",modOf(guesserEl),"Watched the next-word guesser (rounds)",e.detail.round+1);
+});
+
+/* ============ ACTIVITY 4: FAKE-FACT HUNT ============ */
+var huntDoc=$("#huntdoc"),huntFb=$("#hunt_fb");
+var STAMP={bad:["FAKE","#E23A2E"],soft:["CHECK","#B86E00"],fine:["OK","#0F7B6C"]};
+huntDoc.addEventListener("click",function(e){
+  var s=e.target.closest(".sus");if(!s||huntDoc.dataset.done||huntDoc.dataset.busy)return;
+  s.classList.toggle("flag");
+});
+function huntEvaluate(isRestore){
+  if(huntDoc.dataset.done)return;
+  huntDoc.dataset.done="1";
+  var spans=$$(".sus",huntDoc),hits=0,bad=0,falseAlarm=0,html="",flagged=[];
+  spans.forEach(function(s,n){
+    var isBad=s.dataset.v==="bad",isFlag=s.classList.contains("flag");
+    if(isFlag)flagged.push(n);
+    s.classList.remove("flag");
+    if(isBad){bad++;if(isFlag){hits++;s.classList.add("hit");}else{s.classList.add("shown");}}
+    else if(isFlag){falseAlarm++;s.classList.add("miss");}
+    var verdict=isBad?(isFlag?"🎯 You caught it! ":"😮 Missed. "):(s.dataset.v==="soft"?(isFlag?"👍 Good instinct. ":"Worth flagging too. "):(isFlag?"This one was actually fine. ":"✅ Correctly left alone. "));
+    html+='<div class="'+(isBad?"bad":"fine")+'"><b>'+(n+1)+'. </b>'+verdict+esc(s.dataset.note)+'</div>';
+    var sd=STAMP[s.dataset.v]||STAMP.fine,stamp=document.createElement("span");
+    stamp.className="fx-stamp";stamp.textContent=sd[0];stamp.style.color=sd[1];
+    if(!isRestore&&!FX.reduce)stamp.style.animationDelay=(n*0.15)+"s";
+    else stamp.style.animation="none";
+    s.appendChild(stamp);
+  });
+  huntFb.innerHTML=html;
+  var st=$('.stamp[data-stamp="hunt"]');
+  st.textContent=hits+" of "+bad+" fakes caught"+(falseAlarm?", "+falseAlarm+" false alarm"+(falseAlarm>1?"s":""):"")+(hits===bad?" 🌟":"");
+  st.classList.add("on");
+  if(hits<3){st.style.borderColor=st.style.color="#E23A2E";}
+  if(!isRestore){
+    rec("hunt_flags",modOf(huntDoc),"Sentences flagged in the fake-fact hunt",flagged);
+    rec("hunt_score",modOf(huntDoc),"Fakes caught in the fake-fact hunt",hits+"/"+bad+" (false alarms: "+falseAlarm+")",hits);
+    if(hits===bad&&!falseAlarm){var r=st.getBoundingClientRect();setTimeout(function(){FX.confetti({x:r.left+r.width/2,y:r.top,count:80});},900);}
+  }
+}
+$("#hunt_check").addEventListener("click",function(){
+  if(huntDoc.dataset.done||huntDoc.dataset.busy)return;
+  if(!$$(".sus.flag",huntDoc).length){
+    huntFb.innerHTML='<div>👆 Tap the sentences you think are fake first. Then press the button.</div>';
+    return;
+  }
+  if(FX.reduce||FX.instant){huntEvaluate(false);return;}
+  huntDoc.dataset.busy="1";huntDoc.classList.add("fx-scanning");
+  setTimeout(function(){huntDoc.classList.remove("fx-scanning");delete huntDoc.dataset.busy;huntEvaluate(false);},1400);
+});
+function restoreHunt(){
+  var f=STATE.answers.hunt_flags;
+  if(!f||!Array.isArray(f.a))return;
+  var spans=$$(".sus",huntDoc);
+  f.a.forEach(function(n){if(spans[n])spans[n].classList.add("flag");});
+  huntEvaluate(true);
+}
+$("#hunt_reset").addEventListener("click",function(){
+  if(huntDoc.dataset.busy)return;
+  delete huntDoc.dataset.done;huntFb.innerHTML="";
+  var st=$('.stamp[data-stamp="hunt"]');st.classList.remove("on");st.style.borderColor=st.style.color="";
+  $$(".sus",huntDoc).forEach(function(s){s.className="sus";$$(".fx-stamp",s).forEach(function(x){x.remove();});});
+  rec("hunt_flags",modOf(huntDoc),"Sentences flagged in the fake-fact hunt",null);
+});
+
+/* ============ SWAP TRICK (privacy demo) ============ */
+var swapBtn=$("#swapBtn");
+swapBtn.addEventListener("click",function(){
+  if(swapBtn.dataset.done)return;
+  swapBtn.dataset.done="1";swapBtn.disabled=true;swapBtn.innerHTML="✓ Swapped";
+  $("#swapmsg").classList.add("swapped");
+  var out=$("#swapOut");
+  FX.sleep(900).then(function(){
+    out.classList.remove("hide");
+    out.innerHTML='<b style="display:block;font-size:12px;letter-spacing:.06em;color:var(--peacock)">✅ SAFE VERSION</b><span></span>';
+    return FX.type(out.querySelector("span"),"\"A classmate sent me a message that felt a bit mean, but maybe it was a joke. What could she have meant, and how could I ask her about it?\"");
+  }).then(function(){
+    var n=document.createElement("p");n.className="ai-note";n.style.marginTop="8px";
+    n.textContent="Same problem, same help. But no names, no class and no screenshot of someone else's words.";
+    out.parentNode.insertBefore(n,out.nextSibling);
+  });
+});
+
+/* ============ ACTIVITY 7: ME FIRST ============ */
+var mfOwn=$("#mf_own"),mfAsk=$("#mf_ask"),mfCount=$("#mf_count"),mfReply=$("#mf_reply"),mfCmp=$("#mf_cmp");
+var MF_REPLY="Phones can keep you awake in a few ways. The bright screen tells your brain it's still daytime, so your body makes less of its sleep chemical. Exciting videos and games keep your mind busy when it should be slowing down. And notifications can wake you up, or make you want to check your phone \"just once more\".";
+function mfUpdate(){
+  if(mfAsk.dataset.asked)return;
+  var n=mfOwn.value.trim().length;
+  mfAsk.disabled=n<10;
+  mfCount.textContent=n<10?"Write at least a few words to unlock the AI.":"✅ Unlocked! Tap the button when you're happy with your answer.";
+}
+mfOwn.addEventListener("input",mfUpdate);
+function mfReveal(instant){
+  if(mfAsk.dataset.asked)return;
+  mfAsk.dataset.asked="1";mfAsk.disabled=true;mfAsk.innerHTML="✓ Shown";
+  mfOwn.readOnly=true;
+  mfCount.textContent="Your answer is locked in. Now compare.";
+  say(mfReply,MF_REPLY,instant).then(function(){
+    mfCmp.classList.remove("hide");
+    if(!instant)setTimeout(function(){mfCmp.scrollIntoView({behavior:"smooth",block:"center"});},200);
+  });
+}
+mfAsk.addEventListener("click",function(){
+  if(mfOwn.value.trim().length<10)return;
+  rec("mefirst_own",modOf(mfOwn),"Me first: why might a phone at night make it harder to sleep? (own answer)",mfOwn.value);
+  rec("asked_mefirst",modOf(mfAsk),"Me first: wrote own answer, then looked at the AI's","yes");
+  mfReveal(false);
+});
+
+/* ============ COPY ============ */
+function copyText(txt,btn){
+  function done(){
+    if(!btn)return;var old=btn.textContent;btn.textContent="Copied ✓";btn.classList.add("done");
+    setTimeout(function(){btn.textContent=old;btn.classList.remove("done");},1600);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done,function(){fallback(txt);done();});
+  }else{fallback(txt);done();}
+}
+function fallback(txt){
+  var ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(err){}document.body.removeChild(ta);
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-copy]");if(!b)return;
+  var box=b.parentNode.cloneNode(true);
+  var inner=box.querySelector("[data-copy]");if(inner)inner.remove();
+  copyText(box.textContent.trim(),b);
+});
+
+/* ============ MY RULES ============ */
+$('[data-fill="charter"]').addEventListener("click",function(e){
+  var c=e.target.closest(".chip");if(!c)return;
+  var inputs=$$(".charter-in");
+  for(var i=0;i<inputs.length;i++){if(!inputs[i].value.trim()){inputs[i].value=c.textContent;inputs[i].dispatchEvent(new Event("input",{bubbles:true}));inputs[i].classList.add("fx-bounce");inputs[i].focus();return;}}
+});
+
+/* ============ FREE TEXT STORE ============ */
+document.addEventListener("input",function(e){
+  var el=e.target;if(!el.dataset||!el.dataset.store)return;
+  if(el.id==="mf_own")return; /* saved when the AI answer is revealed */
+  var lab=el.id?document.querySelector('label[for="'+el.id+'"]'):null;
+  var q=lab?lab.textContent.trim().slice(0,140):(el.previousElementSibling&&el.previousElementSibling.tagName==="LABEL"?el.previousElementSibling.textContent.trim():el.dataset.store);
+  rec(el.dataset.store,modOf(el),q,el.value);
+});
+
+/* ============ RESUME: put saved answers back on screen ============ */
+function restoreMeqUI(){
+  $$(".meq").forEach(function(box){
+    var id=box.dataset.item,ans=STATE.answers[id];
+    if(!ans)return;
+    var buttons=$$("button[data-val]",box);
+    if(buttons.length){
+      buttons.forEach(function(b){
+        if(String(b.dataset.val)===String(ans.a))b.classList.add(b.parentNode.classList.contains("likert")?"on":"picked");
+      });
+    }else{
+      var ta=box.querySelector("textarea");
+      if(ta)ta.value=ans.a==null?"":ans.a;
+    }
+  });
+  $$(".me").forEach(function(host){
+    var saved=host.querySelector(".saved");
+    if(saved&&host.querySelector(".meq .on,.meq .picked"))saved.classList.add("on");
+  });
+}
+function restoreStoredFields(){
+  $$("[data-store]").forEach(function(el){
+    var ans=STATE.answers[el.dataset.store];
+    if(ans&&ans.a!=null)el.value=ans.a;
+  });
+  if(STATE.answers.code_name&&!pid.value){pid.value=STATE.answers.code_name.a||"";STATE.pid=pid.value;}
+}
+function restoreDemos(){
+  Object.keys(STATE.answers).forEach(function(k){
+    var m=/^asked_(.+)$/.exec(k);
+    if(m&&m[1]!=="mefirst")askDemo(m[1],true);
+  });
+  if(STATE.answers.asked_mefirst)mfReveal(true);else mfUpdate();
+}
+
+/* ============ PLATFORM: open, restore, resume ============ */
+function applyMode(state){
+  var online=state.mode==="online"||state.mode==="offline";
+  if(online&&state.student){
+    STATE.pid=state.student.code;
+    pid.value=state.student.code;
+    pid.classList.add("hide");
+    var lab=pid.parentNode.querySelector('label[for="pid"]');if(lab)lab.classList.add("hide");
+    var hint=pid.parentNode.querySelector("p.small");if(hint)hint.classList.add("hide");
+    $("#pidTitle").textContent="Your secret key 🔑";
+    var ps=$("#pidSigned");ps.textContent=state.student.code;ps.classList.remove("hide");
+    $("#saveNote").textContent="Saved online as you go. You can stop and carry on later, on any phone or computer.";
+    $("#doneSaved").classList.remove("hide");
+    $("#doneBack").classList.remove("hide");
+  }
+  if(state.mode==="local"){
+    $("#saveNote").textContent="You're not signed in, so answers stay on this device only. Open the menu (☰) and choose Sign in to save.";
+  }
+}
+
+slides[0].classList.add("on");
+show(0);
+
+Sawaal.start().then(function(state){
+  RESTORING=true;FX.instant=true;
+  try{
+    Object.keys(state.answers).forEach(function(k){STATE.answers[k]=state.answers[k];});
+    applyMode(state);
+    restoreMeqUI();
+    restoreStoredFields();
+    restoreActivitiesUI();
+    restoreRoti();
+    restoreLadder();
+    restoreHunt();
+    restoreDemos();
+  }catch(err){if(window.console)console.error(err);}
+  finally{RESTORING=false;FX.instant=false;}
+  show(state.completed?0:(state.screen||0));  /* finished students start from the top to reread */
+  READY=true;
+});
+
+window.addEventListener("beforeunload",function(e){
+  if(Sawaal.mode==="local"&&Object.keys(STATE.answers).length>3){e.preventDefault();e.returnValue="";}
+});
+})();
+</script>
+</body>
+</html>
