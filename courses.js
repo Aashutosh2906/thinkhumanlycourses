@@ -73,6 +73,7 @@ window.SAWAAL_COURSES = [
       ]
     }
   },
+
   {
     id: "make-it-run-data-code",
     title: "Make It Run — Data and Code With AI",
@@ -107,8 +108,9 @@ window.SAWAAL_COURSES = [
         { id: "p8", label: "One thing they'll always do before running code they didn't write" }
       ]
     }
-},
- {
+  },
+
+  {
     id: "sawaal-ai-upto-14",
     title: "Sawaal AI - upto 14 ages",
     summary: "Use AI the smart way: ask better questions, check what it tells you, and stay safe. 7 short missions, 7 badges.",
@@ -159,7 +161,57 @@ window.SAWAAL_COURSES = [
         { id: "p8", label: "One thing they'll stop doing with AI" }
       ]
     }
- },
+  },
+
+  {
+    id: "ai-foundations",
+    title: "AI Foundations: Think, Ask, Check",
+    summary: "The basics of using AI well: think for yourself, ask better questions, and check what AI tells you. 6 short missions, made for a live class.",
+    minutes: 45,
+    ages: "11 to 14",
+    screens: 36,
+    insights: {
+      scored: [
+        { id: "drivers_score", label: "Spot the driver", max: 4 },
+        { id: "roti_prompt", label: "Roti they built (strength)", max: 100, bucket: 25 },
+        { id: "ladder_step", label: "Ladder steps climbed", max: 5 },
+        { id: "hunt_score", label: "Fake-fact hunt (fakes caught)", max: 4 },
+        { id: "light_score", label: "Green, amber, red", max: 6 },
+        { id: "rescue_score", label: "Rescue the chat", max: 3 }
+      ],
+      prePost: [
+        { pre: "b1", post: "p1", type: "likert", label: "asking AI questions that fit their class" },
+        { pre: "b2", post: "p2", type: "likert", label: "knowing what they want before opening a chatbot" },
+        { pre: "b3", post: "p3", type: "likert", label: "telling when an AI answer might be wrong" },
+        { pre: "b4", post: "p4", type: "choice", label: "what they do when an AI answer doesn't help", highlight: "Try a totally different way" }
+      ],
+      gapChecks: [
+        { confidence: "b3", high: 4, performance: "hunt_score", below: 3,
+          confidenceLabel: "telling when an AI answer might be wrong",
+          performanceLabel: "the fake-fact hunt (out of 4 fakes)" },
+        { confidence: "m2a", high: 4, performance: "roti_prompt", below: 75,
+          confidenceLabel: "turning a weak question into a strong one",
+          performanceLabel: "the roti they actually built (out of 100)" },
+        { confidence: "m5a", high: 4, performance: "light_score", below: 4,
+          confidenceLabel: "knowing what should never go into a chatbot",
+          performanceLabel: "green, amber, red (out of 6)" }
+      ],
+      counts: [
+        { item: "p9", values: ["A bit hard", "Too hard"], label: "found the course a bit hard or too hard" },
+        { item: "p9", values: ["Just right"], label: "said the course was just right" },
+        { item: "b5", values: ["Most days", "Every day"], label: "use AI for schoolwork most days or every day" },
+        { item: "mefirst_compare", values: ["Mine", "Both had something the other missed"], label: "felt their own answer held up against the AI's" }
+      ],
+      freeText: [
+        { id: "mefirst_own", label: "Me first: their own answer, written before seeing the AI's" },
+        { id: "roti_prompt", label: "The question they built with ROTI" },
+        { id: "charter1", label: "AI rule 1" },
+        { id: "charter2", label: "AI rule 2" },
+        { id: "charter3", label: "AI rule 3" },
+        { id: "p7", label: "What was confusing or boring" }
+      ]
+    }
+  },
 
   // ----- Example of a new course (remove the // to use it) -----
   // {
