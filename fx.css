@@ -1,0 +1,81 @@
+/* =====================================================================
+   fx.css: shared animations for courses. Pair with fx.js.
+   Everything here switches off for people who ask for less motion.
+   ===================================================================== */
+
+/* ---------- pre-stored AI replies that type themselves ---------- */
+.ask-btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;background:#2743C4;color:#fff;box-shadow:0 4px 0 #1A2F8F;transition:transform .1s,box-shadow .1s}
+.ask-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #1A2F8F}
+.ask-btn[disabled]{background:#9AA6D6;box-shadow:none;cursor:default}
+.ask-btn .spark{font-size:18px}
+.ai-say{position:relative;background:#F1F4FF;border:2px solid #CDD6FA;border-radius:16px 16px 16px 4px;padding:12px 15px 13px;margin:12px 0 16px;font-size:16px;line-height:1.55;animation:fxRise .35s ease-out}
+.ai-say[hidden]{display:none}
+.ai-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;font-weight:800;letter-spacing:.06em;color:#2743C4}
+.ai-av{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#2743C4;color:#fff;font-size:11px;letter-spacing:0}
+.ai-text{white-space:pre-wrap}
+.ai-text.typing::after{content:"";display:inline-block;width:8px;height:1.05em;margin-left:2px;vertical-align:-2px;background:#2743C4;animation:fxBlink .8s steps(1) infinite}
+.ai-dots{display:inline-flex;gap:4px;padding:4px 0}
+.ai-dots i{width:7px;height:7px;border-radius:50%;background:#2743C4;opacity:.35;animation:fxDot 1s infinite}
+.ai-dots i:nth-child(2){animation-delay:.15s}.ai-dots i:nth-child(3){animation-delay:.3s}
+.ai-note{font-size:14.5px;color:#5E5A52;margin:-6px 0 14px;animation:fxRise .35s ease-out}
+@keyframes fxDot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@keyframes fxBlink{50%{opacity:0}}
+@keyframes fxRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- chats that play out one message at a time ---------- */
+[data-replay] .bub.fx-wait{display:none}
+[data-replay] .bub.fx-in{animation:fxRise .35s ease-out}
+
+/* ---------- badge unlock ---------- */
+.badge.fx-pop .medal{animation:fxMedal .8s cubic-bezier(.2,1.6,.4,1) both}
+.badge.fx-pop{animation:fxGlow 1.4s ease-out}
+@keyframes fxMedal{0%{transform:scale(.2) rotate(-40deg);opacity:0}70%{transform:scale(1.15) rotate(8deg);opacity:1}100%{transform:none}}
+@keyframes fxGlow{0%{box-shadow:0 0 0 0 rgba(255,183,3,.7)}100%{box-shadow:0 0 0 22px rgba(255,183,3,0)}}
+.fx-confetti{position:fixed;inset:0;pointer-events:none;z-index:9998}
+
+/* ---------- next-word guesser ---------- */
+.guesser{background:#fff;border:2px solid #EADFCB;border-radius:16px;padding:16px;margin-bottom:16px}
+.guesser .gq{font-family:"Baloo 2","Trebuchet MS",sans-serif;font-weight:800;font-size:22px;line-height:1.3;margin-bottom:12px}
+.guesser .blank{display:inline-block;min-width:90px;border-bottom:3px dashed #2743C4;color:#2743C4;padding:0 4px;text-align:center}
+.guesser .blank.wrong{color:#E23A2E;border-color:#E23A2E}
+.guesser .gb{display:grid;grid-template-columns:96px 1fr 44px;gap:10px;align-items:center;font-size:15px;margin-bottom:7px}
+.guesser .gb .t{height:16px;background:#F3EFE6;border-radius:99px;overflow:hidden}
+.guesser .gb .t i{display:block;height:100%;width:0;background:#9AA6D6;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.guesser .gb.pick .t i{background:#2743C4}
+.guesser .gb.pick span:first-child{font-weight:800}
+.guesser .gb b{text-align:right;font-variant-numeric:tabular-nums;opacity:0;transition:opacity .4s .5s}
+.guesser.shown .gb b{opacity:1}
+.guesser .gnote{margin:10px 0 0;font-size:15.5px;animation:fxRise .35s ease-out}
+.guesser .gbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* ---------- flip cards ---------- */
+.flipgrid{display:grid;gap:12px;margin-bottom:16px}
+@media (min-width:640px){.flipgrid{grid-template-columns:1fr 1fr}}
+.flip{perspective:900px;cursor:pointer;min-height:132px;border:0;background:none;padding:0;font:inherit;text-align:left;color:inherit}
+.flip .in{position:relative;width:100%;height:100%;min-height:132px;transition:transform .55s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d}
+.flip.flipped .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}
+.flip .front{background:#fff;border:2px solid #D6CCF7}
+.flip .back{background:#F1ECFF;border:2px solid #6D28D9;transform:rotateY(180deg);font-size:15.5px;line-height:1.5}
+.flip .front b{font-family:"Baloo 2","Trebuchet MS",sans-serif;font-size:20px;line-height:1.2;margin-top:6px}
+.flip .front small{color:#6D28D9;font-weight:700;font-size:12.5px;margin-top:6px}
+.flip:focus-visible .face{outline:3px solid #2743C4;outline-offset:2px}
+
+/* ---------- scan + stamp ---------- */
+.fx-scanning{position:relative}
+.fx-scanning::after{content:"🔍";position:absolute;font-size:34px;left:-6px;top:-10px;animation:fxScan 1.4s ease-in-out;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+@keyframes fxScan{0%{transform:translate(0,0)}25%{transform:translate(70vw,0)}50%{transform:translate(0,45%)}75%{transform:translate(70vw,60%)}100%{transform:translate(85%,90%);opacity:0}}
+.fx-stamp{display:inline-block;margin-left:8px;padding:1px 8px;border:2.5px solid currentColor;border-radius:6px;font-family:"Baloo 2","Trebuchet MS",sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;transform:rotate(-6deg);animation:fxStamp .4s cubic-bezier(.2,1.6,.4,1) both;vertical-align:1px}
+@keyframes fxStamp{0%{transform:scale(2.4) rotate(-6deg);opacity:0}100%{transform:scale(1) rotate(-6deg);opacity:1}}
+
+/* ---------- small helpers ---------- */
+.fx-shake{animation:fxShake .35s}
+@keyframes fxShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.fx-bounce{animation:fxBounce .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes fxBounce{0%{transform:scale(.85)}100%{transform:scale(1)}}
+
+@media (prefers-reduced-motion:reduce){
+  .ai-say,.ai-note,.guesser .gnote,[data-replay] .bub.fx-in,.badge.fx-pop,.badge.fx-pop .medal,.fx-stamp,.fx-bounce,.fx-shake{animation:none!important}
+  .fx-scanning::after{display:none}
+  .flip .in,.guesser .gb .t i{transition:none!important}
+}
