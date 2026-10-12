@@ -165,7 +165,7 @@ window.SAWAAL_COURSES = [
 
   {
     id: "ai-foundations",
-    title: "AI Foundations: Think, Ask, Check",
+    title: "AI Smart Student - Think better. Learn smarter. Create responsibly",
     summary: "The basics of using AI well: think for yourself, ask better questions, and check what AI tells you. 6 short missions, made for a live class.",
     minutes: 45,
     ages: "11 to 14",
